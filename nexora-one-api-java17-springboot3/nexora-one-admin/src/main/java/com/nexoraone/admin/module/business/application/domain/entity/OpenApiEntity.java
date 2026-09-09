@@ -32,10 +32,34 @@ public class OpenApiEntity {
     private Integer permissionLevel;
     /** 接口说明。 */
     private String description;
+    /** 所属后端服务。 */
+    private String serviceName;
+    /** 接口负责人。 */
+    private String ownerName;
+    /** 标签，多个标签使用英文逗号分隔。 */
+    private String tags;
+    /** 当前版本主键。 */
+    private Long currentVersionId;
+    /** 发布状态：1草稿，2配置中，3待发布，4已上架，5已停用，6已下线。 */
+    private Integer status;
+    /** 当前编辑步骤。 */
+    private Integer workflowStep;
+    /** 今日调用量。 */
+    private Long todayCallCount;
+    /** 累计调用量。 */
+    private Long totalCallCount;
     /** 是否启用。 */
     private Boolean enabledFlag;
     /** 排序。 */
     private Integer sort;
+    /** 创建人主键。 */
+    private Long createUserId;
+    /** 创建人姓名。 */
+    private String createUserName;
+    /** 更新人主键。 */
+    private Long updateUserId;
+    /** 更新人姓名。 */
+    private String updateUserName;
     /** 创建时间。 */
     private LocalDateTime createTime;
     /** 更新时间。 */

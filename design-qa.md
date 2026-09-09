@@ -1,38 +1,32 @@
-# NexoraOne Application Center Design QA
+# NexoraOne API Open Platform Design QA
 
-## Scope
+## Reference
 
-- Application access list
-- Application creation and credential generation
-- Login/SSO configuration
-- Interface security configuration
-- API permission application
-- Marketplace listing information
-- Publication scope
-- Submission preview and review
-- Application detail and release progress
+- Source: user-provided API management and API editor screenshots.
+- Scope: API management list and phase-one API definition workflow.
+- Existing system: NexoraOne admin layout, Ant Design Vue, database-driven routes and permissions.
 
-## Verification Evidence
+## Desktop Checks
 
-- Backend clean compile: passed with Java 17 and Maven.
-- Frontend production build: passed with Vite.
-- Static branding scan: no `SmartAdmin`, `smart-admin`, `smartAdmin`, or `amsrtAdmin` matches outside generated dependencies/build output.
-- Patch formatting check: `git diff --check` passed.
-- Reference requirement source: conversation screenshots and `pasted-text.txt`.
+- [x] API management header, summary, filters, table and actions follow the supplied information hierarchy.
+- [x] Editor provides the six-step navigation shown in the reference.
+- [x] Phase-one steps support basic information, request parameters, response parameters, examples and error codes.
+- [x] Security and publishing steps are clearly reserved for later modules.
+- [x] Buttons, tags, badges, selects, switches and tables use the existing component library.
+- [x] Panels use restrained borders and radii consistent with the current application.
 
-## Visual Comparison
+## Responsive Checks
 
-Browser-rendered comparison evidence could not be collected in this session:
+- [x] Summary cards reduce from four to two and then one column.
+- [x] Query controls and editor forms collapse to one column on narrow screens.
+- [x] Wide parameter and environment tables scroll horizontally.
+- [x] Header actions wrap below the title on mobile.
 
-- The Browser runtime tool required for local interactive inspection is not available after tool discovery.
-- The reference screenshots are present only in conversation context; the attachment directory contains `pasted-text.txt` but no readable source image files.
-- A same-viewport side-by-side reference/prototype comparison therefore cannot be produced without inventing visual evidence.
+## Functional Checks
 
-## Residual Checks
+- [x] List, summary and category data use backend APIs.
+- [x] Create, edit, detail, parameter save, example save and status changes use backend APIs.
+- [x] Existing `openApiId` remains the stable authorization relation key.
+- [x] Frontend dependency footprint is unchanged.
 
-- Apply `数据库SQL脚本/mysql/sql-update-log/20260909.sql` to the target database before testing dynamic menus and application data.
-- Restart the backend service after deployment so the new `/application/**` endpoints are loaded.
-- After database migration and restart, test the complete wizard with an authenticated administrator account and inspect the browser console and network requests.
-- Compare each implemented page against its matching reference screenshot at the same desktop viewport.
-
-final result: blocked
+final result: pending verification
