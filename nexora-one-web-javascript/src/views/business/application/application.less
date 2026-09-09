@@ -163,6 +163,22 @@
   background: #f8fafc;
 }
 
+.credential-connect {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(240px, 420px) auto;
+  gap: 16px;
+  align-items: center;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #d9e8ff;
+  border-radius: 6px;
+  background: #f7fbff;
+}
+
+.credential-connect code {
+  color: #1677ff;
+}
+
 .security-options {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -350,7 +366,8 @@
   }
 
   .application-footer-actions__right,
-  .credential-box {
+  .credential-box,
+  .credential-connect {
     grid-template-columns: 1fr;
   }
 

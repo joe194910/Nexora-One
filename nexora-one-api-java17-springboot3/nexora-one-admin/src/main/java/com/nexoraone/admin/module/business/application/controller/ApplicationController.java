@@ -4,6 +4,8 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.nexoraone.admin.module.business.application.domain.entity.OpenApiEntity;
 import com.nexoraone.admin.module.business.application.domain.form.*;
 import com.nexoraone.admin.module.business.application.domain.vo.ApplicationCredentialVO;
+import com.nexoraone.admin.module.business.application.domain.vo.ApplicationConnectVO;
+import com.nexoraone.admin.module.business.application.service.ApplicationOpenAuthService;
 import com.nexoraone.admin.module.business.application.service.ApplicationService;
 import com.nexoraone.base.common.domain.PageResult;
 import com.nexoraone.base.common.domain.ResponseDTO;
@@ -26,6 +28,8 @@ public class ApplicationController {
 
     @Resource
     private ApplicationService applicationService;
+    @Resource
+    private ApplicationOpenAuthService openAuthService;
 
     /** 分页查询应用接入列表。 */
     @Operation(summary = "分页查询应用接入列表")
@@ -89,6 +93,15 @@ public class ApplicationController {
     @SaCheckPermission("application:secret:reset")
     public ResponseDTO<ApplicationCredentialVO> resetSecret(@PathVariable Long applicationId) {
         return applicationService.resetSecret(applicationId);
+    }
+
+    /** 使用当前应用凭证完成一次真实的Token签发和平台接入验证。 */
+    @Operation(summary = "验证App ID和App Secret接入")
+    @PostMapping("/connect/test")
+    @SaCheckPermission("application:save")
+    public ResponseDTO<ApplicationConnectVO> testConnection(
+            @RequestBody @Valid ApplicationConnectTestForm form) {
+        return openAuthService.testConnection(form);
     }
 
     /** 提交应用上架审核。 */

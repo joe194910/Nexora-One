@@ -12,6 +12,7 @@ export const applicationApi = {
   saveApiPermissions: (param) => postRequest('/application/api-permission/save', param),
   queryOpenApiCatalog: () => getRequest('/application/open-api/catalog'),
   resetSecret: (applicationId) => postRequest(`/application/secret/reset/${applicationId}`),
+  testConnection: (param) => postRequest('/application/connect/test', param),
   submit: (param) => postRequest('/application/submit', param),
   review: (param) => postRequest('/application/review', param),
 };

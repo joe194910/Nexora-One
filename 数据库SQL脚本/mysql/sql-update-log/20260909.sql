@@ -137,6 +137,14 @@ INSERT INTO `nexora_one_open_api`
 (`category_name`, `api_name`, `api_code`, `request_method`, `request_path`, `api_version`, `permission_level`, `description`, `sort`)
 SELECT '消息服务', '发送邮件', 'message:email:send', 'POST', '/v1/emails', 'v1.0', 2, '发送企业邮件', 80
 WHERE NOT EXISTS (SELECT 1 FROM `nexora_one_open_api` WHERE `api_code` = 'message:email:send');
+INSERT INTO `nexora_one_open_api`
+(`category_name`, `api_name`, `api_code`, `request_method`, `request_path`, `api_version`, `permission_level`, `description`, `sort`)
+SELECT '应用认证', '换取Access Token', 'application:oauth:token', 'POST', '/open/application/oauth/token', 'v1.0', 1, '使用App ID和App Secret通过client_credentials模式换取Access Token', 1
+WHERE NOT EXISTS (SELECT 1 FROM `nexora_one_open_api` WHERE `api_code` = 'application:oauth:token');
+INSERT INTO `nexora_one_open_api`
+(`category_name`, `api_name`, `api_code`, `request_method`, `request_path`, `api_version`, `permission_level`, `description`, `sort`)
+SELECT '应用认证', '平台连通性检查', 'application:connect:ping', 'GET', '/open/application/connect/ping', 'v1.0', 1, '携带Bearer Access Token验证应用与NexoraOne平台的接入链路', 2
+WHERE NOT EXISTS (SELECT 1 FROM `nexora_one_open_api` WHERE `api_code` = 'application:connect:ping');
 
 -- 应用中心菜单及按钮权限
 INSERT INTO `t_menu`
@@ -192,4 +200,3 @@ WHERE m.menu_id BETWEEN 800 AND 810
   AND NOT EXISTS (
     SELECT 1 FROM `t_role_menu` rm WHERE rm.role_id = 1 AND rm.menu_id = m.menu_id
 );
-

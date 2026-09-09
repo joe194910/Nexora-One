@@ -70,6 +70,40 @@ public class ApplicationCredentialManager {
     }
 
     /**
+     * 根据App ID校验App Secret，校验过程使用恒定时间比较，避免时序攻击。
+     *
+     * @param appId App ID
+     * @param appSecret App Secret明文
+     * @return 校验成功时返回当前有效凭证，否则返回null
+     */
+    public ApplicationCredentialEntity verifyCredential(String appId, String appSecret) {
+        if (appId == null || appSecret == null) {
+            return null;
+        }
+        ApplicationCredentialEntity entity = credentialDao.selectOne(
+                new LambdaQueryWrapper<ApplicationCredentialEntity>()
+                        .eq(ApplicationCredentialEntity::getAppId, appId)
+                        .eq(ApplicationCredentialEntity::getStatus, 1)
+                        .last("limit 1"));
+        if (entity == null) {
+            return null;
+        }
+        byte[] expected = entity.getSecretHash().getBytes(StandardCharsets.UTF_8);
+        byte[] actual = sha256(appSecret).getBytes(StandardCharsets.UTF_8);
+        return MessageDigest.isEqual(expected, actual) ? entity : null;
+    }
+
+    /**
+     * 查询应用当前有效凭证，供Access Token版本校验使用。
+     *
+     * @param applicationId 应用主键
+     * @return 当前有效凭证
+     */
+    public ApplicationCredentialEntity getCurrentCredential(Long applicationId) {
+        return getActiveCredential(applicationId);
+    }
+
+    /**
      * 查询应用当前有效凭证实体。
      */
     private ApplicationCredentialEntity getActiveCredential(Long applicationId) {

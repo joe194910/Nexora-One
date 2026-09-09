@@ -13,5 +13,6 @@ import com.nexoraone.base.constant.RedisKeyConst;
  */
 public class AdminRedisKeyConst extends RedisKeyConst {
 
-
+    /** 第三方应用Access Token缓存前缀，实际键使用Token摘要，避免明文Token出现在Redis键中。 */
+    public static final String APPLICATION_ACCESS_TOKEN = "application:access-token:";
 }

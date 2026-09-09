@@ -294,7 +294,6 @@ public class ApplicationService {
         }
 
         entity.setListingStatus(1);
-        entity.setAccessStatus(2);
         entity.setWorkflowStep(8);
         entity.setConfigLocked(true);
         applicationDao.updateById(entity);
@@ -371,6 +370,7 @@ public class ApplicationService {
         completion.put("基本信息", StringUtils.isNoneBlank(entity.getApplicationName(), entity.getApplicationCode(),
                 entity.getOwnerName(), entity.getContact(), entity.getSummary()));
         completion.put("应用凭证", credentialManager.getMaskedCredential(applicationId) != null);
+        completion.put("接入验证", Objects.equals(entity.getAccessStatus(), 2));
         completion.put("登录接入", StringUtils.isNotBlank(entity.getLoginConfig()));
         completion.put("接口安全", StringUtils.isNotBlank(entity.getSecurityConfig()));
         completion.put("API权限", permissionDao.selectCount(new LambdaQueryWrapper<ApplicationApiPermissionEntity>()

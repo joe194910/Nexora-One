@@ -83,6 +83,30 @@
           </a-space>
         </div>
         <a-alert type="warning" show-icon message="离开本页后无法找回完整 App Secret，只能重新生成；重置后旧密钥立即失效。" />
+        <div class="credential-connect">
+          <div>
+            <strong>平台接入验证</strong>
+            <div class="application-page__subtitle">
+              先通过 <code>POST /open/application/oauth/token</code> 换取 Access Token，再请求
+              <code>GET /open/application/connect/ping</code>；请求成功后才会标记为已接入。
+            </div>
+          </div>
+          <a-input-password
+            v-model:value="connectionSecret"
+            class="credential-connect__secret"
+            placeholder="请输入或粘贴 App Secret"
+          />
+          <a-button type="primary" :loading="testingConnection" @click="testConnection">
+            <ApiOutlined />验证接入
+          </a-button>
+        </div>
+        <a-alert
+          v-if="connectionResult.connected"
+          class="mt16"
+          type="success"
+          show-icon
+          :message="`接入验证通过，密钥版本 v${connectionResult.credentialVersion}，已获得 ${connectionResult.scopes?.length || 0} 个 API scope。`"
+        />
         <a-space class="mt16">
           <a-button @click="downloadCredential"><DownloadOutlined />下载凭证</a-button>
           <a-popconfirm title="确认重新生成密钥吗？" @confirm="resetSecret">
@@ -275,7 +299,7 @@
   import { computed, onMounted, reactive, ref } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { message } from 'ant-design-vue';
-  import { AppstoreOutlined, CheckCircleFilled, CopyOutlined, DownloadOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons-vue';
+  import { ApiOutlined, AppstoreOutlined, CheckCircleFilled, CopyOutlined, DownloadOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons-vue';
   import { applicationApi } from '/@/api/business/application/application-api';
   import Upload from '/@/components/support/file-upload/index.vue';
   import { smartSentry } from '/@/lib/smart-sentry';
@@ -288,6 +312,9 @@
   const loading = ref(false);
   const saving = ref(false);
   const secretVisible = ref(true);
+  const connectionSecret = ref('');
+  const testingConnection = ref(false);
+  const connectionResult = reactive({});
   const maskedText = '****************************';
   const baseFormRef = ref();
   const detail = reactive({});
@@ -415,6 +442,7 @@
           applicationId.value = response.data.applicationId;
           fillDetail(response.data);
           Object.assign(credential, response.data.credential);
+          connectionSecret.value = response.data.credential?.appSecret || '';
           await router.replace({ path: '/application/onboarding', query: { applicationId: applicationId.value, step: 2 } });
         }
       } else if (currentStep.value === 3) {
@@ -474,10 +502,36 @@
     try {
       const response = await applicationApi.resetSecret(applicationId.value);
       Object.assign(credential, response.data);
+      connectionSecret.value = response.data.appSecret || '';
+      Object.keys(connectionResult).forEach((key) => delete connectionResult[key]);
       secretVisible.value = true;
       message.success('新密钥已生成');
     } catch (error) {
       smartSentry.captureError(error);
+    }
+  }
+
+  async function testConnection() {
+    const appSecret = connectionSecret.value || credential.appSecret;
+    if (!appSecret) {
+      message.warning('请输入创建时保存的 App Secret，或重新生成密钥后再验证');
+      return;
+    }
+    testingConnection.value = true;
+    try {
+      const response = await applicationApi.testConnection({
+        applicationId: applicationId.value,
+        appId: credential.appId,
+        appSecret,
+      });
+      Object.assign(connectionResult, response.data || {});
+      detail.accessStatus = response.data?.accessStatus;
+      completion['接入验证'] = true;
+      message.success('App ID / App Secret 接入验证通过');
+    } catch (error) {
+      smartSentry.captureError(error);
+    } finally {
+      testingConnection.value = false;
     }
   }
 
