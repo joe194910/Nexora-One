@@ -1,0 +1,52 @@
+[2026-09-09 10:27:47,476][INFO ][background-preinit][o.h.v.i.u.Version:21] HV000001: Hibernate Validator 8.0.2.Final 
+[2026-09-09 10:27:47,557][INFO ][main][c.n.a.AdminApplication:53] Starting AdminApplication using Java 17.0.20 with PID 11852 (D:\IdeaProjects\Nexora-One\nexora-one-api-java17-springboot3\nexora-one-admin\target\nexora-one-admin-dev-3.0.0.jar started by admin in D:\IdeaProjects\Nexora-One\nexora-one-api-java17-springboot3) 
+[2026-09-09 10:27:47,565][INFO ][main][c.n.a.AdminApplication:658] The following 1 profile is active: "dev" 
+[2026-09-09 10:27:50,759][INFO ][main][o.s.d.r.c.RepositoryConfigurationDelegate:294] Multiple Spring Data modules found, entering strict repository configuration mode 
+[2026-09-09 10:27:50,764][INFO ][main][o.s.d.r.c.RepositoryConfigurationDelegate:145] Bootstrapping Spring Data Redis repositories in DEFAULT mode. 
+[2026-09-09 10:27:50,860][INFO ][main][o.s.d.r.c.RepositoryConfigurationDelegate:213] Finished Spring Data repository scanning in 38 ms. Found 0 Redis repository interfaces. 
+[2026-09-09 10:27:53,796][INFO ][main][c.a.d.p.DruidDataSource:824] {dataSource-1} inited 
+[2026-09-09 10:28:07,760][INFO ][main][o.s.b.w.e.t.TomcatWebServer:111] Tomcat initialized with port 1024 (http) 
+[2026-09-09 10:28:07,786][INFO ][main][o.a.c.h.Http11NioProtocol:168] Initializing ProtocolHandler ["http-nio-1024"] 
+[2026-09-09 10:28:07,792][INFO ][main][o.a.c.c.StandardService:168] Starting service [Tomcat] 
+[2026-09-09 10:28:07,794][INFO ][main][o.a.c.c.StandardEngine:168] Starting Servlet engine: [Apache Tomcat/10.1.43] 
+[2026-09-09 10:28:07,902][INFO ][main][o.a.c.c.C.[.[.[/]:168] Initializing Spring embedded WebApplicationContext 
+[2026-09-09 10:28:07,906][INFO ][main][o.s.b.w.s.c.ServletWebServerApplicationContext:301] Root WebApplicationContext: initialization completed in 20260 ms 
+[2026-09-09 10:28:08,693][INFO ][smart-reload][o.s.b.f.s.DefaultListableBeanFactory:279] Obtaining singleton bean 'dataScopeSqlConfigService' in thread "smart-reload" while other thread holds singleton lock for other beans [employeeService, adminInterceptor, configService, securityPasswordService, mvcConfig, loginService, level3ProtectConfigService] 
+[2026-09-09 10:28:09,156][INFO ][main][o.r.Reflections:219] Reflections took 349 ms to scan 2 urls, producing 31 keys and 4704 values 
+[2026-09-09 10:28:09,767][INFO ][main][c.n.b.m.s.c.ConfigService:61] ################# 系统配置缓存初始化完毕:2 ################### 
+[2026-09-09 10:28:10,364][INFO ][main][o.r.Version:43] Redisson 3.50.0 
+[2026-09-09 10:28:11,824][INFO ][redisson-netty-1-5][o.r.c.ConnectionsHolder:132] 1 connections initialized for 127.0.0.1/127.0.0.1:6379 
+[2026-09-09 10:28:12,001][INFO ][redisson-netty-1-19][o.r.c.ConnectionsHolder:132] 24 connections initialized for 127.0.0.1/127.0.0.1:6379 
+[2026-09-09 10:28:15,987][INFO ][main][c.n.b.m.s.j.a.SmartJobClientManager:67] ==== SmartJob ==== client-manager init 
+[2026-09-09 10:28:17,707][INFO ][main][c.n.b.c.UrlConfig:137] 不需要登录的URL：[/login, /login/sendEmailCode/{loginName}, /login/getTwoFactorLoginFlag, /login/getCaptcha] 
+[2026-09-09 10:28:18,494][INFO ][main][c.b.m.e.s.MybatisPlusApplicationContextAware:40] Register ApplicationContext instances org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@9a7a808 
+[2026-09-09 10:28:19,649][INFO ][main][o.a.c.h.Http11NioProtocol:168] Starting ProtocolHandler ["http-nio-1024"] 
+[2026-09-09 10:28:19,707][INFO ][main][c.n.b.m.s.j.c.SmartJobLauncher:151] ==== SmartJob ==== destroy job 
+[2026-09-09 10:28:19,799][INFO ][main][c.a.d.p.DruidDataSource:2031] {dataSource-1} closing ... 
+[2026-09-09 10:28:19,811][INFO ][main][c.a.d.p.DruidDataSource:2104] {dataSource-1} closed 
+[2026-09-09 10:30:09,155][INFO ][background-preinit][o.h.v.i.u.Version:21] HV000001: Hibernate Validator 8.0.2.Final 
+[2026-09-09 10:30:09,345][INFO ][main][c.n.a.AdminApplication:53] Starting AdminApplication using Java 17.0.20 with PID 38672 (D:\IdeaProjects\Nexora-One\nexora-one-api-java17-springboot3\nexora-one-admin\target\nexora-one-admin-dev-3.0.0.jar started by admin in D:\IdeaProjects\Nexora-One\nexora-one-api-java17-springboot3) 
+[2026-09-09 10:30:09,363][INFO ][main][c.n.a.AdminApplication:658] The following 1 profile is active: "dev" 
+[2026-09-09 10:30:12,327][INFO ][main][o.s.d.r.c.RepositoryConfigurationDelegate:294] Multiple Spring Data modules found, entering strict repository configuration mode 
+[2026-09-09 10:30:12,333][INFO ][main][o.s.d.r.c.RepositoryConfigurationDelegate:145] Bootstrapping Spring Data Redis repositories in DEFAULT mode. 
+[2026-09-09 10:30:12,434][INFO ][main][o.s.d.r.c.RepositoryConfigurationDelegate:213] Finished Spring Data repository scanning in 54 ms. Found 0 Redis repository interfaces. 
+[2026-09-09 10:30:15,233][INFO ][main][c.a.d.p.DruidDataSource:824] {dataSource-1} inited 
+[2026-09-09 10:30:27,979][INFO ][main][o.s.b.w.e.t.TomcatWebServer:111] Tomcat initialized with port 1024 (http) 
+[2026-09-09 10:30:28,012][INFO ][main][o.a.c.h.Http11NioProtocol:168] Initializing ProtocolHandler ["http-nio-1024"] 
+[2026-09-09 10:30:28,017][INFO ][main][o.a.c.c.StandardService:168] Starting service [Tomcat] 
+[2026-09-09 10:30:28,019][INFO ][main][o.a.c.c.StandardEngine:168] Starting Servlet engine: [Apache Tomcat/10.1.43] 
+[2026-09-09 10:30:28,154][INFO ][main][o.a.c.c.C.[.[.[/]:168] Initializing Spring embedded WebApplicationContext 
+[2026-09-09 10:30:28,159][INFO ][main][o.s.b.w.s.c.ServletWebServerApplicationContext:301] Root WebApplicationContext: initialization completed in 18661 ms 
+[2026-09-09 10:30:29,121][INFO ][smart-reload][o.s.b.f.s.DefaultListableBeanFactory:279] Obtaining singleton bean 'dataScopeSqlConfigService' in thread "smart-reload" while other thread holds singleton lock for other beans [employeeService, adminInterceptor, configService, securityPasswordService, mvcConfig, loginService, level3ProtectConfigService] 
+[2026-09-09 10:30:29,577][INFO ][main][o.r.Reflections:219] Reflections took 331 ms to scan 2 urls, producing 31 keys and 4704 values 
+[2026-09-09 10:30:30,154][INFO ][main][c.n.b.m.s.c.ConfigService:61] ################# 系统配置缓存初始化完毕:2 ################### 
+[2026-09-09 10:30:30,751][INFO ][main][o.r.Version:43] Redisson 3.50.0 
+[2026-09-09 10:30:31,796][INFO ][redisson-netty-1-4][o.r.c.ConnectionsHolder:132] 1 connections initialized for 127.0.0.1/127.0.0.1:6379 
+[2026-09-09 10:30:31,950][INFO ][redisson-netty-1-19][o.r.c.ConnectionsHolder:132] 24 connections initialized for 127.0.0.1/127.0.0.1:6379 
+[2026-09-09 10:30:35,324][INFO ][main][c.n.b.m.s.j.a.SmartJobClientManager:67] ==== SmartJob ==== client-manager init 
+[2026-09-09 10:30:36,944][INFO ][main][c.n.b.c.UrlConfig:137] 不需要登录的URL：[/login, /login/sendEmailCode/{loginName}, /login/getTwoFactorLoginFlag, /login/getCaptcha] 
+[2026-09-09 10:30:37,642][INFO ][main][c.b.m.e.s.MybatisPlusApplicationContextAware:40] Register ApplicationContext instances org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 
+[2026-09-09 10:30:38,895][INFO ][main][o.a.c.h.Http11NioProtocol:168] Starting ProtocolHandler ["http-nio-1024"] 
+[2026-09-09 10:30:38,943][INFO ][main][c.n.b.m.s.j.c.SmartJobLauncher:151] ==== SmartJob ==== destroy job 
+[2026-09-09 10:30:39,041][INFO ][main][c.a.d.p.DruidDataSource:2031] {dataSource-1} closing ... 
+[2026-09-09 10:30:39,053][INFO ][main][c.a.d.p.DruidDataSource:2104] {dataSource-1} closed 

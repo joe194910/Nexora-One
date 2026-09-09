@@ -1,0 +1,411 @@
+ 
+
+ / ____|                    | |     /\      | |         (_)
+| (___  _ __ ___   __ _ _ __| |_   /  \   __| |_ __ ___  _ _ __
+ \___ \| '_ ` _ \ / _` | '__| __| / /\ \ / _` | '_ ` _ \| | '_ \
+ ____) | | | | | | (_| | |  | |_ / ____ \ (_| | | | | | | | | | |
+|_____/|_| |_| |_|\__,_|_|   \__/_/    \_\__,_|_| |_| |_|_|_| |_|
+
+±£³ÖÇ«Ñ· ±£³ÖÑ§Ï° !
+ÈÈ°®´úÂë ÈÈ°®Éú»î !
+ÓÀÔ¶ÄêÇá ÓÀÔ¶Ç°ÐÐ !
+
+NexoraOne v3.X £¬×÷Õß£ºNexoraOne @copyright£º¡¾ NexoraOne ¡¿
+
+NexoraOne
+
+NexoraOne£º#
+
+
+[[34m2026-09-09 10:30:09,155[m][[32mINFO [m][background-preinit][[36mo.h.v.i.u.Version:21[m] HV000001: Hibernate Validator 8.0.2.Final 
+[[34m2026-09-09 10:30:09,345[m][[32mINFO [m][main][[36mc.n.a.AdminApplication:53[m] Starting AdminApplication using Java 17.0.20 with PID 38672 (D:\IdeaProjects\Nexora-One\nexora-one-api-java17-springboot3\nexora-one-admin\target\nexora-one-admin-dev-3.0.0.jar started by admin in D:\IdeaProjects\Nexora-One\nexora-one-api-java17-springboot3) 
+[[34m2026-09-09 10:30:09,363[m][[32mINFO [m][main][[36mc.n.a.AdminApplication:658[m] The following 1 profile is active: "dev" 
+[[34m2026-09-09 10:30:12,327[m][[32mINFO [m][main][[36mo.s.d.r.c.RepositoryConfigurationDelegate:294[m] Multiple Spring Data modules found, entering strict repository configuration mode 
+[[34m2026-09-09 10:30:12,333[m][[32mINFO [m][main][[36mo.s.d.r.c.RepositoryConfigurationDelegate:145[m] Bootstrapping Spring Data Redis repositories in DEFAULT mode. 
+[[34m2026-09-09 10:30:12,434[m][[32mINFO [m][main][[36mo.s.d.r.c.RepositoryConfigurationDelegate:213[m] Finished Spring Data repository scanning in 54 ms. Found 0 Redis repository interfaces. 
+[[34m2026-09-09 10:30:14,560[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'mybatisPlusConfig' of type [com.nexoraone.base.config.MybatisPlusConfig$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:14,583[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'paginationInterceptor' of type [com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:14,597[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'myBatisPlugin' of type [com.nexoraone.admin.module.system.datascope.MyBatisPlugin] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:14,614[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'dataSourceConfig' of type [com.nexoraone.base.config.DataSourceConfig$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:14,625[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'jdkRegexpMethodPointcut' of type [org.springframework.aop.support.JdkRegexpMethodPointcut] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:14,633[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'defaultPointcutAdvisor' of type [org.springframework.aop.support.DefaultPointcutAdvisor] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+ Consume Time£º20 ms 2026-09-09 10:30:15
+ Execute SQL£ºSELECT 1
+
+ Consume Time£º1 ms 2026-09-09 10:30:15
+ Execute SQL£ºSELECT 1
+
+[[34m2026-09-09 10:30:15,233[m][[32mINFO [m][main][[36mc.a.d.p.DruidDataSource:824[m] {dataSource-1} inited 
+[[34m2026-09-09 10:30:15,242[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'druidDataSource' of type [com.alibaba.druid.pool.DruidDataSource] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:18,099[m][[33mWARN [m][main][[36mc.b.m.c.i.m.DeleteByIds:405[m] [com.nexoraone.base.module.support.operatelog.OperateLogDao.deleteByIds] Has been loaded by XML or SqlProvider or Mybatis's Annotation, so ignoring this injection for [class com.baomidou.mybatisplus.core.injector.methods.DeleteByIds] 
+[[34m2026-09-09 10:30:18,716[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'sqlSessionFactory' of type [org.apache.ibatis.session.defaults.DefaultSqlSessionFactory] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:18,735[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'org.springframework.boot.autoconfigure.sql.init.DataSourceInitializationConfiguration' of type [org.springframework.boot.autoconfigure.sql.init.DataSourceInitializationConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:18,783[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'spring.sql.init-org.springframework.boot.autoconfigure.sql.init.SqlInitializationProperties' of type [org.springframework.boot.autoconfigure.sql.init.SqlInitializationProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:18,810[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'dataSourceScriptDatabaseInitializer' of type [org.springframework.boot.autoconfigure.sql.init.SqlDataSourceScriptDatabaseInitializer] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:18,832[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'mybatis-plus-com.baomidou.mybatisplus.autoconfigure.MybatisPlusProperties' of type [com.baomidou.mybatisplus.autoconfigure.MybatisPlusProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:18,860[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration' of type [com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:18,878[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'sqlSessionTemplate' of type [org.mybatis.spring.SqlSessionTemplate] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:18,890[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'reloadItemDao' of type [org.mybatis.spring.mapper.MapperFactoryBean] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:18,902[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'reloadItemDao' of type [jdk.proxy2.$Proxy113] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:18,921[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'reloadResultDao' of type [org.mybatis.spring.mapper.MapperFactoryBean] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:18,926[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'reloadResultDao' of type [jdk.proxy2.$Proxy114] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:18,939[m][[33mWARN [m][main][[36mo.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker:437[m] Bean 'reloadCommand' of type [com.nexoraone.base.module.support.reload.ReloadCommand] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected/applied to a currently created BeanPostProcessor [smartReloadManager]? Check the corresponding BeanPostProcessor declaration and its dependencies/advisors. If this bean does not have to be post-processed, declare it with ROLE_INFRASTRUCTURE. 
+[[34m2026-09-09 10:30:27,979[m][[32mINFO [m][main][[36mo.s.b.w.e.t.TomcatWebServer:111[m] Tomcat initialized with port 1024 (http) 
+[[34m2026-09-09 10:30:28,012[m][[32mINFO [m][main][[36mo.a.c.h.Http11NioProtocol:168[m] Initializing ProtocolHandler ["http-nio-1024"] 
+[[34m2026-09-09 10:30:28,017[m][[32mINFO [m][main][[36mo.a.c.c.StandardService:168[m] Starting service [Tomcat] 
+[[34m2026-09-09 10:30:28,019[m][[32mINFO [m][main][[36mo.a.c.c.StandardEngine:168[m] Starting Servlet engine: [Apache Tomcat/10.1.43] 
+[[34m2026-09-09 10:30:28,154[m][[32mINFO [m][main][[36mo.a.c.c.C.[.[.[/]:168[m] Initializing Spring embedded WebApplicationContext 
+[[34m2026-09-09 10:30:28,159[m][[32mINFO [m][main][[36mo.s.b.w.s.c.ServletWebServerApplicationContext:301[m] Root WebApplicationContext: initialization completed in 18661 ms 
+[[34m2026-09-09 10:30:29,121[m][[32mINFO [m][smart-reload][[36mo.s.b.f.s.DefaultListableBeanFactory:279[m] Obtaining singleton bean 'dataScopeSqlConfigService' in thread "smart-reload" while other thread holds singleton lock for other beans [employeeService, adminInterceptor, configService, securityPasswordService, mvcConfig, loginService, level3ProtectConfigService] 
+[[34m2026-09-09 10:30:29,577[m][[32mINFO [m][main][[36mo.r.Reflections:219[m] Reflections took 331 ms to scan 2 urls, producing 31 keys and 4704 values 
+ Consume Time£º4 ms 2026-09-09 10:30:30
+ Execute SQL£ºSELECT tag,args,identification,update_time,create_time FROM t_reload_item
+
+ Consume Time£º7 ms 2026-09-09 10:30:30
+ Execute SQL£ºSELECT config_id,config_key,config_value,config_name,remark,update_time,create_time FROM t_config
+
+[[34m2026-09-09 10:30:30,154[m][[32mINFO [m][main][[36mc.n.b.m.s.c.ConfigService:61[m] ################# ÏµÍ³ÅäÖÃ»º´æ³õÊ¼»¯Íê±Ï:2 ################### 
+[[34m2026-09-09 10:30:30,751[m][[32mINFO [m][main][[36mo.r.Version:43[m] Redisson 3.50.0 
+[[34m2026-09-09 10:30:31,796[m][[32mINFO [m][redisson-netty-1-4][[36mo.r.c.ConnectionsHolder:132[m] 1 connections initialized for 127.0.0.1/127.0.0.1:6379 
+[[34m2026-09-09 10:30:31,950[m][[32mINFO [m][redisson-netty-1-19][[36mo.r.c.ConnectionsHolder:132[m] 24 connections initialized for 127.0.0.1/127.0.0.1:6379 
+ Consume Time£º1 ms 2026-09-09 10:30:35
+ Execute SQL£ºSELECT serial_number_id,business_name,format,rule_type,init_number,step_random_range,remark,last_number,last_time,update_time,create_time FROM t_serial_number
+
+[32;1m    _____                      __         __      __  
+  / ___/____ ___  ____ ______/ /_       / /___  / /_ 
+  \__ \/ __ `__ \/ __ `/ ___/ __/  __  / / __ \/ __ \
+ ___/ / / / / / / /_/ / /  / /_   / /_/ / /_/ / /_/ /
+/____/_/ /_/ /_/\__,_/_/   \__/   \____/\____/_.___/ 
+-->ÈÎÎñÖ´ÐÐÏß³Ì³Ø£º2
+-->ÈÎÎñ³õÊ¼»¯ÑÓ³Ù£º10Ãë
+-->Êý¾Ý¿âÅäÖÃ¼ì²â£º¿ªÆô|¼ì²â¼ä¸ô60Ãë
+
+ [0m[[34m2026-09-09 10:30:35,324[m][[32mINFO [m][main][[36mc.n.b.m.s.j.a.SmartJobClientManager:67[m] ==== SmartJob ==== client-manager init 
+[[34m2026-09-09 10:30:36,944[m][[32mINFO [m][main][[36mc.n.b.c.UrlConfig:137[m] ²»ÐèÒªµÇÂ¼µÄURL£º[/login, /login/sendEmailCode/{loginName}, /login/getTwoFactorLoginFlag, /login/getCaptcha] 
+SA [INFO] -->: È«¾ÖÅäÖÃ SaTokenConfig [tokenName=Authorization, timeout=2592000, activeTimeout=1800, dynamicActiveTimeout=false, isConcurrent=false, isShare=false, replacedRange=CURR_DEVICE_TYPE, maxLoginCount=12, overflowLogoutMode=LOGOUT, maxTryTimes=12, isReadBody=true, isReadHeader=true, isReadCookie=false, isLastingCookie=true, isWriteHeader=false, logoutRange=TOKEN, isLogoutKeepFreezeOps=false, isLogoutKeepTokenSession=false, rightNowCreateTokenSession=false, tokenStyle=simple-uuid, dataRefreshPeriod=30, tokenSessionCheckLogin=true, autoRenew=true, tokenPrefix=Bearer, cookieAutoFillPrefix=false, isPrint=false, isLog=true, logLevel=debug, logLevelInt=2, isColorLog=false, jwtSecretKey=null, httpBasic=, httpDigest=, currDomain=null, sameTokenTimeout=86400, checkSameToken=false, cookie=SaCookieConfig [domain=null, path=null, secure=false, httpOnly=false, sameSite=null, extraAttrs={}]] 
+SA [INFO] -->: SPI plugin loading start ...
+SA [INFO] -->: È«¾Ö×é¼þ SaJsonTemplate ÔØÈë³É¹¦: cn.dev33.satoken.json.SaJsonTemplateForJackson
+SA [INFO] -->: SPI plugin loading end ...
+SA [INFO] -->: È«¾Ö×é¼þ SaTokenDao ÔØÈë³É¹¦: cn.dev33.satoken.dao.SaTokenDaoForRedisTemplate
+SA [INFO] -->: È«¾Ö×é¼þ StpInterface ÔØÈë³É¹¦: com.nexoraone.admin.module.system.login.service.LoginService$$SpringCGLIB$$1
+[[34m2026-09-09 10:30:37,642[m][[32mINFO [m][main][[36mc.b.m.e.s.MybatisPlusApplicationContextAware:40[m] Register ApplicationContext instances org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 
+[[34m2026-09-09 10:30:38,644[m][[33mWARN [m][main][[36mo.s.b.a.f.FreeMarkerAutoConfiguration:66[m] Cannot find template location: [classpath:/templates/] (please add some templates, check your FreeMarker configuration, or set spring.freemarker.check-template-location=false) 
+[[34m2026-09-09 10:30:38,895[m][[32mINFO [m][main][[36mo.a.c.h.Http11NioProtocol:168[m] Starting ProtocolHandler ["http-nio-1024"] 
+[[34m2026-09-09 10:30:38,908[m][[33mWARN [m][main][[36mo.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext:635[m] Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop' 
+[[34m2026-09-09 10:30:38,943[m][[32mINFO [m][main][[36mc.n.b.m.s.j.c.SmartJobLauncher:151[m] ==== SmartJob ==== destroy job 
+[[34m2026-09-09 10:30:39,041[m][[32mINFO [m][main][[36mc.a.d.p.DruidDataSource:2031[m] {dataSource-1} closing ... 
+[[34m2026-09-09 10:30:39,053[m][[32mINFO [m][main][[36mc.a.d.p.DruidDataSource:2104[m] {dataSource-1} closed 
+[[34m2026-09-09 10:30:39,147[m][[1;31mERROR[m][main][[36mo.s.b.d.LoggingFailureAnalysisReporter:40[m] 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 1024 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 1024 or configure this application to listen on another port.
+ 
+[[34m2026-09-09 10:30:45,288[m][[1;31mERROR[m][SmartJobLauncher-0][[36mc.n.b.m.s.j.c.SmartJobLauncher:62[m] SmartJob Error: 
+org.mybatis.spring.MyBatisSystemException: 
+### Error querying database.  Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+### Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.mybatis.spring.MyBatisExceptionTranslator.translateExceptionIfPossible(MyBatisExceptionTranslator.java:99) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:347) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at jdk.proxy2/jdk.proxy2.$Proxy112.selectList(Unknown Source) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate.selectList(SqlSessionTemplate.java:194) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperMethod.executeForMany(MybatisMapperMethod.java:164) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperMethod.execute(MybatisMapperMethod.java:77) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy$PlainMethodInvoker.invoke(MybatisMapperProxy.java:156) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy.invoke(MybatisMapperProxy.java:93) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at jdk.proxy2/jdk.proxy2.$Proxy185.selectList(Unknown Source) ~[?:?]
+	at com.nexoraone.base.module.support.job.core.SmartJobLauncher.queryJob(SmartJobLauncher.java:130) ~[nexora-one-base-3.0.0.jar!/:?]
+	at com.nexoraone.base.module.support.job.core.SmartJobLauncher.lambda$new$0(SmartJobLauncher.java:59) ~[nexora-one-base-3.0.0.jar!/:?]
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539) [?:?]
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:305) [?:?]
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305) [?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) [?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) [?:?]
+	at java.base/java.lang.Thread.run(Thread.java:840) [?:?]
+Caused by: org.apache.ibatis.exceptions.PersistenceException: 
+### Error querying database.  Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+### Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.apache.ibatis.exceptions.ExceptionFactory.wrapException(ExceptionFactory.java:30) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:156) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:147) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:142) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:333) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	... 15 more
+Caused by: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.springframework.context.support.AbstractApplicationContext.assertBeanFactoryActive(AbstractApplicationContext.java:1259) ~[spring-context-6.2.9.jar!/:6.2.9]
+	at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1271) ~[spring-context-6.2.9.jar!/:6.2.9]
+	at com.nexoraone.admin.module.system.datascope.MyBatisPlugin.dataScopeSqlConfigService(MyBatisPlugin.java:125) ~[!/:?]
+	at com.nexoraone.admin.module.system.datascope.MyBatisPlugin.intercept(MyBatisPlugin.java:51) ~[!/:?]
+	at org.apache.ibatis.plugin.Plugin.invoke(Plugin.java:59) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at jdk.proxy2/jdk.proxy2.$Proxy128.query(Unknown Source) ~[?:?]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:154) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:147) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:142) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:333) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	... 15 more
+[[34m2026-09-09 10:31:45,312[m][[1;31mERROR[m][SmartJobLauncher-0][[36mc.n.b.m.s.j.c.SmartJobLauncher:62[m] SmartJob Error: 
+org.mybatis.spring.MyBatisSystemException: 
+### Error querying database.  Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+### Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.mybatis.spring.MyBatisExceptionTranslator.translateExceptionIfPossible(MyBatisExceptionTranslator.java:99) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:347) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at jdk.proxy2/jdk.proxy2.$Proxy112.selectList(Unknown Source) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate.selectList(SqlSessionTemplate.java:194) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperMethod.executeForMany(MybatisMapperMethod.java:164) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperMethod.execute(MybatisMapperMethod.java:77) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy$PlainMethodInvoker.invoke(MybatisMapperProxy.java:156) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy.invoke(MybatisMapperProxy.java:93) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at jdk.proxy2/jdk.proxy2.$Proxy185.selectList(Unknown Source) ~[?:?]
+	at com.nexoraone.base.module.support.job.core.SmartJobLauncher.queryJob(SmartJobLauncher.java:130) ~[nexora-one-base-3.0.0.jar!/:?]
+	at com.nexoraone.base.module.support.job.core.SmartJobLauncher.lambda$new$0(SmartJobLauncher.java:59) ~[nexora-one-base-3.0.0.jar!/:?]
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539) [?:?]
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:305) [?:?]
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305) [?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) [?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) [?:?]
+	at java.base/java.lang.Thread.run(Thread.java:840) [?:?]
+Caused by: org.apache.ibatis.exceptions.PersistenceException: 
+### Error querying database.  Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+### Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.apache.ibatis.exceptions.ExceptionFactory.wrapException(ExceptionFactory.java:30) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:156) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:147) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:142) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:333) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	... 15 more
+Caused by: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.springframework.context.support.AbstractApplicationContext.assertBeanFactoryActive(AbstractApplicationContext.java:1259) ~[spring-context-6.2.9.jar!/:6.2.9]
+	at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1271) ~[spring-context-6.2.9.jar!/:6.2.9]
+	at com.nexoraone.admin.module.system.datascope.MyBatisPlugin.dataScopeSqlConfigService(MyBatisPlugin.java:125) ~[!/:?]
+	at com.nexoraone.admin.module.system.datascope.MyBatisPlugin.intercept(MyBatisPlugin.java:51) ~[!/:?]
+	at org.apache.ibatis.plugin.Plugin.invoke(Plugin.java:59) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at jdk.proxy2/jdk.proxy2.$Proxy128.query(Unknown Source) ~[?:?]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:154) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:147) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:142) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:333) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	... 15 more
+[[34m2026-09-09 10:32:45,380[m][[1;31mERROR[m][SmartJobLauncher-0][[36mc.n.b.m.s.j.c.SmartJobLauncher:62[m] SmartJob Error: 
+org.mybatis.spring.MyBatisSystemException: 
+### Error querying database.  Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+### Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.mybatis.spring.MyBatisExceptionTranslator.translateExceptionIfPossible(MyBatisExceptionTranslator.java:99) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:347) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at jdk.proxy2/jdk.proxy2.$Proxy112.selectList(Unknown Source) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate.selectList(SqlSessionTemplate.java:194) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperMethod.executeForMany(MybatisMapperMethod.java:164) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperMethod.execute(MybatisMapperMethod.java:77) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy$PlainMethodInvoker.invoke(MybatisMapperProxy.java:156) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy.invoke(MybatisMapperProxy.java:93) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at jdk.proxy2/jdk.proxy2.$Proxy185.selectList(Unknown Source) ~[?:?]
+	at com.nexoraone.base.module.support.job.core.SmartJobLauncher.queryJob(SmartJobLauncher.java:130) ~[nexora-one-base-3.0.0.jar!/:?]
+	at com.nexoraone.base.module.support.job.core.SmartJobLauncher.lambda$new$0(SmartJobLauncher.java:59) ~[nexora-one-base-3.0.0.jar!/:?]
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539) [?:?]
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:305) [?:?]
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305) [?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) [?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) [?:?]
+	at java.base/java.lang.Thread.run(Thread.java:840) [?:?]
+Caused by: org.apache.ibatis.exceptions.PersistenceException: 
+### Error querying database.  Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+### Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.apache.ibatis.exceptions.ExceptionFactory.wrapException(ExceptionFactory.java:30) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:156) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:147) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:142) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:333) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	... 15 more
+Caused by: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.springframework.context.support.AbstractApplicationContext.assertBeanFactoryActive(AbstractApplicationContext.java:1259) ~[spring-context-6.2.9.jar!/:6.2.9]
+	at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1271) ~[spring-context-6.2.9.jar!/:6.2.9]
+	at com.nexoraone.admin.module.system.datascope.MyBatisPlugin.dataScopeSqlConfigService(MyBatisPlugin.java:125) ~[!/:?]
+	at com.nexoraone.admin.module.system.datascope.MyBatisPlugin.intercept(MyBatisPlugin.java:51) ~[!/:?]
+	at org.apache.ibatis.plugin.Plugin.invoke(Plugin.java:59) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at jdk.proxy2/jdk.proxy2.$Proxy128.query(Unknown Source) ~[?:?]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:154) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:147) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:142) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:333) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	... 15 more
+[[34m2026-09-09 10:33:45,396[m][[1;31mERROR[m][SmartJobLauncher-0][[36mc.n.b.m.s.j.c.SmartJobLauncher:62[m] SmartJob Error: 
+org.mybatis.spring.MyBatisSystemException: 
+### Error querying database.  Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+### Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.mybatis.spring.MyBatisExceptionTranslator.translateExceptionIfPossible(MyBatisExceptionTranslator.java:99) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:347) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at jdk.proxy2/jdk.proxy2.$Proxy112.selectList(Unknown Source) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate.selectList(SqlSessionTemplate.java:194) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperMethod.executeForMany(MybatisMapperMethod.java:164) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperMethod.execute(MybatisMapperMethod.java:77) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy$PlainMethodInvoker.invoke(MybatisMapperProxy.java:156) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy.invoke(MybatisMapperProxy.java:93) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at jdk.proxy2/jdk.proxy2.$Proxy185.selectList(Unknown Source) ~[?:?]
+	at com.nexoraone.base.module.support.job.core.SmartJobLauncher.queryJob(SmartJobLauncher.java:130) ~[nexora-one-base-3.0.0.jar!/:?]
+	at com.nexoraone.base.module.support.job.core.SmartJobLauncher.lambda$new$0(SmartJobLauncher.java:59) ~[nexora-one-base-3.0.0.jar!/:?]
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539) [?:?]
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:305) [?:?]
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305) [?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) [?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) [?:?]
+	at java.base/java.lang.Thread.run(Thread.java:840) [?:?]
+Caused by: org.apache.ibatis.exceptions.PersistenceException: 
+### Error querying database.  Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+### Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.apache.ibatis.exceptions.ExceptionFactory.wrapException(ExceptionFactory.java:30) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:156) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:147) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:142) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:333) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	... 15 more
+Caused by: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.springframework.context.support.AbstractApplicationContext.assertBeanFactoryActive(AbstractApplicationContext.java:1259) ~[spring-context-6.2.9.jar!/:6.2.9]
+	at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1271) ~[spring-context-6.2.9.jar!/:6.2.9]
+	at com.nexoraone.admin.module.system.datascope.MyBatisPlugin.dataScopeSqlConfigService(MyBatisPlugin.java:125) ~[!/:?]
+	at com.nexoraone.admin.module.system.datascope.MyBatisPlugin.intercept(MyBatisPlugin.java:51) ~[!/:?]
+	at org.apache.ibatis.plugin.Plugin.invoke(Plugin.java:59) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at jdk.proxy2/jdk.proxy2.$Proxy128.query(Unknown Source) ~[?:?]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:154) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:147) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:142) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:333) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	... 15 more
+[[34m2026-09-09 10:34:45,410[m][[1;31mERROR[m][SmartJobLauncher-0][[36mc.n.b.m.s.j.c.SmartJobLauncher:62[m] SmartJob Error: 
+org.mybatis.spring.MyBatisSystemException: 
+### Error querying database.  Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+### Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.mybatis.spring.MyBatisExceptionTranslator.translateExceptionIfPossible(MyBatisExceptionTranslator.java:99) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:347) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at jdk.proxy2/jdk.proxy2.$Proxy112.selectList(Unknown Source) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate.selectList(SqlSessionTemplate.java:194) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperMethod.executeForMany(MybatisMapperMethod.java:164) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperMethod.execute(MybatisMapperMethod.java:77) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy$PlainMethodInvoker.invoke(MybatisMapperProxy.java:156) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy.invoke(MybatisMapperProxy.java:93) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at jdk.proxy2/jdk.proxy2.$Proxy185.selectList(Unknown Source) ~[?:?]
+	at com.nexoraone.base.module.support.job.core.SmartJobLauncher.queryJob(SmartJobLauncher.java:130) ~[nexora-one-base-3.0.0.jar!/:?]
+	at com.nexoraone.base.module.support.job.core.SmartJobLauncher.lambda$new$0(SmartJobLauncher.java:59) ~[nexora-one-base-3.0.0.jar!/:?]
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539) [?:?]
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:305) [?:?]
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305) [?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) [?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) [?:?]
+	at java.base/java.lang.Thread.run(Thread.java:840) [?:?]
+Caused by: org.apache.ibatis.exceptions.PersistenceException: 
+### Error querying database.  Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+### Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.apache.ibatis.exceptions.ExceptionFactory.wrapException(ExceptionFactory.java:30) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:156) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:147) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:142) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:333) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	... 15 more
+Caused by: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.springframework.context.support.AbstractApplicationContext.assertBeanFactoryActive(AbstractApplicationContext.java:1259) ~[spring-context-6.2.9.jar!/:6.2.9]
+	at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1271) ~[spring-context-6.2.9.jar!/:6.2.9]
+	at com.nexoraone.admin.module.system.datascope.MyBatisPlugin.dataScopeSqlConfigService(MyBatisPlugin.java:125) ~[!/:?]
+	at com.nexoraone.admin.module.system.datascope.MyBatisPlugin.intercept(MyBatisPlugin.java:51) ~[!/:?]
+	at org.apache.ibatis.plugin.Plugin.invoke(Plugin.java:59) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at jdk.proxy2/jdk.proxy2.$Proxy128.query(Unknown Source) ~[?:?]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:154) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:147) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:142) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:333) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	... 15 more
+[[34m2026-09-09 10:35:45,420[m][[1;31mERROR[m][SmartJobLauncher-0][[36mc.n.b.m.s.j.c.SmartJobLauncher:62[m] SmartJob Error: 
+org.mybatis.spring.MyBatisSystemException: 
+### Error querying database.  Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+### Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.mybatis.spring.MyBatisExceptionTranslator.translateExceptionIfPossible(MyBatisExceptionTranslator.java:99) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:347) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at jdk.proxy2/jdk.proxy2.$Proxy112.selectList(Unknown Source) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate.selectList(SqlSessionTemplate.java:194) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperMethod.executeForMany(MybatisMapperMethod.java:164) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperMethod.execute(MybatisMapperMethod.java:77) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy$PlainMethodInvoker.invoke(MybatisMapperProxy.java:156) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at com.baomidou.mybatisplus.core.override.MybatisMapperProxy.invoke(MybatisMapperProxy.java:93) ~[mybatis-plus-core-3.5.12.jar!/:3.5.12]
+	at jdk.proxy2/jdk.proxy2.$Proxy185.selectList(Unknown Source) ~[?:?]
+	at com.nexoraone.base.module.support.job.core.SmartJobLauncher.queryJob(SmartJobLauncher.java:130) ~[nexora-one-base-3.0.0.jar!/:?]
+	at com.nexoraone.base.module.support.job.core.SmartJobLauncher.lambda$new$0(SmartJobLauncher.java:59) ~[nexora-one-base-3.0.0.jar!/:?]
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539) [?:?]
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:305) [?:?]
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305) [?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) [?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) [?:?]
+	at java.base/java.lang.Thread.run(Thread.java:840) [?:?]
+Caused by: org.apache.ibatis.exceptions.PersistenceException: 
+### Error querying database.  Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+### Cause: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.apache.ibatis.exceptions.ExceptionFactory.wrapException(ExceptionFactory.java:30) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:156) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:147) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:142) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:333) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	... 15 more
+Caused by: java.lang.IllegalStateException: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@18324f97 has not been refreshed yet
+	at org.springframework.context.support.AbstractApplicationContext.assertBeanFactoryActive(AbstractApplicationContext.java:1259) ~[spring-context-6.2.9.jar!/:6.2.9]
+	at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1271) ~[spring-context-6.2.9.jar!/:6.2.9]
+	at com.nexoraone.admin.module.system.datascope.MyBatisPlugin.dataScopeSqlConfigService(MyBatisPlugin.java:125) ~[!/:?]
+	at com.nexoraone.admin.module.system.datascope.MyBatisPlugin.intercept(MyBatisPlugin.java:51) ~[!/:?]
+	at org.apache.ibatis.plugin.Plugin.invoke(Plugin.java:59) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at jdk.proxy2/jdk.proxy2.$Proxy128.query(Unknown Source) ~[?:?]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:154) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:147) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.selectList(DefaultSqlSession.java:142) ~[mybatis-3.5.19.jar!/:3.5.19]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[?:?]
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:333) ~[mybatis-spring-3.0.4.jar!/:3.0.4]
+	... 15 more

@@ -1,0 +1,14 @@
+
+> nexora-one-web@3.0.0 dev
+> vite --host 0.0.0.0
+
+Port 8081 is in use, trying another one...
+Port 8082 is in use, trying another one...
+
+  VITE v5.2.12  ready in 2759 ms
+
+  ➜  Local:   http://localhost:8083/
+  ➜  Network: http://192.168.7.57:8083/
+11:18:49 [vite] page reload src/views/system/home/index.vue
+11:21:57 [vite] page reload src/views/system/home/index.vue
+11:30:54 [vite] hmr update /src/views/system/home/index.vue?vue&type=style&index=0&scoped=232fc72b&lang.less
