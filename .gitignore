@@ -23,3 +23,5 @@ target/
 **/node_modules
 **/.vscode
 
+*.log
+
