@@ -2,7 +2,7 @@
 
 序号| 数据库                                                              | 类型         | 免费             | 支持                      |  下载
 -------- |------------------------------------------------------------------|--------------------| ----- |-------------------------| ----
-1| [Mysql](https://www.mysql.com)                                   | 国外🌈  | 免费🍉               | Java8+Java17  ✔️     | [Gitee](https://gitee.com/lab1024/smart-admin/tree/master/%E6%95%B0%E6%8D%AE%E5%BA%93SQL%E8%84%9A%E6%9C%AC/mysql) 
+1| [Mysql](https://www.mysql.com)                                   | 国外🌈  | 免费🍉               | Java8+Java17  ✔️     | 本地目录：`mysql`
 2| [PostgreSQL](https://www.postgresql.org/)                        | 国外🌈       | 收费🎉️         | Java8+Java17 ✔️      |  [购买](../buy.md)
 3| [SqlServer](https://www.microsoft.com/en-us/sql-server/)         | 国外🌈    | 收费🎉️              | Java8+Java17 ✔️      |  [购买](../buy.md)
 4| [Oracle](https://www.oracle.com/)            | 国外🌈    | 收费🎉️              | Java8+Java17 ✔️      |  [购买](../buy.md)
