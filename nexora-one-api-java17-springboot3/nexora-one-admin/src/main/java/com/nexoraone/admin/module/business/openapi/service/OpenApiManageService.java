@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nexoraone.admin.module.business.application.dao.OpenApiDao;
 import com.nexoraone.admin.module.business.application.domain.entity.OpenApiEntity;
+import com.nexoraone.admin.module.business.application.service.ApplicationDataScopeService;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiEnvironmentDao;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiErrorCodeDao;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiExampleDao;
@@ -58,6 +59,8 @@ public class OpenApiManageService {
     private OpenApiExampleDao exampleDao;
     @Resource
     private OpenApiErrorCodeDao errorCodeDao;
+    @Resource
+    private ApplicationDataScopeService applicationDataScopeService;
 
     /**
      * Query the API management list by page.
@@ -76,6 +79,7 @@ public class OpenApiManageService {
         if (StringUtils.isNotBlank(form.getRequestMethod())) {
             wrapper.eq(OpenApiEntity::getRequestMethod, StringUtils.upperCase(form.getRequestMethod()));
         }
+        applyCreatorScope(wrapper);
         Page<OpenApiEntity> page = openApiDao.selectPage(
                 new Page<>(form.getPageNum(), form.getPageSize(), !Boolean.FALSE.equals(form.getSearchCount())), wrapper);
         PageResult<OpenApiEntity> result = new PageResult<>();
@@ -93,7 +97,9 @@ public class OpenApiManageService {
      */
     public ResponseDTO<Map<String, Long>> summary() {
         Map<String, Long> result = new LinkedHashMap<>();
-        result.put("total", openApiDao.selectCount(null));
+        LambdaQueryWrapper<OpenApiEntity> totalWrapper = new LambdaQueryWrapper<>();
+        applyCreatorScope(totalWrapper);
+        result.put("total", openApiDao.selectCount(totalWrapper));
         result.put("published", countByStatus(4));
         result.put("draft", countByStatus(1));
         result.put("disabled", countByStatus(5));
@@ -104,10 +110,12 @@ public class OpenApiManageService {
      * Query distinct API categories used by existing records.
      */
     public ResponseDTO<List<String>> categories() {
-        List<String> categories = openApiDao.selectList(new LambdaQueryWrapper<OpenApiEntity>()
-                        .select(OpenApiEntity::getCategoryName)
-                        .isNotNull(OpenApiEntity::getCategoryName)
-                        .orderByAsc(OpenApiEntity::getCategoryName))
+        LambdaQueryWrapper<OpenApiEntity> wrapper = new LambdaQueryWrapper<OpenApiEntity>()
+                .select(OpenApiEntity::getCategoryName)
+                .isNotNull(OpenApiEntity::getCategoryName);
+        applyCreatorScope(wrapper);
+        wrapper.orderByAsc(OpenApiEntity::getCategoryName);
+        List<String> categories = openApiDao.selectList(wrapper)
                 .stream()
                 .map(OpenApiEntity::getCategoryName)
                 .filter(StringUtils::isNotBlank)
@@ -138,7 +146,7 @@ public class OpenApiManageService {
         if (!validation.getOk()) {
             return ResponseDTO.userErrorParam(validation.getMsg());
         }
-        RequestEmployee employee = getRequestEmployee();
+        RequestEmployee employee = applicationDataScopeService.requireEmployee();
         OpenApiEntity api = new OpenApiEntity();
         copyMaster(form, api);
         api.setStatus(1);
@@ -147,10 +155,10 @@ public class OpenApiManageService {
         api.setTotalCallCount(0L);
         api.setEnabledFlag(false);
         api.setSort(0);
-        api.setCreateUserId(employee == null ? null : employee.getEmployeeId());
-        api.setCreateUserName(employee == null ? null : employee.getActualName());
-        api.setUpdateUserId(employee == null ? null : employee.getEmployeeId());
-        api.setUpdateUserName(employee == null ? null : employee.getActualName());
+        api.setCreateUserId(employee.getEmployeeId());
+        api.setCreateUserName(employee.getActualName());
+        api.setUpdateUserId(employee.getEmployeeId());
+        api.setUpdateUserName(employee.getActualName());
         openApiDao.insert(api);
 
         OpenApiVersionEntity version = new OpenApiVersionEntity();
@@ -160,10 +168,10 @@ public class OpenApiManageService {
         version.setDataMaskingFlag(true);
         version.setStatus(1);
         version.setLockedFlag(false);
-        version.setCreateUserId(employee == null ? null : employee.getEmployeeId());
-        version.setCreateUserName(employee == null ? null : employee.getActualName());
-        version.setUpdateUserId(employee == null ? null : employee.getEmployeeId());
-        version.setUpdateUserName(employee == null ? null : employee.getActualName());
+        version.setCreateUserId(employee.getEmployeeId());
+        version.setCreateUserName(employee.getActualName());
+        version.setUpdateUserId(employee.getEmployeeId());
+        version.setUpdateUserName(employee.getActualName());
         versionDao.insert(version);
 
         api.setCurrentVersionId(version.getVersionId());
@@ -321,6 +329,27 @@ public class OpenApiManageService {
         if (api == null) {
             return ResponseDTO.userErrorParam("API不存在");
         }
+        if (!canManage(api)) {
+            return ResponseDTO.userErrorParam("API不存在或无权访问");
+        }
+        return buildDetail(api);
+    }
+
+    /**
+     * Queries a published API for API market documentation.
+     */
+    public ResponseDTO<Map<String, Object>> publishedDetail(Long openApiId) {
+        OpenApiEntity api = openApiDao.selectById(openApiId);
+        if (api == null || !Objects.equals(api.getStatus(), 4) || !Boolean.TRUE.equals(api.getEnabledFlag())) {
+            return ResponseDTO.userErrorParam("API不存在或尚未上架");
+        }
+        return buildDetail(api);
+    }
+
+    /**
+     * Builds API details after data-scope validation.
+     */
+    private ResponseDTO<Map<String, Object>> buildDetail(OpenApiEntity api) {
         OpenApiVersionEntity version = resolveCurrentVersion(api);
         if (version == null) {
             return ResponseDTO.userErrorParam("API版本不存在");
@@ -362,6 +391,9 @@ public class OpenApiManageService {
         if (api == null) {
             return ResponseDTO.userErrorParam("API不存在");
         }
+        if (!canManage(api)) {
+            return ResponseDTO.userErrorParam("API不存在或无权访问");
+        }
         OpenApiVersionEntity version = resolveCurrentVersion(api);
         if (version == null) {
             return ResponseDTO.userErrorParam("API版本不存在");
@@ -384,8 +416,10 @@ public class OpenApiManageService {
      * Count APIs by one status value.
      */
     private long countByStatus(Integer status) {
-        return openApiDao.selectCount(new LambdaQueryWrapper<OpenApiEntity>()
-                .eq(OpenApiEntity::getStatus, status));
+        LambdaQueryWrapper<OpenApiEntity> wrapper = new LambdaQueryWrapper<OpenApiEntity>()
+                .eq(OpenApiEntity::getStatus, status);
+        applyCreatorScope(wrapper);
+        return openApiDao.selectCount(wrapper);
     }
 
     /**
@@ -428,6 +462,9 @@ public class OpenApiManageService {
     private ResponseDTO<String> checkEditable(OpenApiEntity api, OpenApiVersionEntity version) {
         if (api == null || version == null || !Objects.equals(version.getOpenApiId(), api.getOpenApiId())) {
             return ResponseDTO.userErrorParam("API或版本不存在");
+        }
+        if (!canManage(api)) {
+            return ResponseDTO.userErrorParam("API不存在或无权访问");
         }
         if (Boolean.TRUE.equals(version.getLockedFlag()) || !EDITABLE_STATUS.contains(api.getStatus())) {
             return ResponseDTO.userErrorParam("当前API版本已锁定，不允许直接修改");
@@ -508,6 +545,25 @@ public class OpenApiManageService {
     private boolean isValidApiCode(String apiCode) {
         return StringUtils.isNotBlank(apiCode)
                 && apiCode.matches("^[A-Za-z][A-Za-z0-9._:-]{2,99}$");
+    }
+
+    /**
+     * Limits API management records to their creator for non-platform administrators.
+     */
+    private void applyCreatorScope(LambdaQueryWrapper<OpenApiEntity> wrapper) {
+        RequestEmployee employee = applicationDataScopeService.requireEmployee();
+        if (!applicationDataScopeService.isPlatformAdministrator()) {
+            wrapper.eq(OpenApiEntity::getCreateUserId, employee.getEmployeeId());
+        }
+    }
+
+    /**
+     * Returns whether the current employee may manage an API definition.
+     */
+    private boolean canManage(OpenApiEntity api) {
+        RequestEmployee employee = applicationDataScopeService.requireEmployee();
+        return applicationDataScopeService.isPlatformAdministrator()
+                || Objects.equals(api.getCreateUserId(), employee.getEmployeeId());
     }
 
     /**

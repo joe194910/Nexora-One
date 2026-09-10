@@ -1,11 +1,3 @@
-export const applicationData = [
-  { name: '企业管理', description: '组织、成员与权限管理', icon: 'ApartmentOutlined', color: '#1677ff' },
-  { name: '商品管理', description: '商品、类目与库存管理', icon: 'ShopOutlined', color: '#20b65b' },
-  { name: '文档中心', description: '知识库与文档协作', icon: 'FileTextOutlined', color: '#7253df' },
-  { name: '监控服务', description: '系统监控与告警管理', icon: 'BarChartOutlined', color: '#fa8c16' },
-  { name: '系统设置', description: '平台基础配置', icon: 'SettingOutlined', color: '#1ab8aa' },
-];
-
 export const assistantShortcutData = [
   { label: '应用接入', icon: 'LinkOutlined', question: '如何将一个新的应用接入 NexoraOne？' },
   { label: '发布 API', icon: 'CodeOutlined', question: '如何创建、调试并发布一个 API？' },
@@ -30,13 +22,6 @@ export const knowledgeList = [
   { title: '系统部署与运维', date: '2026-09-06 17:45' },
   { title: '常见问题（FAQ）', date: '2026-09-05 09:28' },
   { title: '安全与权限最佳实践', date: '2026-09-04 15:12' },
-];
-
-export const platformStatData = [
-  { label: '已上架应用', value: 12, icon: 'AppstoreOutlined', color: '#1677ff', background: '#eaf4ff' },
-  { label: '已发布 API', value: 28, icon: 'ApiOutlined', color: '#20b65b', background: '#eaf8ef' },
-  { label: 'MCP 在线服务', value: 6, icon: 'DatabaseOutlined', color: '#7253df', background: '#f0edff' },
-  { label: '待审核', value: 3, icon: 'ClockCircleOutlined', color: '#fa8c16', background: '#fff4e8', valueColor: '#fa8c16' },
 ];
 
 export const alertList = [

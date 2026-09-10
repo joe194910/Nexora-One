@@ -221,8 +221,14 @@
     router.push({ path: '/application/onboarding', query: { applicationId, step: Math.min((detail.workflowStep || 1) + 1, 8) } });
   }
 
-  function openApplication() {
-    window.open(detail.homeUrl, '_blank', 'noopener,noreferrer');
+  async function openApplication() {
+    try {
+      const response = await applicationApi.launch({ applicationId });
+      const target = response.data.openMode === 'CURRENT' ? '_self' : '_blank';
+      window.open(response.data.launchUrl, target, target === '_blank' ? 'noopener,noreferrer' : undefined);
+    } catch (error) {
+      smartSentry.captureError(error);
+    }
   }
 
   async function submitReview(reviewStatus) {

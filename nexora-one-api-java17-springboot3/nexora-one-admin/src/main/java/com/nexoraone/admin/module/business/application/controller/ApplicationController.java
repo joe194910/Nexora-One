@@ -1,11 +1,13 @@
 package com.nexoraone.admin.module.business.application.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.nexoraone.admin.module.business.application.domain.entity.ApplicationVisitLogEntity;
 import com.nexoraone.admin.module.business.application.domain.entity.OpenApiEntity;
 import com.nexoraone.admin.module.business.application.domain.form.*;
 import com.nexoraone.admin.module.business.application.domain.vo.ApplicationCredentialVO;
 import com.nexoraone.admin.module.business.application.domain.vo.ApplicationConnectVO;
 import com.nexoraone.admin.module.business.application.service.ApplicationOpenAuthService;
+import com.nexoraone.admin.module.business.application.service.ApplicationPortalService;
 import com.nexoraone.admin.module.business.application.service.ApplicationService;
 import com.nexoraone.base.common.domain.PageResult;
 import com.nexoraone.base.common.domain.ResponseDTO;
@@ -30,6 +32,8 @@ public class ApplicationController {
     private ApplicationService applicationService;
     @Resource
     private ApplicationOpenAuthService openAuthService;
+    @Resource
+    private ApplicationPortalService portalService;
 
     /** 分页查询应用接入列表。 */
     @Operation(summary = "分页查询应用接入列表")
@@ -118,5 +122,30 @@ public class ApplicationController {
     @SaCheckPermission("application:review")
     public ResponseDTO<String> review(@RequestBody @Valid ApplicationReviewForm form) {
         return applicationService.review(form);
+    }
+
+    /** 查询应用运营概览。 */
+    @Operation(summary = "查询应用运营概览")
+    @GetMapping("/manage/summary")
+    @SaCheckPermission("application:manage")
+    public ResponseDTO<Map<String, Object>> summary() {
+        return portalService.summary();
+    }
+
+    /** 管理员执行应用上架或下架。 */
+    @Operation(summary = "更新应用上架状态")
+    @PostMapping("/manage/status/update")
+    @SaCheckPermission("application:status")
+    public ResponseDTO<String> updateStatus(@RequestBody @Valid ApplicationStatusUpdateForm form) {
+        return portalService.updateStatus(form);
+    }
+
+    /** 分页查询应用访问日志。 */
+    @Operation(summary = "查询应用访问日志")
+    @PostMapping("/manage/visit-log/query")
+    @SaCheckPermission("application:visit-log")
+    public ResponseDTO<PageResult<ApplicationVisitLogEntity>> queryVisitLogs(
+            @RequestBody @Valid ApplicationVisitLogQueryForm form) {
+        return portalService.queryVisitLogs(form);
     }
 }

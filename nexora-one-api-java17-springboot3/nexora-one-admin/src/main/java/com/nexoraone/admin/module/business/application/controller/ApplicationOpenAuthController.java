@@ -1,9 +1,11 @@
 package com.nexoraone.admin.module.business.application.controller;
 
 import com.nexoraone.admin.module.business.application.domain.form.ApplicationTokenForm;
+import com.nexoraone.admin.module.business.application.domain.form.ApplicationSsoTokenForm;
 import com.nexoraone.admin.module.business.application.domain.vo.ApplicationAccessTokenVO;
 import com.nexoraone.admin.module.business.application.domain.vo.ApplicationConnectVO;
 import com.nexoraone.admin.module.business.application.service.ApplicationOpenAuthService;
+import com.nexoraone.admin.module.business.application.service.ApplicationPortalService;
 import com.nexoraone.base.common.annoation.NoNeedLogin;
 import com.nexoraone.base.common.domain.ResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 /**
  * 第三方应用使用App ID和App Secret访问平台的公开认证接口。
  */
@@ -30,6 +34,8 @@ public class ApplicationOpenAuthController {
 
     @Resource
     private ApplicationOpenAuthService openAuthService;
+    @Resource
+    private ApplicationPortalService portalService;
 
     /**
      * 使用JSON格式的客户端凭证换取Access Token。
@@ -69,5 +75,16 @@ public class ApplicationOpenAuthController {
             @Parameter(description = "Bearer Access Token", required = true)
             @RequestHeader("Authorization") String authorization) {
         return openAuthService.authorize(authorization, null, true);
+    }
+
+    /**
+     * 第三方应用使用一次性授权码换取当前登录用户信息。
+     */
+    @NoNeedLogin
+    @Operation(summary = "使用SSO授权码换取用户信息")
+    @PostMapping(value = "/sso/token", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseDTO<Map<String, Object>> exchangeSsoCode(
+            @RequestBody @Valid ApplicationSsoTokenForm form) {
+        return portalService.exchangeSsoCode(form);
     }
 }

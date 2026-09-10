@@ -29,18 +29,28 @@
       </WorkbenchTitle>
       <button class="more-button" type="button" @click="showMore('应用')">更多</button>
 
-      <div class="application-grid">
-        <button v-for="app in applicationList" :key="app.name" class="application-item" type="button" @click="openApp(app)">
-          <span class="application-icon" :style="{ backgroundColor: app.color }">
-            <component :is="app.icon" />
-          </span>
-          <span class="application-copy">
-            <strong>{{ app.name }}</strong>
-            <small>{{ app.description }}</small>
-          </span>
-          <RightOutlined class="application-arrow" />
-        </button>
-      </div>
+      <a-spin :spinning="applicationLoading">
+        <div v-if="applicationList.length" class="application-grid">
+          <button
+            v-for="app in applicationList"
+            :key="app.applicationId"
+            class="application-item"
+            type="button"
+            @click="openApp(app)"
+          >
+            <span class="application-icon" :style="{ backgroundColor: app.color }">
+              <img v-if="app.iconUrl" :src="app.iconUrl" :alt="app.name" />
+              <AppstoreOutlined v-else />
+            </span>
+            <span class="application-copy">
+              <strong>{{ app.name }}</strong>
+              <small>{{ app.description }}</small>
+            </span>
+            <RightOutlined class="application-arrow" />
+          </button>
+        </div>
+        <a-empty v-else class="application-empty" description="暂无可使用的应用" />
+      </a-spin>
     </section>
 
     <div class="middle-grid">
@@ -139,11 +149,11 @@
 </template>
 
 <script setup>
-  import { computed, defineComponent, h, ref } from 'vue';
+  import { computed, defineComponent, h, onMounted, reactive, ref } from 'vue';
+  import { useRouter } from 'vue-router';
   import { message } from 'ant-design-vue';
   import { Lunar, Solar } from 'lunar-javascript';
   import {
-    ApartmentOutlined,
     ApiOutlined,
     AppstoreOutlined,
     BarChartOutlined,
@@ -156,12 +166,12 @@
     RightOutlined,
     RobotOutlined,
     SendOutlined,
-    SettingOutlined,
-    ShopOutlined,
     WarningFilled,
   } from '@ant-design/icons-vue';
+  import { applicationApi } from '/@/api/business/application/application-api';
+  import { smartSentry } from '/@/lib/smart-sentry';
   import { useUserStore } from '/@/store/modules/system/user';
-  import { alertList, applicationData, assistantShortcutData, knowledgeList, platformStatData, todoList } from './home-mock';
+  import { alertList, assistantShortcutData, knowledgeList, todoList } from './home-mock';
 
   const WorkbenchTitle = defineComponent({
     props: {
@@ -179,27 +189,59 @@
   });
 
   const iconMap = {
-    ApartmentOutlined,
-    ShopOutlined,
-    FileTextOutlined,
-    BarChartOutlined,
-    SettingOutlined,
     LinkOutlined,
     CodeOutlined,
     DatabaseOutlined,
-    AppstoreOutlined,
-    ApiOutlined,
-    ClockCircleOutlined,
   };
 
+  const router = useRouter();
   const userStore = useUserStore();
   const displayName = computed(() => userStore.actualName || '管理员');
   const searchKeyword = ref('');
   const assistantQuestion = ref('');
+  const applicationLoading = ref(false);
+  const applicationList = ref([]);
+  const overview = reactive({
+    listedApplications: 0,
+    publishedApis: 0,
+    mcpOnlineServices: 0,
+    pendingReviews: 0,
+  });
 
-  const applicationList = applicationData.map((item) => ({ ...item, icon: iconMap[item.icon] }));
   const assistantShortcuts = assistantShortcutData.map((item) => ({ ...item, icon: iconMap[item.icon] }));
-  const platformStats = platformStatData.map((item) => ({ ...item, icon: iconMap[item.icon] }));
+  const platformStats = computed(() => [
+    {
+      label: '已上架应用',
+      value: overview.listedApplications,
+      icon: AppstoreOutlined,
+      color: '#1677ff',
+      background: '#eaf4ff',
+    },
+    {
+      label: '已发布 API',
+      value: overview.publishedApis,
+      icon: ApiOutlined,
+      color: '#20b65b',
+      background: '#eaf8ef',
+    },
+    {
+      label: 'MCP 在线服务',
+      value: overview.mcpOnlineServices,
+      icon: DatabaseOutlined,
+      color: '#7253df',
+      background: '#f0edff',
+    },
+    {
+      label: '待审核',
+      value: overview.pendingReviews,
+      icon: ClockCircleOutlined,
+      color: '#fa8c16',
+      background: '#fff4e8',
+      valueColor: '#fa8c16',
+    },
+  ]);
+
+  const applicationColors = ['#1677ff', '#20b65b', '#7253df', '#fa8c16', '#1ab8aa'];
 
   const greeting = computed(() => {
     const hour = new Date().getHours();
@@ -240,8 +282,38 @@
     assistantQuestion.value = '';
   }
 
-  function openApp(app) {
-    message.info(`正在打开${app.name}`);
+  async function loadHomeData() {
+    applicationLoading.value = true;
+    const [applicationsResult, overviewResult] = await Promise.allSettled([
+      applicationApi.queryMyApplications(),
+      applicationApi.queryHomeOverview(),
+    ]);
+    if (applicationsResult.status === 'fulfilled') {
+      applicationList.value = (applicationsResult.value.data.applications || []).slice(0, 5).map((item, index) => ({
+        ...item,
+        name: item.marketName || item.applicationName,
+        description: item.subtitle || item.summary || '暂无应用简介',
+        color: applicationColors[index % applicationColors.length],
+      }));
+    } else {
+      smartSentry.captureError(applicationsResult.reason);
+    }
+    if (overviewResult.status === 'fulfilled') {
+      Object.assign(overview, overviewResult.value.data);
+    } else {
+      smartSentry.captureError(overviewResult.reason);
+    }
+    applicationLoading.value = false;
+  }
+
+  async function openApp(app) {
+    try {
+      const response = await applicationApi.launch({ applicationId: app.applicationId });
+      const target = response.data.openMode === 'CURRENT' ? '_self' : '_blank';
+      window.open(response.data.launchUrl, target, target === '_blank' ? 'noopener,noreferrer' : undefined);
+    } catch (error) {
+      smartSentry.captureError(error);
+    }
   }
 
   function openListItem(title) {
@@ -249,8 +321,14 @@
   }
 
   function showMore(moduleName) {
+    if (moduleName === '应用') {
+      router.push('/application/my');
+      return;
+    }
     message.info(`查看更多${moduleName}`);
   }
+
+  onMounted(loadHomeData);
 </script>
 
 <style lang="less" scoped>

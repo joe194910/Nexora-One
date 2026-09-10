@@ -48,6 +48,8 @@ public class ApplicationService {
     @Resource
     private ApplicationCredentialManager credentialManager;
     @Resource
+    private ApplicationDataScopeService applicationDataScopeService;
+    @Resource
     private ObjectMapper objectMapper;
 
     /**
@@ -69,8 +71,9 @@ public class ApplicationService {
         }
         wrapper.eq(form.getApplicationType() != null, ApplicationEntity::getApplicationType, form.getApplicationType())
                 .eq(form.getAccessStatus() != null, ApplicationEntity::getAccessStatus, form.getAccessStatus())
-                .eq(form.getListingStatus() != null, ApplicationEntity::getListingStatus, form.getListingStatus())
-                .orderByDesc(ApplicationEntity::getCreateTime);
+                .eq(form.getListingStatus() != null, ApplicationEntity::getListingStatus, form.getListingStatus());
+        applicationDataScopeService.applyScope(wrapper, "application:review");
+        wrapper.orderByDesc(ApplicationEntity::getCreateTime);
         Page<ApplicationEntity> page = applicationDao.selectPage(
                 new Page<>(form.getPageNum(), form.getPageSize(), !Boolean.FALSE.equals(form.getSearchCount())), wrapper);
 
@@ -102,7 +105,10 @@ public class ApplicationService {
         if (count > 0) {
             return ResponseDTO.userErrorParam("应用编码已存在");
         }
-        RequestEmployee employee = getRequestEmployee();
+        RequestEmployee employee = applicationDataScopeService.requireEmployee();
+        if (!applicationDataScopeService.canAssignEnterprise(form.getEnterpriseId())) {
+            return ResponseDTO.userErrorParam("No permission to create an application for this enterprise");
+        }
         ApplicationEntity entity = new ApplicationEntity();
         entity.setApplicationName(form.getApplicationName());
         entity.setApplicationCode(form.getApplicationCode());
@@ -119,9 +125,9 @@ public class ApplicationService {
         entity.setListingStatus(0);
         entity.setWorkflowStep(2);
         entity.setConfigLocked(false);
-        entity.setCreateUserId(employee == null ? null : employee.getEmployeeId());
-        entity.setCreateUserName(employee == null ? null : employee.getActualName());
-        entity.setUpdateUserId(employee == null ? null : employee.getEmployeeId());
+        entity.setCreateUserId(employee.getEmployeeId());
+        entity.setCreateUserName(employee.getActualName());
+        entity.setUpdateUserId(employee.getEmployeeId());
         applicationDao.insert(entity);
 
         ApplicationCredentialVO credential = credentialManager.createCredential(entity.getApplicationId());
@@ -142,6 +148,9 @@ public class ApplicationService {
         }
         if (!Objects.equals(entity.getApplicationCode(), form.getApplicationCode())) {
             return ResponseDTO.userErrorParam("应用编码创建后不可修改");
+        }
+        if (!applicationDataScopeService.canAssignEnterprise(form.getEnterpriseId())) {
+            return ResponseDTO.userErrorParam("无权将应用归属到该企业");
         }
         entity.setApplicationName(form.getApplicationName());
         entity.setApplicationType(form.getApplicationType());
@@ -166,6 +175,9 @@ public class ApplicationService {
         ApplicationEntity entity = applicationDao.selectById(applicationId);
         if (entity == null) {
             return ResponseDTO.userErrorParam("应用不存在");
+        }
+        if (!applicationDataScopeService.canManage(entity)) {
+            return ResponseDTO.userErrorParam("应用不存在或无权访问");
         }
         Map<String, Object> result = toApplicationMap(entity, null);
         result.put("credential", credentialManager.getMaskedCredential(applicationId));
@@ -355,6 +367,9 @@ public class ApplicationService {
     private ResponseDTO<String> checkEditable(ApplicationEntity entity) {
         if (entity == null) {
             return ResponseDTO.userErrorParam("应用不存在");
+        }
+        if (!applicationDataScopeService.canManage(entity)) {
+            return ResponseDTO.userErrorParam("应用不存在或无权访问");
         }
         if (Boolean.TRUE.equals(entity.getConfigLocked())) {
             return ResponseDTO.userErrorParam("应用配置已锁定，当前状态不可修改");

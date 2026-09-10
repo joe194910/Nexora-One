@@ -10,6 +10,7 @@ import com.nexoraone.admin.module.business.application.domain.entity.Application
 import com.nexoraone.admin.module.business.application.domain.entity.ApplicationCredentialEntity;
 import com.nexoraone.admin.module.business.application.domain.entity.ApplicationEntity;
 import com.nexoraone.admin.module.business.application.domain.entity.OpenApiEntity;
+import com.nexoraone.admin.module.business.application.service.ApplicationDataScopeService;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiCallLogDao;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiEnvironmentDao;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiExampleDao;
@@ -70,6 +71,8 @@ public class OpenApiPortalService {
     private OpenApiCallLogDao callLogDao;
     @Resource
     private OpenApiManageService manageService;
+    @Resource
+    private ApplicationDataScopeService applicationDataScopeService;
 
     /**
      * 分页查询已上架的API市场。
@@ -108,20 +111,17 @@ public class OpenApiPortalService {
         if (api == null || !Objects.equals(api.getStatus(), 4) || !Boolean.TRUE.equals(api.getEnabledFlag())) {
             return ResponseDTO.userErrorParam("API不存在或尚未上架");
         }
-        return manageService.detail(openApiId);
+        return manageService.publishedDetail(openApiId);
     }
 
     /**
      * 查询当前用户可管理的应用及其脱敏App ID。
      */
     public ResponseDTO<List<Map<String, Object>>> queryApplications() {
-        RequestEmployee employee = getRequestEmployee();
         LambdaQueryWrapper<ApplicationEntity> wrapper = new LambdaQueryWrapper<ApplicationEntity>()
                 .ne(ApplicationEntity::getListingStatus, 4)
                 .orderByDesc(ApplicationEntity::getUpdateTime);
-        if (employee != null && !Boolean.TRUE.equals(employee.getAdministratorFlag())) {
-            wrapper.eq(ApplicationEntity::getCreateUserId, employee.getEmployeeId());
-        }
+        applicationDataScopeService.applyScope(wrapper);
         List<Map<String, Object>> result = new ArrayList<>();
         for (ApplicationEntity application : applicationDao.selectList(wrapper)) {
             ApplicationCredentialEntity credential = credentialDao.selectOne(
@@ -188,6 +188,7 @@ public class OpenApiPortalService {
      * 查询API权限申请和授权状态。
      */
     public ResponseDTO<List<Map<String, Object>>> queryPermissions(Integer applyStatus) {
+        boolean platformReviewer = applicationDataScopeService.hasPlatformPermission("open-api:grant:review");
         LambdaQueryWrapper<ApplicationApiPermissionEntity> wrapper =
                 new LambdaQueryWrapper<ApplicationApiPermissionEntity>()
                         .eq(applyStatus != null, ApplicationApiPermissionEntity::getApplyStatus, applyStatus)
@@ -198,8 +199,7 @@ public class OpenApiPortalService {
         List<Map<String, Object>> result = new ArrayList<>();
         for (ApplicationApiPermissionEntity permission : permissions) {
             ApplicationEntity application = applicationDao.selectById(permission.getApplicationId());
-            if (employee != null && !Boolean.TRUE.equals(employee.getAdministratorFlag())
-                    && (application == null || !Objects.equals(application.getCreateUserId(), employee.getEmployeeId()))) {
+            if (application == null || !platformReviewer && !applicationDataScopeService.canManage(application)) {
                 continue;
             }
             OpenApiEntity api = openApiDao.selectById(permission.getOpenApiId());
@@ -362,15 +362,9 @@ public class OpenApiPortalService {
      * 查询调用统计概览和最近调用日志。
      */
     public ResponseDTO<Map<String, Object>> statistics() {
-        RequestEmployee employee = getRequestEmployee();
         List<Long> applicationIds = null;
-        if (employee != null && !Boolean.TRUE.equals(employee.getAdministratorFlag())) {
-            applicationIds = applicationDao.selectList(new LambdaQueryWrapper<ApplicationEntity>()
-                            .eq(ApplicationEntity::getCreateUserId, employee.getEmployeeId())
-                            .select(ApplicationEntity::getApplicationId))
-                    .stream()
-                    .map(ApplicationEntity::getApplicationId)
-                    .toList();
+        if (!applicationDataScopeService.isPlatformAdministrator()) {
+            applicationIds = applicationDataScopeService.getVisibleApplicationIds();
             if (applicationIds.isEmpty()) {
                 return ResponseDTO.ok(emptyStatistics());
             }
@@ -487,9 +481,7 @@ public class OpenApiPortalService {
         if (application == null || Objects.equals(application.getListingStatus(), 4)) {
             return false;
         }
-        RequestEmployee employee = getRequestEmployee();
-        return employee == null || Boolean.TRUE.equals(employee.getAdministratorFlag())
-                || Objects.equals(application.getCreateUserId(), employee.getEmployeeId());
+        return applicationDataScopeService.canManage(application);
     }
 
     /**
