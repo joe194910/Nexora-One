@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS `nexora_one_open_api_version` (
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`version_id`),
     UNIQUE KEY `uk_open_api_version` (`open_api_id`, `version_no`),
-    UNIQUE KEY `uk_gateway_path_version` (`gateway_path`, `version_no`),
+    UNIQUE KEY `uk_gateway_method_path_version` (`request_method`, `gateway_path`, `version_no`),
     KEY `idx_open_api_version_status` (`open_api_id`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='NexoraOne开放API版本';
 
@@ -189,10 +189,15 @@ INSERT INTO `t_menu`
 SELECT 827, '变更API状态', 3, 821, 50, 2, 'open-api:status', 'open-api:status', 0, 0, 0, 1, 1, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 827);
 
+INSERT INTO `t_menu`
+(`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `frame_flag`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `update_user_id`, `create_time`, `update_time`)
+SELECT 828, 'API详情', 2, 820, 30, '/open-api/detail', 'business/open-api/api-editor.vue', 1, NULL, 'open-api:detail', 'ProfileOutlined', 0, 0, 0, 0, 0, 1, 1, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 828);
+
 INSERT INTO `t_role_menu` (`role_id`, `menu_id`, `create_time`, `update_time`)
 SELECT 1, m.`menu_id`, NOW(), NOW()
 FROM `t_menu` m
-WHERE m.`menu_id` BETWEEN 820 AND 827
+WHERE m.`menu_id` BETWEEN 820 AND 828
   AND NOT EXISTS (
       SELECT 1 FROM `t_role_menu` rm
       WHERE rm.`role_id` = 1 AND rm.`menu_id` = m.`menu_id`

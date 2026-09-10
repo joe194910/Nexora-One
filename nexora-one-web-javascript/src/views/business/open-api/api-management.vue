@@ -252,7 +252,7 @@
   }
 
   function goDetail(record) {
-    router.push({ path: '/open-api/editor', query: { openApiId: record.openApiId, mode: 'detail' } });
+    router.push({ path: '/open-api/detail', query: { openApiId: record.openApiId, mode: 'detail' } });
   }
 
   async function changeStatus(record, status) {

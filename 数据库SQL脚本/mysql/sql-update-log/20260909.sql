@@ -180,7 +180,7 @@ INSERT INTO `t_menu`
 (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `perms_type`, `api_perms`, `web_perms`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `update_user_id`, `create_time`, `update_time`)
 SELECT 807, '保存配置', 3, 801, 40, 2, 'application:save', 'application:save', 0, 0, 0, 1, 1, NOW(), NOW()
     WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 807);
-INSERT INTO `t_menu`
+INSERT INTO `t_menne
 (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `perms_type`, `api_perms`, `web_perms`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `update_user_id`, `create_time`, `update_time`)
 SELECT 808, '重置密钥', 3, 801, 50, 2, 'application:secret:reset', 'application:secret:reset', 0, 0, 0, 1, 1, NOW(), NOW()
     WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 808);

@@ -35,8 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * API open platform management service.
@@ -227,6 +225,10 @@ public class OpenApiManageService {
                 form.getParameters() == null ? List.of() : form.getParameters();
         for (int index = 0; index < rows.size(); index++) {
             OpenApiParameterSaveForm.ParameterItem item = rows.get(index);
+            if (StringUtils.isNotBlank(item.getParentRowKey())
+                    && !rowIdMap.containsKey(item.getParentRowKey())) {
+                return ResponseDTO.userErrorParam("父参数必须位于子参数之前");
+            }
             OpenApiParameterEntity parameter = new OpenApiParameterEntity();
             parameter.setVersionId(form.getVersionId());
             parameter.setDirection(form.getDirection());
@@ -363,7 +365,8 @@ public class OpenApiManageService {
         if (version == null) {
             return ResponseDTO.userErrorParam("API版本不存在");
         }
-        if (Objects.equals(form.getStatus(), 4) && api.getWorkflowStep() < 4) {
+        if (Objects.equals(form.getStatus(), 4)
+                && Objects.requireNonNullElse(api.getWorkflowStep(), 1) < 4) {
             return ResponseDTO.userErrorParam("请先完成请求参数、响应参数和示例错误码配置");
         }
         boolean enabled = Objects.equals(form.getStatus(), 4);
@@ -408,6 +411,7 @@ public class OpenApiManageService {
             return ResponseDTO.userErrorParam("API编码已存在");
         }
         long pathCount = versionDao.selectCount(new LambdaQueryWrapper<OpenApiVersionEntity>()
+                .eq(OpenApiVersionEntity::getRequestMethod, method)
                 .eq(OpenApiVersionEntity::getGatewayPath, form.getGatewayPath())
                 .eq(OpenApiVersionEntity::getVersionNo, form.getVersionNo())
                 .ne(form.getVersionId() != null, OpenApiVersionEntity::getVersionId, form.getVersionId()));

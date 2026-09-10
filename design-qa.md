@@ -27,6 +27,18 @@
 - [x] List, summary and category data use backend APIs.
 - [x] Create, edit, detail, parameter save, example save and status changes use backend APIs.
 - [x] Existing `openApiId` remains the stable authorization relation key.
+- [x] Detail and editor routes use independent database menu entries and matching permissions.
+- [x] Nested response fields preserve parent-child order and reject invalid parent references.
+- [x] Gateway path uniqueness includes request method, path and version.
 - [x] Frontend dependency footprint is unchanged.
 
-final result: pending verification
+## Verification
+
+- [x] Maven compile passed for `nexora-one-admin` and dependent modules on 2026-09-10.
+- [x] Vite `build:test` passed on 2026-09-10.
+- [x] Local Vite entry returned HTTP 200 at `http://127.0.0.1:5174/`.
+- [x] `git diff --check` reported no whitespace errors.
+- [ ] Authenticated browser flow and live API requests require local MySQL and Redis services plus execution of `20260909-2.sql`.
+- [ ] Pixel comparison against the supplied screenshots could not be completed because the authenticated dynamic route cannot load without those backend dependencies.
+
+final result: blocked

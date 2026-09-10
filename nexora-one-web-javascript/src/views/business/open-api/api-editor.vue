@@ -75,9 +75,7 @@
               </a-radio-group>
             </a-form-item>
             <a-form-item label="请求超时" name="timeoutSeconds">
-              <a-input-number v-model:value="basicForm.timeoutSeconds" :disabled="readOnly" :min="1" :max="300" style="width: 100%">
-                <template #addonAfter>秒</template>
-              </a-input-number>
+              <a-input-number v-model:value="basicForm.timeoutSeconds" :disabled="readOnly" :min="1" :max="300" addon-after="秒" style="width: 100%" />
             </a-form-item>
             <a-form-item label="标签">
               <a-input v-model:value="basicForm.tags" :disabled="readOnly" placeholder="多个标签用英文逗号分隔" />
@@ -137,6 +135,7 @@
               <tr>
                 <th style="min-width: 120px">参数位置</th>
                 <th style="min-width: 160px">参数名称</th>
+                <th v-if="currentStep === 2" style="min-width: 160px">父字段</th>
                 <th style="min-width: 140px">中文名称</th>
                 <th style="min-width: 130px">数据类型</th>
                 <th style="min-width: 80px">{{ currentStep === 1 ? '必填' : '可空' }}</th>
@@ -154,6 +153,23 @@
                   </a-select>
                 </td>
                 <td><a-input v-model:value="item.parameterName" :disabled="readOnly" placeholder="参数名称" /></td>
+                <td v-if="currentStep === 2">
+                  <a-select
+                    v-model:value="item.parentRowKey"
+                    :disabled="readOnly"
+                    allow-clear
+                    placeholder="顶级字段"
+                    style="width: 100%"
+                  >
+                    <a-select-option
+                      v-for="parent in responseParameters.slice(0, index)"
+                      :key="parent.rowKey"
+                      :value="parent.rowKey"
+                    >
+                      {{ parent.parameterName || parent.chineseName || '未命名字段' }}
+                    </a-select-option>
+                  </a-select>
+                </td>
                 <td><a-input v-model:value="item.chineseName" :disabled="readOnly" placeholder="中文名称" /></td>
                 <td>
                   <a-select v-model:value="item.dataType" :disabled="readOnly" style="width: 100%">
@@ -172,7 +188,7 @@
                 </td>
               </tr>
               <tr v-if="activeParameters.length === 0">
-                <td :colspan="readOnly ? 8 : 9">
+                <td :colspan="parameterTableColspan">
                   <a-empty :description="readOnly ? '暂无参数' : '点击添加参数开始定义'" :image="simpleImage" />
                 </td>
               </tr>
@@ -376,6 +392,7 @@
   });
   const categoryOptions = computed(() => categories.value.map((value) => ({ value })));
   const activeParameters = computed(() => (currentStep.value === 1 ? requestParameters.value : responseParameters.value));
+  const parameterTableColspan = computed(() => 8 + (currentStep.value === 2 ? 1 : 0) + (readOnly.value ? 0 : 1));
 
   function createParameter(direction) {
     return {
@@ -405,7 +422,14 @@
   }
 
   function removeParameter(index) {
-    activeParameters.value.splice(index, 1);
+    const [removed] = activeParameters.value.splice(index, 1);
+    if (currentStep.value === 2 && removed) {
+      responseParameters.value.forEach((item) => {
+        if (item.parentRowKey === removed.rowKey) {
+          item.parentRowKey = undefined;
+        }
+      });
+    }
   }
 
   function addErrorCode() {
