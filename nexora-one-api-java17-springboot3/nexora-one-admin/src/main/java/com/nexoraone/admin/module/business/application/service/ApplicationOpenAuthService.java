@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.time.LocalDateTime;
 
 /**
  * 第三方应用通过App ID和App Secret接入NexoraOne的认证服务。
@@ -75,8 +76,8 @@ public class ApplicationOpenAuthService {
         if (application == null) {
             return ResponseDTO.userErrorParam("应用不存在或已停用");
         }
-        if (Objects.equals(application.getListingStatus(), 4)) {
-            return ResponseDTO.userErrorParam("应用已下架，无法签发Access Token");
+        if (!Objects.equals(application.getListingStatus(), 2)) {
+            return ResponseDTO.userErrorParam("应用尚未通过平台审核并上架，无法签发Access Token");
         }
 
         long ttlSeconds = resolveTokenTtl(application.getLoginConfig());
@@ -134,15 +135,14 @@ public class ApplicationOpenAuthService {
             accessTokenManager.revoke(accessToken);
             return ResponseDTO.userErrorParam("Access Token已因应用密钥变更而失效");
         }
-        if (StringUtils.isNotBlank(requiredScope)
-                && (context.getScopes() == null || !context.getScopes().contains(requiredScope))) {
-            return ResponseDTO.userErrorParam("当前应用未获得API权限：" + requiredScope);
-        }
-
         ApplicationEntity application = applicationDao.selectById(context.getApplicationId());
-        if (application == null || Objects.equals(application.getListingStatus(), 4)) {
+        if (application == null || !Objects.equals(application.getListingStatus(), 2)) {
             accessTokenManager.revoke(accessToken);
-            return ResponseDTO.userErrorParam("应用不存在或已停用");
+            return ResponseDTO.userErrorParam("应用不存在、未上架或已停用");
+        }
+        if (StringUtils.isNotBlank(requiredScope)
+                && !queryGrantedScopes(context.getApplicationId()).contains(requiredScope)) {
+            return ResponseDTO.userErrorParam("当前应用未获得API权限：" + requiredScope);
         }
         if (markConnected && !Objects.equals(application.getAccessStatus(), 2)) {
             application.setAccessStatus(2);
@@ -189,6 +189,7 @@ public class ApplicationOpenAuthService {
         Set<String> scopes = new LinkedHashSet<>();
         openApiDao.selectList(new LambdaQueryWrapper<OpenApiEntity>()
                         .eq(OpenApiEntity::getEnabledFlag, true)
+                        .eq(OpenApiEntity::getStatus, 4)
                         .eq(OpenApiEntity::getPermissionLevel, 1)
                         .orderByAsc(OpenApiEntity::getSort))
                 .forEach(api -> scopes.add(api.getApiCode()));
@@ -196,13 +197,18 @@ public class ApplicationOpenAuthService {
         List<ApplicationApiPermissionEntity> permissions = permissionDao.selectList(
                 new LambdaQueryWrapper<ApplicationApiPermissionEntity>()
                         .eq(ApplicationApiPermissionEntity::getApplicationId, applicationId)
-                        .eq(ApplicationApiPermissionEntity::getApplyStatus, 2));
+                        .eq(ApplicationApiPermissionEntity::getApplyStatus, 2)
+                        .and(query -> query.isNull(ApplicationApiPermissionEntity::getEffectiveTime)
+                                .or().le(ApplicationApiPermissionEntity::getEffectiveTime, LocalDateTime.now()))
+                        .and(query -> query.isNull(ApplicationApiPermissionEntity::getExpireTime)
+                                .or().gt(ApplicationApiPermissionEntity::getExpireTime, LocalDateTime.now())));
         if (!permissions.isEmpty()) {
             openApiDao.selectBatchIds(permissions.stream()
                             .map(ApplicationApiPermissionEntity::getOpenApiId)
                             .toList())
                     .stream()
-                    .filter(api -> Boolean.TRUE.equals(api.getEnabledFlag()))
+                    .filter(api -> Boolean.TRUE.equals(api.getEnabledFlag())
+                            && Objects.equals(api.getStatus(), 4))
                     .forEach(api -> scopes.add(api.getApiCode()));
         }
         return new ArrayList<>(scopes);

@@ -59,12 +59,8 @@ public class ApplicationDataScopeService {
             return false;
         }
         RequestEmployee employee = requireEmployee();
-        if (isPlatformAdministrator(employee)
-                || Objects.equals(application.getCreateUserId(), employee.getEmployeeId())) {
-            return true;
-        }
-        return application.getEnterpriseId() != null
-                && getEnterpriseIds(employee).contains(application.getEnterpriseId());
+        return isPlatformAdministrator(employee)
+                || Objects.equals(application.getCreateUserId(), employee.getEmployeeId());
     }
 
     /**

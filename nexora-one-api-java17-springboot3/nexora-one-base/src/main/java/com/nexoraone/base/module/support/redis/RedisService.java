@@ -210,6 +210,21 @@ public class RedisService {
         }
     }
 
+    /**
+     * 原子递增计数器，并在首次创建计数器时设置过期时间。
+     *
+     * @param key Redis 键
+     * @param expireSeconds 过期秒数
+     * @return 递增后的计数值
+     */
+    public long increment(String key, long expireSeconds) {
+        Long value = stringRedisTemplate.opsForValue().increment(key);
+        if (value != null && value == 1L && expireSeconds > 0) {
+            stringRedisTemplate.expire(key, expireSeconds, TimeUnit.SECONDS);
+        }
+        return value == null ? 0L : value;
+    }
+
     //============================ map =============================
 
 

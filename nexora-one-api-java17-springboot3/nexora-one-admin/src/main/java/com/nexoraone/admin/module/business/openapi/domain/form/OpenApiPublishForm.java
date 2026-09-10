@@ -1,9 +1,8 @@
 package com.nexoraone.admin.module.business.openapi.domain.form;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
@@ -30,7 +29,6 @@ public class OpenApiPublishForm {
     private String slaDescription;
     /** 发布可见范围：1全平台，2指定企业。 */
     @NotNull(message = "发布范围不能为空")
-    @Min(value = 1, message = "发布范围不正确")
-    @Max(value = 2, message = "发布范围不正确")
+    @Pattern(regexp = "platform|enterprise", message = "发布范围不正确")
     private String publishScope;
 }

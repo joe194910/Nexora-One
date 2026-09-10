@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.HexFormat;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * 应用凭证生成、脱敏和失效管理。
@@ -104,6 +106,44 @@ public class ApplicationCredentialManager {
     }
 
     /**
+     * 使用当前有效应用凭证校验网关请求签名。
+     *
+     * <p>签名密钥使用 App Secret 的 SHA-256 摘要，在不保存 App Secret 明文的前提下，
+     * 支持网关校验 HMAC-SHA256 请求签名。</p>
+     *
+     * @param credential 当前有效应用凭证
+     * @param canonicalRequest 待签名的规范请求字符串
+     * @param suppliedSignature 调用方提交的请求签名
+     * @return 签名是否校验通过
+     */
+    public boolean verifySignature(ApplicationCredentialEntity credential,
+                                   String canonicalRequest,
+                                   String suppliedSignature) {
+        if (credential == null || suppliedSignature == null) {
+            return false;
+        }
+        byte[] expected = sign(credential.getSecretHash(), canonicalRequest)
+                .getBytes(StandardCharsets.UTF_8);
+        byte[] actual = suppliedSignature.trim().toLowerCase()
+                .getBytes(StandardCharsets.UTF_8);
+        return MessageDigest.isEqual(expected, actual);
+    }
+
+    /**
+     * 为平台托管的在线调试请求生成签名。
+     *
+     * @param credential 当前有效应用凭证
+     * @param canonicalRequest 待签名的规范请求字符串
+     * @return 小写十六进制格式的 HMAC-SHA256 签名
+     */
+    public String signForPlatform(ApplicationCredentialEntity credential, String canonicalRequest) {
+        if (credential == null) {
+            throw new IllegalArgumentException("应用凭证不存在");
+        }
+        return sign(credential.getSecretHash(), canonicalRequest);
+    }
+
+    /**
      * 查询应用当前有效凭证实体。
      */
     private ApplicationCredentialEntity getActiveCredential(Long applicationId) {
@@ -142,6 +182,24 @@ public class ApplicationCredentialManager {
             return HexFormat.of().formatHex(digest.digest(value.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException("当前运行环境不支持SHA-256", exception);
+        }
+    }
+
+    /**
+     * 计算小写十六进制格式的 HMAC-SHA256 签名。
+     *
+     * @param signingKey 签名密钥
+     * @param canonicalRequest 待签名的规范请求字符串
+     * @return 小写十六进制格式的签名
+     */
+    private String sign(String signingKey, String canonicalRequest) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(signingKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            return HexFormat.of().formatHex(
+                    mac.doFinal(canonicalRequest.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception exception) {
+            throw new IllegalStateException("计算 HMAC-SHA256 签名失败", exception);
         }
     }
 
