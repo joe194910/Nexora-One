@@ -85,15 +85,9 @@
             <div class="open-api-actions">
               <a-button type="link" @click="goDetail(record)" v-privilege="'open-api:detail'">详情</a-button>
               <a-button type="link" :disabled="record.status === 4" @click="goEdit(record)" v-privilege="'open-api:save'">编辑</a-button>
-              <a-popconfirm
-                v-if="record.status !== 4"
-                title="确认启用当前 API？"
-                ok-text="启用"
-                cancel-text="取消"
-                @confirm="changeStatus(record, 4)"
-              >
-                <a-button type="link" v-privilege="'open-api:status'">启用</a-button>
-              </a-popconfirm>
+              <a-button v-if="record.status !== 4" type="link" @click="goPublish(record)" v-privilege="'open-api:publish'">
+                上架
+              </a-button>
               <a-popconfirm
                 v-else
                 title="确认停用当前 API？已授权应用将无法继续调用。"
@@ -253,6 +247,10 @@
 
   function goDetail(record) {
     router.push({ path: '/open-api/detail', query: { openApiId: record.openApiId, mode: 'detail' } });
+  }
+
+  function goPublish(record) {
+    router.push({ path: '/open-api/publish', query: { openApiId: record.openApiId } });
   }
 
   async function changeStatus(record, status) {

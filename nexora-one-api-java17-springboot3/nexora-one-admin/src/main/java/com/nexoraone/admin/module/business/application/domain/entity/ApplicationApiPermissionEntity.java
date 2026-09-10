@@ -22,10 +22,28 @@ public class ApplicationApiPermissionEntity {
     private Long openApiId;
     /** 申请原因。 */
     private String applyReason;
+    /** 使用场景。 */
+    private String useScene;
+    /** 申请环境：test测试，prod生产。 */
+    private String applyEnvironment;
+    /** 申请人主键。 */
+    private Long applicantId;
+    /** 申请人姓名。 */
+    private String applicantName;
     /** 申请状态：1待审核，2已授权，3已驳回。 */
     private Integer applyStatus;
+    /** 审核人主键。 */
+    private Long reviewerId;
+    /** 审核人姓名。 */
+    private String reviewerName;
     /** 审核意见。 */
     private String reviewRemark;
+    /** 每日调用额度。 */
+    private Long dailyQuota;
+    /** 授权开始时间。 */
+    private LocalDateTime effectiveTime;
+    /** 授权结束时间。 */
+    private LocalDateTime expireTime;
     /** 创建时间。 */
     private LocalDateTime createTime;
     /** 更新时间。 */

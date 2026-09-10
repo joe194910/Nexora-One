@@ -70,11 +70,12 @@ public class OpenApiManageService {
         }
         wrapper.eq(StringUtils.isNotBlank(form.getCategoryName()),
                         OpenApiEntity::getCategoryName, form.getCategoryName())
-                .eq(StringUtils.isNotBlank(form.getRequestMethod()),
-                        OpenApiEntity::getRequestMethod, form.getRequestMethod().toUpperCase())
                 .eq(form.getStatus() != null, OpenApiEntity::getStatus, form.getStatus())
                 .orderByDesc(OpenApiEntity::getUpdateTime)
                 .orderByDesc(OpenApiEntity::getOpenApiId);
+        if (StringUtils.isNotBlank(form.getRequestMethod())) {
+            wrapper.eq(OpenApiEntity::getRequestMethod, StringUtils.upperCase(form.getRequestMethod()));
+        }
         Page<OpenApiEntity> page = openApiDao.selectPage(
                 new Page<>(form.getPageNum(), form.getPageSize(), !Boolean.FALSE.equals(form.getSearchCount())), wrapper);
         PageResult<OpenApiEntity> result = new PageResult<>();

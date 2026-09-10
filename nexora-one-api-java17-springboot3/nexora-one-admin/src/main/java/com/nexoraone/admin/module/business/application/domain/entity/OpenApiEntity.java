@@ -38,6 +38,16 @@ public class OpenApiEntity {
     private String ownerName;
     /** 标签，多个标签使用英文逗号分隔。 */
     private String tags;
+    /** API市场标题。 */
+    private String marketTitle;
+    /** API市场简介。 */
+    private String marketSummary;
+    /** 服务等级说明。 */
+    private String slaDescription;
+    /** 发布可见范围：1全平台，2指定企业。 */
+    private String publishScope;
+    /** 最近发布时间。 */
+    private LocalDateTime publishTime;
     /** 当前版本主键。 */
     private Long currentVersionId;
     /** 发布状态：1草稿，2配置中，3待发布，4已上架，5已停用，6已下线。 */
