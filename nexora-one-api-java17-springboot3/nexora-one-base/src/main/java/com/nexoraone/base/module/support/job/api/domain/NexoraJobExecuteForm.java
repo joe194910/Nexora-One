@@ -12,7 +12,7 @@ import org.hibernate.validator.constraints.Length;
  * @date 2024/6/18 20:30
  */
 @Data
-public class SmartJobExecuteForm {
+public class NexoraJobExecuteForm {
 
     @Schema(description = "任务id")
     @NotNull(message = "任务id不能为空")

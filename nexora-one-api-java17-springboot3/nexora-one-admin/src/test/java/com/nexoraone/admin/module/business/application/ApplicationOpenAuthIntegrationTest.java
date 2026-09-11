@@ -81,7 +81,7 @@ class ApplicationOpenAuthIntegrationTest {
     }
 
     /**
-     * 验证客户端凭证换取访问令牌、平台连通性和密钥轮换后的失效机制。
+     * 验证草稿应用可完成客户端凭证签发和平台连通性验证，并验证密钥轮换后的失效机制。
      */
     @Test
     void shouldCompleteClientCredentialsFlowAndInvalidateOldTokenAfterSecretReset() throws Exception {
@@ -90,15 +90,15 @@ class ApplicationOpenAuthIntegrationTest {
         applicationId = Long.valueOf(createResult.getData().get("applicationId").toString());
         ApplicationCredentialVO credential =
                 (ApplicationCredentialVO) createResult.getData().get("credential");
-        ApplicationEntity application = applicationDao.selectById(applicationId);
-        application.setListingStatus(2);
-        applicationDao.updateById(application);
+        assertEquals(0, applicationDao.selectById(applicationId).getListingStatus());
 
         JsonNode invalidTokenResponse = requestToken(credential.getAppId(), "invalid-secret");
         assertFalse(invalidTokenResponse.path("ok").asBoolean());
 
         JsonNode tokenResponse = requestToken(credential.getAppId(), credential.getAppSecret());
         assertTrue(tokenResponse.path("ok").asBoolean());
+        assertTrue(tokenResponse.path("data").path("scopes").toString()
+                .contains("application:connect:ping"));
         String accessToken = tokenResponse.path("data").path("access_token").asText();
         activeAccessToken = accessToken;
         assertFalse(accessToken.isBlank());

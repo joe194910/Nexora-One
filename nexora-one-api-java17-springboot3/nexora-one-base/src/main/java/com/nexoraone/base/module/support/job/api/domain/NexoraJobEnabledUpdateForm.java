@@ -11,7 +11,7 @@ import lombok.Data;
  * @date 2024/6/17 21:30
  */
 @Data
-public class SmartJobEnabledUpdateForm {
+public class NexoraJobEnabledUpdateForm {
 
     @Schema(description = "任务id")
     @NotNull(message = "任务id不能为空")

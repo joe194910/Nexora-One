@@ -3,11 +3,11 @@ package com.nexoraone.base.module.support.job.core;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import com.nexoraone.base.module.support.job.config.SmartJobConfig;
-import com.nexoraone.base.module.support.job.constant.SmartJobConst;
-import com.nexoraone.base.module.support.job.constant.SmartJobUtil;
-import com.nexoraone.base.module.support.job.repository.SmartJobRepository;
-import com.nexoraone.base.module.support.job.repository.domain.SmartJobEntity;
+import com.nexoraone.base.module.support.job.config.NexoraJobConfig;
+import com.nexoraone.base.module.support.job.constant.NexoraJobConst;
+import com.nexoraone.base.module.support.job.constant.NexoraJobUtil;
+import com.nexoraone.base.module.support.job.repository.NexoraJobRepository;
+import com.nexoraone.base.module.support.job.repository.domain.NexoraJobEntity;
 import org.redisson.api.RedissonClient;
 import org.springframework.util.CollectionUtils;
 
@@ -27,39 +27,39 @@ import java.util.stream.Collectors;
  * @date 2024/6/17 21:30
  */
 @Slf4j
-public class SmartJobLauncher {
+public class NexoraJobLauncher {
 
-    private final SmartJobRepository jobRepository;
+    private final NexoraJobRepository jobRepository;
 
-    private final List<SmartJob> jobInterfaceList;
+    private final List<NexoraJob> jobInterfaceList;
 
     private final RedissonClient redissonClient;
 
-    public SmartJobLauncher(SmartJobConfig jobConfig,
-                            SmartJobRepository jobRepository,
-                            List<SmartJob> jobInterfaceList,
+    public NexoraJobLauncher(NexoraJobConfig jobConfig,
+                            NexoraJobRepository jobRepository,
+                            List<NexoraJob> jobInterfaceList,
                             RedissonClient redissonClient) {
         this.jobRepository = jobRepository;
         this.jobInterfaceList = jobInterfaceList;
         this.redissonClient = redissonClient;
 
         // init job scheduler
-        SmartJobScheduler.init(jobConfig);
+        NexoraJobScheduler.init(jobConfig);
 
         // 任务自动检测配置 固定1个线程
         Integer initDelay = jobConfig.getInitDelay();
         Boolean refreshEnabled = jobConfig.getDbRefreshEnabled();
         Integer refreshInterval = jobConfig.getDbRefreshInterval();
 
-        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("SmartJobLauncher-%d").build();
+        ThreadFactory factory = new ThreadFactoryBuilder().setNameFormat("NexoraJobLauncher-%d").build();
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, factory);
         Runnable launcherRunnable = () -> {
             try {
                 // 查询所有任务
-                List<SmartJobEntity> smartJobList = this.queryJob();
-                this.startOrRefreshJob(smartJobList);
+                List<NexoraJobEntity> nexoraJobList = this.queryJob();
+                this.startOrRefreshJob(nexoraJobList);
             } catch (Throwable t) {
-                log.error("SmartJob Error:", t);
+                log.error("NexoraJob Error:", t);
             }
             // 只在启动时 执行一次
             if (!refreshEnabled) {
@@ -70,34 +70,34 @@ public class SmartJobLauncher {
 
         // 打印信息
         String refreshDesc = refreshEnabled ? "开启|检测间隔" + refreshInterval + "秒" : "关闭";
-        String format = String.format(SmartJobConst.LOGO, jobConfig.getCorePoolSize(), initDelay, refreshDesc);
-        SmartJobUtil.printInfo(format);
+        String format = String.format(NexoraJobConst.LOGO, jobConfig.getCorePoolSize(), initDelay, refreshDesc);
+        NexoraJobUtil.printInfo(format);
     }
 
     /**
      * 查询数据库
      * 启动/刷新任务
      */
-    public void startOrRefreshJob(List<SmartJobEntity> smartJobList) {
+    public void startOrRefreshJob(List<NexoraJobEntity> nexoraJobList) {
         // 查询任务配置
-        if (CollectionUtils.isEmpty(smartJobList) || CollectionUtils.isEmpty(jobInterfaceList)) {
-            log.info("==== SmartJob ==== job list empty");
+        if (CollectionUtils.isEmpty(nexoraJobList) || CollectionUtils.isEmpty(jobInterfaceList)) {
+            log.info("==== NexoraJob ==== job list empty");
             return;
         }
 
         // 任务实现类
-        Map<String, SmartJob> jobImplMap = jobInterfaceList.stream().collect(Collectors.toMap(SmartJob::getClassName, Function.identity()));
-        for (SmartJobEntity jobEntity : smartJobList) {
+        Map<String, NexoraJob> jobImplMap = jobInterfaceList.stream().collect(Collectors.toMap(NexoraJob::getClassName, Function.identity()));
+        for (NexoraJobEntity jobEntity : nexoraJobList) {
             // 任务是否存在 判断是否需要更新
             Integer jobId = jobEntity.getJobId();
-            SmartJobEntity oldJobEntity = SmartJobScheduler.getJobInfo(jobId);
+            NexoraJobEntity oldJobEntity = NexoraJobScheduler.getJobInfo(jobId);
             if (null != oldJobEntity) {
                 // 不需要更新
                 if (!isNeedUpdate(oldJobEntity, jobEntity)) {
                     continue;
                 }
                 // 需要更新 移除原任务
-                SmartJobScheduler.removeJob(jobId);
+                NexoraJobScheduler.removeJob(jobId);
             }
             // 任务未开启
             if (!jobEntity.getEnabledFlag()) {
@@ -108,17 +108,17 @@ public class SmartJobLauncher {
                 continue;
             }
             // 查找任务实现类
-            SmartJob jobImpl = jobImplMap.get(jobEntity.getJobClass());
+            NexoraJob jobImpl = jobImplMap.get(jobEntity.getJobClass());
             if (null == jobImpl) {
                 continue;
             }
             // 添加任务
-            SmartJobExecutor jobExecute = new SmartJobExecutor(jobEntity, jobRepository, jobImpl, redissonClient);
-            SmartJobScheduler.addJob(jobExecute);
+            NexoraJobExecutor jobExecute = new NexoraJobExecutor(jobEntity, jobRepository, jobImpl, redissonClient);
+            NexoraJobScheduler.addJob(jobExecute);
         }
-        List<SmartJobEntity> runjJobList = SmartJobScheduler.getJobInfo();
-        List<String> jobNameList = runjJobList.stream().map(SmartJobEntity::getJobName).collect(Collectors.toList());
-        log.info("==== SmartJob ==== start/refresh job num:{}->{}", runjJobList.size(), jobNameList);
+        List<NexoraJobEntity> runjJobList = NexoraJobScheduler.getJobInfo();
+        List<String> jobNameList = runjJobList.stream().map(NexoraJobEntity::getJobName).collect(Collectors.toList());
+        log.info("==== NexoraJob ==== start/refresh job num:{}->{}", runjJobList.size(), jobNameList);
     }
 
     /**
@@ -126,7 +126,7 @@ public class SmartJobLauncher {
      *
      * @return
      */
-    private List<SmartJobEntity> queryJob() {
+    private List<NexoraJobEntity> queryJob() {
         return jobRepository.getJobDao().selectList(null);
     }
 
@@ -136,7 +136,7 @@ public class SmartJobLauncher {
      *
      * @return
      */
-    private static boolean isNeedUpdate(SmartJobEntity oldJob, SmartJobEntity newJob) {
+    private static boolean isNeedUpdate(NexoraJobEntity oldJob, NexoraJobEntity newJob) {
         // cron为空时 fixedDelay 才有意义
         return !Objects.equals(oldJob.getEnabledFlag(), newJob.getEnabledFlag())
                 || !Objects.equals(oldJob.getDeletedFlag(), newJob.getDeletedFlag())
@@ -147,7 +147,7 @@ public class SmartJobLauncher {
 
     @PreDestroy
     public void destroy() {
-        SmartJobScheduler.destroy();
-        log.info("==== SmartJob ==== destroy job");
+        NexoraJobScheduler.destroy();
+        log.info("==== NexoraJob ==== destroy job");
     }
 }

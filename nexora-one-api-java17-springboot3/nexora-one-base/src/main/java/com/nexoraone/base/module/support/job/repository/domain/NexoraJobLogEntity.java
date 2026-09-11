@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
  * @date 2024/6/17 21:30
  */
 @Data
-@TableName("t_smart_job_log")
-public class SmartJobLogEntity {
+@TableName("t_nexora_job_log")
+public class NexoraJobLogEntity {
 
     @TableId(type = IdType.AUTO)
     private Long logId;

@@ -174,7 +174,7 @@ sa-token:
   # 是否从cookie读取token
   is-read-cookie: false
 
-# SmartJob 定时任务配置(不需要可以直接删除以下配置，详细文档请看：https://www.xxxxxx.com)
+# NexoraJob 定时任务配置(不需要可以直接删除以下配置，详细文档请看：https://www.xxxxxx.com)
 smart:
   job:
     enabled: true

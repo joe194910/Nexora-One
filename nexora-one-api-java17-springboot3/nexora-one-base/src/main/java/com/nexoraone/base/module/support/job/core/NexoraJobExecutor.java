@@ -3,11 +3,11 @@ package com.nexoraone.base.module.support.job.core;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import lombok.extern.slf4j.Slf4j;
 import com.nexoraone.base.common.util.SmartIpUtil;
-import com.nexoraone.base.module.support.job.constant.SmartJobConst;
-import com.nexoraone.base.module.support.job.constant.SmartJobUtil;
-import com.nexoraone.base.module.support.job.repository.SmartJobRepository;
-import com.nexoraone.base.module.support.job.repository.domain.SmartJobEntity;
-import com.nexoraone.base.module.support.job.repository.domain.SmartJobLogEntity;
+import com.nexoraone.base.module.support.job.constant.NexoraJobConst;
+import com.nexoraone.base.module.support.job.constant.NexoraJobUtil;
+import com.nexoraone.base.module.support.job.repository.NexoraJobRepository;
+import com.nexoraone.base.module.support.job.repository.domain.NexoraJobEntity;
+import com.nexoraone.base.module.support.job.repository.domain.NexoraJobLogEntity;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.util.StopWatch;
@@ -23,21 +23,21 @@ import java.util.concurrent.TimeUnit;
  * @date 2024/6/17 21:30
  */
 @Slf4j
-public class SmartJobExecutor implements Runnable {
+public class NexoraJobExecutor implements Runnable {
 
-    private final SmartJobEntity jobEntity;
+    private final NexoraJobEntity jobEntity;
 
-    private final SmartJobRepository jobRepository;
+    private final NexoraJobRepository jobRepository;
 
-    private final SmartJob jobInterface;
+    private final NexoraJob jobInterface;
 
     private final RedissonClient redissonClient;
 
-    private static final String EXECUTE_LOCK = "smart-job-lock-execute-";
+    private static final String EXECUTE_LOCK = "nexora-job-lock-execute-";
 
-    public SmartJobExecutor(SmartJobEntity jobEntity,
-                            SmartJobRepository jobRepository,
-                            SmartJob jobInterface,
+    public NexoraJobExecutor(NexoraJobEntity jobEntity,
+                            NexoraJobRepository jobRepository,
+                            NexoraJob jobInterface,
                             RedissonClient redissonClient) {
         this.jobEntity = jobEntity;
         this.jobRepository = jobRepository;
@@ -59,22 +59,22 @@ public class SmartJobExecutor implements Runnable {
                 return;
             }
             // 查询上次执行时间 校验执行间隔
-            SmartJobEntity dbJobEntity = jobRepository.getJobDao().selectById(jobId);
+            NexoraJobEntity dbJobEntity = jobRepository.getJobDao().selectById(jobId);
             if (null == dbJobEntity) {
                 return;
             }
             LocalDateTime lastExecuteTime = dbJobEntity.getLastExecuteTime();
             if (null != lastExecuteTime) {
-                LocalDateTime nextTime = SmartJobUtil.queryNextTimeFromLast(jobEntity.getTriggerType(), jobEntity.getTriggerValue(), lastExecuteTime, 1).get(0);
+                LocalDateTime nextTime = NexoraJobUtil.queryNextTimeFromLast(jobEntity.getTriggerType(), jobEntity.getTriggerValue(), lastExecuteTime, 1).get(0);
                 if (LocalDateTime.now().isBefore(nextTime)) {
                     return;
                 }
             }
             // 执行任务
-            SmartJobLogEntity logEntity = this.execute(SmartJobConst.SYSTEM_NAME);
-            log.info("==== SmartJob ==== execute job->{},time-millis->{}ms", jobEntity.getJobName(), logEntity.getExecuteTimeMillis());
+            NexoraJobLogEntity logEntity = this.execute(NexoraJobConst.SYSTEM_NAME);
+            log.info("==== NexoraJob ==== execute job->{},time-millis->{}ms", jobEntity.getJobName(), logEntity.getExecuteTimeMillis());
         } catch (Throwable t) {
-            log.error("==== SmartJob ==== execute err:", t);
+            log.error("==== NexoraJob ==== execute err:", t);
         } finally {
             if (rLock.isHeldByCurrentThread()) {
                 rLock.unlock();
@@ -87,7 +87,7 @@ public class SmartJobExecutor implements Runnable {
      *
      * @param executorName
      */
-    public SmartJobLogEntity execute(String executorName) {
+    public NexoraJobLogEntity execute(String executorName) {
         // 保存执行记录
         LocalDateTime startTime = LocalDateTime.now();
         Long logId = this.saveLogBeforeExecute(jobEntity, executorName, startTime);
@@ -107,11 +107,11 @@ public class SmartJobExecutor implements Runnable {
             successFlag = false;
             // ps:异常信息不大于数据库字段长度限制
             executeResult = ExceptionUtil.stacktraceToString(t, 1800);
-            log.error("==== SmartJob ==== execute err:", t);
+            log.error("==== NexoraJob ==== execute err:", t);
         }
 
         // 更新执行记录
-        SmartJobLogEntity logEntity = new SmartJobLogEntity();
+        NexoraJobLogEntity logEntity = new NexoraJobLogEntity();
         logEntity.setLogId(logId);
         logEntity.setSuccessFlag(successFlag);
         long totalTimeMillis = stopWatch.getTotalTimeMillis();
@@ -130,12 +130,12 @@ public class SmartJobExecutor implements Runnable {
      * @param executeTime
      * @return 返回执行记录id
      */
-    private Long saveLogBeforeExecute(SmartJobEntity jobEntity,
+    private Long saveLogBeforeExecute(NexoraJobEntity jobEntity,
                                       String executorName,
                                       LocalDateTime executeTime) {
         Integer jobId = jobEntity.getJobId();
         // 保存执行记录
-        SmartJobLogEntity logEntity = new SmartJobLogEntity();
+        NexoraJobLogEntity logEntity = new NexoraJobLogEntity();
         logEntity.setJobId(jobId);
         logEntity.setJobName(jobEntity.getJobName());
         logEntity.setParam(jobEntity.getParam());
@@ -146,11 +146,11 @@ public class SmartJobExecutor implements Runnable {
         logEntity.setExecuteTimeMillis(0L);
         logEntity.setCreateName(executorName);
         logEntity.setIp(SmartIpUtil.getLocalFirstIp());
-        logEntity.setProcessId(SmartJobUtil.getProcessId());
-        logEntity.setProgramPath(SmartJobUtil.getProgramPath());
+        logEntity.setProcessId(NexoraJobUtil.getProcessId());
+        logEntity.setProgramPath(NexoraJobUtil.getProgramPath());
 
         // 更新最后执行时间
-        SmartJobEntity updateJobEntity = new SmartJobEntity();
+        NexoraJobEntity updateJobEntity = new NexoraJobEntity();
         updateJobEntity.setJobId(jobId);
         updateJobEntity.setLastExecuteTime(executeTime);
         jobRepository.saveLog(logEntity, updateJobEntity);
@@ -162,7 +162,7 @@ public class SmartJobExecutor implements Runnable {
      *
      * @return
      */
-    public SmartJobEntity getJob() {
+    public NexoraJobEntity getJob() {
         return jobEntity;
     }
 }

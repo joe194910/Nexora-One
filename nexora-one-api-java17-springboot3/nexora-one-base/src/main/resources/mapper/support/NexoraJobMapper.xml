@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.nexoraone.base.module.support.job.repository.SmartJobDao">
+<mapper namespace="com.nexoraone.base.module.support.job.repository.NexoraJobDao">
 
     <update id="updateDeletedFlag">
-        update t_smart_job
+        update t_nexora_job
         set deleted_flag = #{deletedFlag}
         where job_id = #{jobId}
     </update>
 
     <!-- 定时任务-分页查询 -->
-    <select id="query" resultType="com.nexoraone.base.module.support.job.api.domain.SmartJobVO">
+    <select id="query" resultType="com.nexoraone.base.module.support.job.api.domain.NexoraJobVO">
         SELECT *
-        FROM t_smart_job
+        FROM t_nexora_job
         <where>
             <if test="query.searchWord != null and query.searchWord != ''">
                 AND ( INSTR(job_name,#{query.searchWord})
@@ -34,9 +34,9 @@
         </if>
     </select>
 
-    <select id="selectByJobClass" resultType="com.nexoraone.base.module.support.job.repository.domain.SmartJobEntity">
+    <select id="selectByJobClass" resultType="com.nexoraone.base.module.support.job.repository.domain.NexoraJobEntity">
         SELECT *
-        FROM t_smart_job
+        FROM t_nexora_job
         WHERE job_class = #{jobClass}
     </select>
 

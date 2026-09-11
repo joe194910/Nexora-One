@@ -39,6 +39,9 @@ import java.time.LocalDateTime;
 @Service
 public class ApplicationOpenAuthService {
 
+    /** 应用在提交审核前用于验证平台连通性的专用权限。 */
+    public static final String CONNECTION_VERIFICATION_SCOPE = "application:connect:ping";
+
     private static final String CLIENT_CREDENTIALS = "client_credentials";
     private static final long DEFAULT_TOKEN_TTL_SECONDS = 7200L;
     private static final long MIN_TOKEN_TTL_SECONDS = 60L;
@@ -76,12 +79,16 @@ public class ApplicationOpenAuthService {
         if (application == null) {
             return ResponseDTO.userErrorParam("应用不存在或已停用");
         }
-        if (!Objects.equals(application.getListingStatus(), 2)) {
-            return ResponseDTO.userErrorParam("应用尚未通过平台审核并上架，无法签发Access Token");
+        if (Objects.equals(application.getListingStatus(), 4)) {
+            return ResponseDTO.userErrorParam("应用已下架，无法签发Access Token");
         }
 
         long ttlSeconds = resolveTokenTtl(application.getLoginConfig());
-        List<String> scopes = queryGrantedScopes(application.getApplicationId());
+        List<String> scopes = new ArrayList<>();
+        scopes.add(CONNECTION_VERIFICATION_SCOPE);
+        if (Objects.equals(application.getListingStatus(), 2)) {
+            scopes.addAll(queryGrantedScopes(application.getApplicationId()));
+        }
         long now = System.currentTimeMillis();
 
         ApplicationAccessContextVO context = new ApplicationAccessContextVO();
@@ -136,11 +143,22 @@ public class ApplicationOpenAuthService {
             return ResponseDTO.userErrorParam("Access Token已因应用密钥变更而失效");
         }
         ApplicationEntity application = applicationDao.selectById(context.getApplicationId());
-        if (application == null || !Objects.equals(application.getListingStatus(), 2)) {
+        if (application == null || Objects.equals(application.getListingStatus(), 4)) {
             accessTokenManager.revoke(accessToken);
-            return ResponseDTO.userErrorParam("应用不存在、未上架或已停用");
+            return ResponseDTO.userErrorParam("应用不存在或已下架");
+        }
+        boolean connectionVerification = markConnected
+                && Objects.equals(requiredScope, CONNECTION_VERIFICATION_SCOPE);
+        if (!connectionVerification && !Objects.equals(application.getListingStatus(), 2)) {
+            return ResponseDTO.userErrorParam("应用尚未通过平台审核并上架，暂时只能进行接入验证");
+        }
+        if (connectionVerification
+                && (context.getScopes() == null
+                || !context.getScopes().contains(CONNECTION_VERIFICATION_SCOPE))) {
+            return ResponseDTO.userErrorParam("当前Access Token不具备接入验证权限");
         }
         if (StringUtils.isNotBlank(requiredScope)
+                && !Objects.equals(requiredScope, CONNECTION_VERIFICATION_SCOPE)
                 && !queryGrantedScopes(context.getApplicationId()).contains(requiredScope)) {
             return ResponseDTO.userErrorParam("当前应用未获得API权限：" + requiredScope);
         }
@@ -177,7 +195,8 @@ public class ApplicationOpenAuthService {
         }
 
         String accessToken = tokenResult.getData().getAccessToken();
-        ResponseDTO<ApplicationConnectVO> connectResult = authorize("Bearer " + accessToken, null, true);
+        ResponseDTO<ApplicationConnectVO> connectResult = authorize(
+                "Bearer " + accessToken, CONNECTION_VERIFICATION_SCOPE, true);
         accessTokenManager.revoke(accessToken);
         return connectResult;
     }

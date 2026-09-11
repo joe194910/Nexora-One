@@ -88,7 +88,8 @@
             <strong>平台接入验证</strong>
             <div class="application-page__subtitle">
               先通过 <code>POST /open-api/oauth/token</code> 换取 Access Token，再请求
-              <code>GET /open-api/connect/ping</code>；请求成功后才会标记为已接入。
+              <code>GET /open-api/connect/ping</code>；草稿阶段即可验证，成功后才允许提交审核。
+              审核通过前签发的 Token 仅能用于本次连通性验证。
             </div>
           </div>
           <a-input-password

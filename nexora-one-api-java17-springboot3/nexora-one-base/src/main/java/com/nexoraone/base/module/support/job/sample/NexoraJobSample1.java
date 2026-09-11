@@ -1,7 +1,7 @@
 package com.nexoraone.base.module.support.job.sample;
 
 import lombok.extern.slf4j.Slf4j;
-import com.nexoraone.base.module.support.job.core.SmartJob;
+import com.nexoraone.base.module.support.job.core.NexoraJob;
 import org.springframework.stereotype.Service;
 
 /**
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
-public class SmartJobSample1 implements SmartJob {
+public class NexoraJobSample1 implements NexoraJob {
 
     /**
      * 定时任务示例

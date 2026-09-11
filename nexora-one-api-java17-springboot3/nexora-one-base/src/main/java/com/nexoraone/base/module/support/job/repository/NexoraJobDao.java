@@ -2,9 +2,9 @@ package com.nexoraone.base.module.support.job.repository;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.nexoraone.base.module.support.job.api.domain.SmartJobQueryForm;
-import com.nexoraone.base.module.support.job.api.domain.SmartJobVO;
-import com.nexoraone.base.module.support.job.repository.domain.SmartJobEntity;
+import com.nexoraone.base.module.support.job.api.domain.NexoraJobQueryForm;
+import com.nexoraone.base.module.support.job.api.domain.NexoraJobVO;
+import com.nexoraone.base.module.support.job.repository.domain.NexoraJobEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Component;
@@ -18,7 +18,7 @@ import java.util.List;
  * @date 2024/6/17 21:30
  */
 @Mapper
-public interface SmartJobDao extends BaseMapper<SmartJobEntity> {
+public interface NexoraJobDao extends BaseMapper<NexoraJobEntity> {
 
     /**
      * 定时任务-分页查询
@@ -27,7 +27,7 @@ public interface SmartJobDao extends BaseMapper<SmartJobEntity> {
      * @param queryForm
      * @return
      */
-    List<SmartJobVO> query(Page<?> page, @Param("query") SmartJobQueryForm queryForm);
+    List<NexoraJobVO> query(Page<?> page, @Param("query") NexoraJobQueryForm queryForm);
 
     /**
      * 假删除
@@ -43,5 +43,5 @@ public interface SmartJobDao extends BaseMapper<SmartJobEntity> {
      * @param jobClass
      * @return
      */
-    SmartJobEntity selectByJobClass(@Param("jobClass") String jobClass);
+    NexoraJobEntity selectByJobClass(@Param("jobClass") String jobClass);
 }

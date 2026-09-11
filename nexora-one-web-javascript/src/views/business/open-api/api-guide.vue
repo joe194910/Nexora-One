@@ -83,7 +83,7 @@
   const apiBaseUrl = new URL(configuredApiUrl, window.location.origin).href.replace(/\/$/, '');
   const tokenExample = computed(() => `curl -X POST ${apiBaseUrl}${guide.tokenPath} \\
   -H "Content-Type: application/json" \\
-  -d '{"app_id":"app_nxo_xxx","app_secret":"仅服务端保存","grant_type":"${guide.grantType}"}'`);
+  -d '{"appId":"app_nxo_xxx","appSecret":"仅服务端保存","grantType":"${guide.grantType}"}'`);
   const callExample = `curl -X GET "${apiBaseUrl}/open-api/v1/resource" \\
   -H "Authorization: Bearer {access_token}" \\
   -H "X-App-Id: {app_id}" \\

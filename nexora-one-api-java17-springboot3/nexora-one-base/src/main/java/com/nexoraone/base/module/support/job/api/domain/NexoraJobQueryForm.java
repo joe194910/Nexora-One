@@ -5,7 +5,7 @@ import lombok.Data;
 import com.nexoraone.base.common.domain.PageParam;
 import com.nexoraone.base.common.swagger.SchemaEnum;
 import com.nexoraone.base.common.validator.enumeration.CheckEnum;
-import com.nexoraone.base.module.support.job.constant.SmartJobTriggerTypeEnum;
+import com.nexoraone.base.module.support.job.constant.NexoraJobTriggerTypeEnum;
 import org.hibernate.validator.constraints.Length;
 
 /**
@@ -15,14 +15,14 @@ import org.hibernate.validator.constraints.Length;
  * @date 2024/6/17 20:50
  */
 @Data
-public class SmartJobQueryForm extends PageParam {
+public class NexoraJobQueryForm extends PageParam {
 
     @Schema(description = "搜索词|可选")
     @Length(max = 50, message = "搜索词最多50字符")
     private String searchWord;
 
-    @SchemaEnum(desc = "触发类型", value = SmartJobTriggerTypeEnum.class)
-    @CheckEnum(value = SmartJobTriggerTypeEnum.class, message = "触发类型错误")
+    @SchemaEnum(desc = "触发类型", value = NexoraJobTriggerTypeEnum.class)
+    @CheckEnum(value = NexoraJobTriggerTypeEnum.class, message = "触发类型错误")
     private String triggerType;
 
     @Schema(description = "是否启用|可选")

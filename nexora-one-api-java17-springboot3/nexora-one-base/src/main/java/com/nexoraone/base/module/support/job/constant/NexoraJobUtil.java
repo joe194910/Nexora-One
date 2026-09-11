@@ -1,7 +1,7 @@
 package com.nexoraone.base.module.support.job.constant;
 
 import com.nexoraone.base.common.domain.ResponseDTO;
-import com.nexoraone.base.module.support.job.core.SmartJob;
+import com.nexoraone.base.module.support.job.core.NexoraJob;
 import org.springframework.scheduling.support.CronExpression;
 
 import java.lang.management.ManagementFactory;
@@ -12,14 +12,14 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * smart job util
+ * NexoraJob 定时任务工具类
  *
  * @author huke
  * @date 2024/6/18 20:00
  */
-public class SmartJobUtil {
+public class NexoraJobUtil {
 
-    private SmartJobUtil() {
+    private NexoraJobUtil() {
     }
 
     /**
@@ -72,10 +72,10 @@ public class SmartJobUtil {
                                                             LocalDateTime lastExecuteTime,
                                                             int num) {
         List<LocalDateTime> nextTimeList = null;
-        if (SmartJobTriggerTypeEnum.CRON.equalsValue(triggerType)) {
-            nextTimeList = SmartJobUtil.queryNextTime(triggerVal, lastExecuteTime, num);
-        } else if (SmartJobTriggerTypeEnum.FIXED_DELAY.equalsValue(triggerType)) {
-            nextTimeList = SmartJobUtil.queryNextTime(getFixedDelayVal(triggerVal), lastExecuteTime, num);
+        if (NexoraJobTriggerTypeEnum.CRON.equalsValue(triggerType)) {
+            nextTimeList = NexoraJobUtil.queryNextTime(triggerVal, lastExecuteTime, num);
+        } else if (NexoraJobTriggerTypeEnum.FIXED_DELAY.equalsValue(triggerType)) {
+            nextTimeList = NexoraJobUtil.queryNextTime(getFixedDelayVal(triggerVal), lastExecuteTime, num);
         }
         return nextTimeList;
     }
@@ -95,13 +95,13 @@ public class SmartJobUtil {
                                                            int num) {
         LocalDateTime nowTime = LocalDateTime.now();
         List<LocalDateTime> nextTimeList = null;
-        if (SmartJobTriggerTypeEnum.CRON.equalsValue(triggerType)) {
-            nextTimeList = SmartJobUtil.queryNextTime(triggerVal, nowTime, num);
-        } else if (SmartJobTriggerTypeEnum.FIXED_DELAY.equalsValue(triggerType)) {
+        if (NexoraJobTriggerTypeEnum.CRON.equalsValue(triggerType)) {
+            nextTimeList = NexoraJobUtil.queryNextTime(triggerVal, nowTime, num);
+        } else if (NexoraJobTriggerTypeEnum.FIXED_DELAY.equalsValue(triggerType)) {
             Integer fixedDelay = getFixedDelayVal(triggerVal);
             LocalDateTime startTime = null == lastExecuteTime || lastExecuteTime.plusSeconds(fixedDelay).isBefore(nowTime)
                     ? nowTime : lastExecuteTime;
-            nextTimeList = SmartJobUtil.queryNextTime(fixedDelay, startTime, num);
+            nextTimeList = NexoraJobUtil.queryNextTime(fixedDelay, startTime, num);
         }
         return nextTimeList;
     }
@@ -183,9 +183,9 @@ public class SmartJobUtil {
     public static ResponseDTO<String> checkJobClass(String className) {
         try {
             Class<?> aClass = Class.forName(className);
-            // 判断是否实现了 SmartJob
-            if (!SmartJob.class.isAssignableFrom(aClass)) {
-                return ResponseDTO.userErrorParam(className + " 执行类没有实现 SmartJob 接口");
+            // 判断是否实现了 NexoraJob
+            if (!NexoraJob.class.isAssignableFrom(aClass)) {
+                return ResponseDTO.userErrorParam(className + " 执行类没有实现 NexoraJob 接口");
             }
         } catch (ClassNotFoundException e) {
             return ResponseDTO.userErrorParam("没有在代码中发现执行类：" + className);
@@ -196,15 +196,15 @@ public class SmartJobUtil {
 
     public static void main(String[] args) {
         LocalDateTime startTime = LocalDateTime.now();
-        List<LocalDateTime> timeList = SmartJobUtil.queryNextTime("5 * * * * *", startTime, 3);
+        List<LocalDateTime> timeList = NexoraJobUtil.queryNextTime("5 * * * * *", startTime, 3);
         System.out.println(timeList);
 
-        timeList = SmartJobUtil.queryNextTime(10, startTime, 3);
+        timeList = NexoraJobUtil.queryNextTime(10, startTime, 3);
         System.out.println(timeList);
 
         System.out.println("project path ->" + getProgramPath());
         System.out.println("project process id ->" + getProcessId());
-        ResponseDTO<String> res = checkJobClass("com.nexoraone.base.module.support.job.sample.SmartJobSample1");
+        ResponseDTO<String> res = checkJobClass("com.nexoraone.base.module.support.job.sample.NexoraJobSample1");
         System.out.println(res.getMsg());
     }
 }

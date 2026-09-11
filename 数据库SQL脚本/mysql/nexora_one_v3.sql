@@ -118,7 +118,7 @@ CREATE TABLE `t_config`  (
 -- Records of t_config
 -- ----------------------------
 INSERT INTO `t_config` VALUES (1, '万能密码', 'super_password', '1024ok', '一路春光啊一路荆棘呀惊鸿一般短暂如夏花一样绚烂这是一个不能停留太久的世界，一路春光啊一路荆棘呀惊鸿一般短暂如夏花一样绚烂这是一个不能停留太久的世界啊', '2024-09-03 21:27:03', '2021-12-16 23:32:46');
-INSERT INTO `t_config` VALUES (2, '三级等保', 'level3_protect_config', '{\n	\"fileDetectFlag\":true,\n	\"loginActiveTimeoutMinutes\":30,\n	\"loginFailLockMinutes\":30,\n	\"loginFailMaxTimes\":3,\n	\"maxUploadFileSizeMb\":30,\n	\"passwordComplexityEnabled\":true,\n	\"regularChangePasswordMonths\":3,\n	\"regularChangePasswordNotAllowRepeatTimes\":3,\n	\"twoFactorLoginEnabled\":false\n}', 'SmartJob Sample2 update', '2024-09-03 21:49:23', '2024-08-13 11:44:49');
+INSERT INTO `t_config` VALUES (2, '三级等保', 'level3_protect_config', '{\n	\"fileDetectFlag\":true,\n	\"loginActiveTimeoutMinutes\":30,\n	\"loginFailLockMinutes\":30,\n	\"loginFailMaxTimes\":3,\n	\"maxUploadFileSizeMb\":30,\n	\"passwordComplexityEnabled\":true,\n	\"regularChangePasswordMonths\":3,\n	\"regularChangePasswordNotAllowRepeatTimes\":3,\n	\"twoFactorLoginEnabled\":false\n}', 'NexoraJob Sample2 update', '2024-09-03 21:49:23', '2024-08-13 11:44:49');
 
 -- ----------------------------
 -- Table structure for t_data_tracer
@@ -1235,10 +1235,10 @@ CREATE TABLE `t_serial_number_record`  (
 
 
 -- ----------------------------
--- Table structure for t_smart_job
+-- Table structure for t_nexora_job
 -- ----------------------------
-DROP TABLE IF EXISTS `t_smart_job`;
-CREATE TABLE `t_smart_job`  (
+DROP TABLE IF EXISTS `t_nexora_job`;
+CREATE TABLE `t_nexora_job`  (
   `job_id` int(0) NOT NULL AUTO_INCREMENT COMMENT '任务id',
   `job_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '任务名称',
   `job_class` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '任务执行类',
@@ -1258,17 +1258,17 @@ CREATE TABLE `t_smart_job`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '定时任务配置 @listen' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Records of t_smart_job
+-- Records of t_nexora_job
 -- ----------------------------
-INSERT INTO `t_smart_job` VALUES (1, '示例任务1', 'com.nexoraone.base.module.support.job.sample.SmartJobSample1', 'cron', '10 15 0/1 * * *', 1, '执行示例任务1', '2025-01-05 19:15:10', 7988, 1, '执行示例任务1', 0, '管理员', '2024-06-17 20:00:46', '2025-01-08 20:07:51');
-INSERT INTO `t_smart_job` VALUES (2, '示例任务2', 'com.nexoraone.base.module.support.job.sample.SmartJobSample2', 'fixed_delay', '120', 1, '执行示例任务2', '2025-01-08 19:56:59', 8144, 2, '执行示例任务2', 0, '管理员', '2024-06-18 20:45:35', '2025-01-08 19:57:00');
+INSERT INTO `t_nexora_job` VALUES (1, '示例任务1', 'com.nexoraone.base.module.support.job.sample.NexoraJobSample1', 'cron', '10 15 0/1 * * *', 1, '执行示例任务1', '2025-01-05 19:15:10', 7988, 1, '执行示例任务1', 0, '管理员', '2024-06-17 20:00:46', '2025-01-08 20:07:51');
+INSERT INTO `t_nexora_job` VALUES (2, '示例任务2', 'com.nexoraone.base.module.support.job.sample.NexoraJobSample2', 'fixed_delay', '120', 1, '执行示例任务2', '2025-01-08 19:56:59', 8144, 2, '执行示例任务2', 0, '管理员', '2024-06-18 20:45:35', '2025-01-08 19:57:00');
 
 
 -- ----------------------------
--- Table structure for t_smart_job_log
+-- Table structure for t_nexora_job_log
 -- ----------------------------
-DROP TABLE IF EXISTS `t_smart_job_log`;
-CREATE TABLE `t_smart_job_log`  (
+DROP TABLE IF EXISTS `t_nexora_job_log`;
+CREATE TABLE `t_nexora_job_log`  (
   `log_id` int(0) NOT NULL AUTO_INCREMENT,
   `job_id` int(0) NOT NULL COMMENT '任务id',
   `job_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '任务名称',

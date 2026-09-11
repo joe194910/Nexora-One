@@ -74,7 +74,8 @@ public class ApplicationOpenAuthController {
     public ResponseDTO<ApplicationConnectVO> ping(
             @Parameter(description = "Bearer Access Token", required = true)
             @RequestHeader("Authorization") String authorization) {
-        return openAuthService.authorize(authorization, null, true);
+        return openAuthService.authorize(
+                authorization, ApplicationOpenAuthService.CONNECTION_VERIFICATION_SCOPE, true);
     }
 
     /**

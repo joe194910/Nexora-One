@@ -12,7 +12,7 @@ import com.nexoraone.base.common.enumeration.BaseEnum;
  * @date 2024/6/20 21:10
  */
 @Data
-public class SmartJobMsg {
+public class NexoraJobMsg {
 
     /**
      * 消息id 无需设置

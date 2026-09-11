@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * @date 2024/6/17 21:30
  */
 @Data
-public class SmartJobLogVO {
+public class NexoraJobLogVO {
 
     @Schema(description = "logId")
     private Long logId;

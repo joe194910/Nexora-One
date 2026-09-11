@@ -12,7 +12,7 @@ import com.nexoraone.base.common.enumeration.BaseEnum;
  **/
 @AllArgsConstructor
 @Getter
-public enum SmartJobTriggerTypeEnum implements BaseEnum {
+public enum NexoraJobTriggerTypeEnum implements BaseEnum {
 
     /**
      * 1 cron表达式

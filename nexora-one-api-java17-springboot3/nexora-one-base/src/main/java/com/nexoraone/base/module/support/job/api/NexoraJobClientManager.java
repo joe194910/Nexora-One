@@ -4,13 +4,13 @@ import cn.hutool.core.util.IdUtil;
 import com.google.common.collect.Lists;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import com.nexoraone.base.module.support.job.api.domain.SmartJobMsg;
-import com.nexoraone.base.module.support.job.config.SmartJobAutoConfiguration;
-import com.nexoraone.base.module.support.job.core.SmartJob;
-import com.nexoraone.base.module.support.job.core.SmartJobExecutor;
-import com.nexoraone.base.module.support.job.core.SmartJobLauncher;
-import com.nexoraone.base.module.support.job.repository.SmartJobRepository;
-import com.nexoraone.base.module.support.job.repository.domain.SmartJobEntity;
+import com.nexoraone.base.module.support.job.api.domain.NexoraJobMsg;
+import com.nexoraone.base.module.support.job.config.NexoraJobAutoConfiguration;
+import com.nexoraone.base.module.support.job.core.NexoraJob;
+import com.nexoraone.base.module.support.job.core.NexoraJobExecutor;
+import com.nexoraone.base.module.support.job.core.NexoraJobLauncher;
+import com.nexoraone.base.module.support.job.repository.NexoraJobRepository;
+import com.nexoraone.base.module.support.job.repository.domain.NexoraJobEntity;
 import org.redisson.api.RLock;
 import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
@@ -24,36 +24,36 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
- * smart job 执行端管理
+ * NexoraJob 定时任务执行端管理器
  * 分布式系统之间 用发布/订阅消息的形式 来管理多个job
  *
  * @author huke
  * @date 2024/6/22 20:31
  */
-@ConditionalOnBean(SmartJobAutoConfiguration.class)
+@ConditionalOnBean(NexoraJobAutoConfiguration.class)
 @Slf4j
 @Service
-public class SmartJobClientManager {
+public class NexoraJobClientManager {
 
-    private final SmartJobLauncher jobLauncher;
+    private final NexoraJobLauncher jobLauncher;
 
-    private final SmartJobRepository jobRepository;
+    private final NexoraJobRepository jobRepository;
 
-    private final List<SmartJob> jobInterfaceList;
+    private final List<NexoraJob> jobInterfaceList;
 
-    private static final String EXECUTE_LOCK = "smart-job-lock-msg-execute-";
+    private static final String EXECUTE_LOCK = "nexora-job-lock-msg-execute-";
 
-    private static final String TOPIC = "smart-job-instance";
+    private static final String TOPIC = "nexora-job-instance";
 
     private final RedissonClient redissonClient;
 
     private final RTopic topic;
 
-    private final SmartJobMsgListener jobMsgListener;
+    private final NexoraJobMsgListener jobMsgListener;
 
-    public SmartJobClientManager(SmartJobLauncher jobLauncher,
-                                 SmartJobRepository jobRepository,
-                                 List<SmartJob> jobInterfaceList,
+    public NexoraJobClientManager(NexoraJobLauncher jobLauncher,
+                                 NexoraJobRepository jobRepository,
+                                 List<NexoraJob> jobInterfaceList,
                                  RedissonClient redissonClient) {
         this.jobLauncher = jobLauncher;
         this.jobRepository = jobRepository;
@@ -62,15 +62,15 @@ public class SmartJobClientManager {
 
         // 添加监听器
         this.topic = redissonClient.getTopic(TOPIC);
-        this.jobMsgListener = new SmartJobMsgListener();
-        topic.addListener(SmartJobMsg.class, jobMsgListener);
-        log.info("==== SmartJob ==== client-manager init");
+        this.jobMsgListener = new NexoraJobMsgListener();
+        topic.addListener(NexoraJobMsg.class, jobMsgListener);
+        log.info("==== NexoraJob ==== client-manager init");
     }
 
     /**
      * 发布消息
      */
-    public void publishToClient(SmartJobMsg msgDTO) {
+    public void publishToClient(NexoraJobMsg msgDTO) {
         msgDTO.setMsgId(IdUtil.fastSimpleUUID());
         topic.publish(msgDTO);
     }
@@ -78,19 +78,19 @@ public class SmartJobClientManager {
     /**
      * 处理消息
      */
-    private class SmartJobMsgListener implements MessageListener<SmartJobMsg> {
+    private class NexoraJobMsgListener implements MessageListener<NexoraJobMsg> {
 
         @Override
-        public void onMessage(CharSequence channel, SmartJobMsg msg) {
-            log.info("==== SmartJob ==== on-message :{}", msg);
+        public void onMessage(CharSequence channel, NexoraJobMsg msg) {
+            log.info("==== NexoraJob ==== on-message :{}", msg);
             // 判断消息类型 业务简单就直接判断 复杂的话可以策略模式
-            SmartJobMsg.MsgTypeEnum msgType = msg.getMsgType();
+            NexoraJobMsg.MsgTypeEnum msgType = msg.getMsgType();
             // 更新任务
-            if (SmartJobMsg.MsgTypeEnum.UPDATE_JOB == msgType) {
+            if (NexoraJobMsg.MsgTypeEnum.UPDATE_JOB == msgType) {
                 updateJob(msg.getJobId());
             }
             // 执行任务
-            if (SmartJobMsg.MsgTypeEnum.EXECUTE_JOB == msgType) {
+            if (NexoraJobMsg.MsgTypeEnum.EXECUTE_JOB == msgType) {
                 executeJob(msg);
             }
         }
@@ -102,7 +102,7 @@ public class SmartJobClientManager {
      * @param jobClass
      * @return
      */
-    private Optional<SmartJob> queryJobImpl(String jobClass) {
+    private Optional<NexoraJob> queryJobImpl(String jobClass) {
         return jobInterfaceList.stream().filter(e -> Objects.equals(e.getClassName(), jobClass)).findFirst();
     }
 
@@ -112,7 +112,7 @@ public class SmartJobClientManager {
      * @param jobId
      */
     private void updateJob(Integer jobId) {
-        SmartJobEntity jobEntity = jobRepository.getJobDao().selectById(jobId);
+        NexoraJobEntity jobEntity = jobRepository.getJobDao().selectById(jobId);
         if (null == jobEntity) {
             return;
         }
@@ -124,14 +124,14 @@ public class SmartJobClientManager {
      *
      * @param msg
      */
-    private void executeJob(SmartJobMsg msg) {
+    private void executeJob(NexoraJobMsg msg) {
         Integer jobId = msg.getJobId();
-        SmartJobEntity jobEntity = jobRepository.getJobDao().selectById(jobId);
+        NexoraJobEntity jobEntity = jobRepository.getJobDao().selectById(jobId);
         if (null == jobEntity) {
             return;
         }
         // 获取定时任务实现类
-        Optional<SmartJob> optional = this.queryJobImpl(jobEntity.getJobClass());
+        Optional<NexoraJob> optional = this.queryJobImpl(jobEntity.getJobClass());
         if (!optional.isPresent()) {
             return;
         }
@@ -144,13 +144,13 @@ public class SmartJobClientManager {
                 return;
             }
         } catch (InterruptedException e) {
-            log.error("==== SmartJob ==== msg execute err:", e);
+            log.error("==== NexoraJob ==== msg execute err:", e);
             return;
         }
 
         // 通过执行器 执行任务
         jobEntity.setParam(msg.getParam());
-        SmartJobExecutor jobExecutor = new SmartJobExecutor(jobEntity, jobRepository, optional.get(), redissonClient);
+        NexoraJobExecutor jobExecutor = new NexoraJobExecutor(jobEntity, jobRepository, optional.get(), redissonClient);
         jobExecutor.execute(msg.getUpdateName());
     }
 

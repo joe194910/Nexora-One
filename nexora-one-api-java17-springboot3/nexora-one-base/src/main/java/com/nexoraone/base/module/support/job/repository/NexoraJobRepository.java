@@ -1,7 +1,7 @@
 package com.nexoraone.base.module.support.job.repository;
 
-import com.nexoraone.base.module.support.job.repository.domain.SmartJobEntity;
-import com.nexoraone.base.module.support.job.repository.domain.SmartJobLogEntity;
+import com.nexoraone.base.module.support.job.repository.domain.NexoraJobEntity;
+import com.nexoraone.base.module.support.job.repository.domain.NexoraJobLogEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,19 +13,19 @@ import org.springframework.transaction.annotation.Transactional;
  * @date 2024/6/22 22:28
  */
 @Service
-public class SmartJobRepository {
+public class NexoraJobRepository {
 
     @Autowired
-    private SmartJobDao jobDao;
+    private NexoraJobDao jobDao;
 
     @Autowired
-    private SmartJobLogDao jobLogDao;
+    private NexoraJobLogDao jobLogDao;
 
-    public SmartJobDao getJobDao() {
+    public NexoraJobDao getJobDao() {
         return jobDao;
     }
 
-    public SmartJobLogDao getJobLogDao() {
+    public NexoraJobLogDao getJobLogDao() {
         return jobLogDao;
     }
 
@@ -36,7 +36,7 @@ public class SmartJobRepository {
      * @param jobEntity
      */
     @Transactional(rollbackFor = Throwable.class)
-    public void saveLog(SmartJobLogEntity logEntity, SmartJobEntity jobEntity) {
+    public void saveLog(NexoraJobLogEntity logEntity, NexoraJobEntity jobEntity) {
         jobLogDao.insert(logEntity);
 
         jobEntity.setLastExecuteLogId(logEntity.getLogId());

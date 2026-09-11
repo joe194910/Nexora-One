@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import com.nexoraone.base.common.json.serializer.enumeration.EnumSerialize;
 import com.nexoraone.base.common.swagger.SchemaEnum;
-import com.nexoraone.base.module.support.job.constant.SmartJobTriggerTypeEnum;
+import com.nexoraone.base.module.support.job.constant.NexoraJobTriggerTypeEnum;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
  * @date 2024/6/17 21:30
  */
 @Data
-public class SmartJobVO {
+public class NexoraJobVO {
 
     @Schema(description = "任务id")
     private Integer jobId;
@@ -27,8 +27,8 @@ public class SmartJobVO {
     @Schema(description = "执行类")
     private String jobClass;
 
-    @SchemaEnum(desc = "触发类型", value = SmartJobTriggerTypeEnum.class)
-    @EnumSerialize(SmartJobTriggerTypeEnum.class)
+    @SchemaEnum(desc = "触发类型", value = NexoraJobTriggerTypeEnum.class)
+    @EnumSerialize(NexoraJobTriggerTypeEnum.class)
     private String triggerType;
 
     @Schema(description = "触发配置")
@@ -59,7 +59,7 @@ public class SmartJobVO {
     private LocalDateTime createTime;
 
     @Schema(description = "上次执行记录")
-    private SmartJobLogVO lastJobLog;
+    private NexoraJobLogVO lastJobLog;
 
     @Schema(description = "未来N次任务执行时间")
     private List<LocalDateTime> nextJobExecuteTimeList;

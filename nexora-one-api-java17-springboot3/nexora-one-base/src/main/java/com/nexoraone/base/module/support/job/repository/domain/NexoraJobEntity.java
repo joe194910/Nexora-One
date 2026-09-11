@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-import com.nexoraone.base.module.support.job.constant.SmartJobTriggerTypeEnum;
+import com.nexoraone.base.module.support.job.constant.NexoraJobTriggerTypeEnum;
 
 import java.time.LocalDateTime;
 
@@ -15,8 +15,8 @@ import java.time.LocalDateTime;
  * @date 2024/6/17 21:30
  */
 @Data
-@TableName("t_smart_job")
-public class SmartJobEntity {
+@TableName("t_nexora_job")
+public class NexoraJobEntity {
 
     /**
      * 任务id
@@ -37,7 +37,7 @@ public class SmartJobEntity {
     /**
      * 触发类型
      *
-     * @see SmartJobTriggerTypeEnum
+     * @see NexoraJobTriggerTypeEnum
      */
     private String triggerType;
 

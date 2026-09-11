@@ -2,10 +2,10 @@ package com.nexoraone.base.module.support.job.core;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
-import com.nexoraone.base.module.support.job.config.SmartJobConfig;
-import com.nexoraone.base.module.support.job.constant.SmartJobTriggerTypeEnum;
-import com.nexoraone.base.module.support.job.constant.SmartJobUtil;
-import com.nexoraone.base.module.support.job.repository.domain.SmartJobEntity;
+import com.nexoraone.base.module.support.job.config.NexoraJobConfig;
+import com.nexoraone.base.module.support.job.constant.NexoraJobTriggerTypeEnum;
+import com.nexoraone.base.module.support.job.constant.NexoraJobUtil;
+import com.nexoraone.base.module.support.job.repository.domain.NexoraJobEntity;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * @date 2024/6/22 21:30
  */
 @Slf4j
-public class SmartJobScheduler {
+public class NexoraJobScheduler {
 
     /**
      * Spring线程池任务调度器
@@ -37,18 +37,18 @@ public class SmartJobScheduler {
     /**
      * 定时任务 map
      */
-    private static Map<Integer, Pair<SmartJobEntity, ScheduledFuture<?>>> JOB_FUTURE_MAP;
+    private static Map<Integer, Pair<NexoraJobEntity, ScheduledFuture<?>>> JOB_FUTURE_MAP;
 
-    private SmartJobScheduler() {
+    private NexoraJobScheduler() {
 
     }
 
     /**
      * 初始化任务调度配置
      */
-    public static void init(SmartJobConfig config) {
+    public static void init(NexoraJobConfig config) {
         TASK_SCHEDULER = new ThreadPoolTaskScheduler();
-        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("SmartJobExecutor-%d").build();
+        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("NexoraJobExecutor-%d").build();
         TASK_SCHEDULER.setThreadFactory(threadFactory);
         TASK_SCHEDULER.setPoolSize(config.getCorePoolSize());
         // 线程池在关闭时会等待所有任务完成
@@ -56,7 +56,7 @@ public class SmartJobScheduler {
         // 在调用shutdown方法后，等待任务完成的最长时间
         TASK_SCHEDULER.setAwaitTerminationSeconds(10);
         // 错误处理
-        TASK_SCHEDULER.setErrorHandler((t) -> log.error("SmartJobExecute Err:", t));
+        TASK_SCHEDULER.setErrorHandler((t) -> log.error("NexoraJobExecute Err:", t));
         // 当一个任务在被调度执行前被取消时，是否应该从线程池的任务队列中移除
         TASK_SCHEDULER.setRemoveOnCancelPolicy(true);
         TASK_SCHEDULER.initialize();
@@ -71,7 +71,7 @@ public class SmartJobScheduler {
      * @return
      */
     public static ScheduledFuture<?> getJobFuture(Integer jobId) {
-        Pair<SmartJobEntity, ScheduledFuture<?>> pair = JOB_FUTURE_MAP.get(jobId);
+        Pair<NexoraJobEntity, ScheduledFuture<?>> pair = JOB_FUTURE_MAP.get(jobId);
         if (null == pair) {
             return null;
         }
@@ -83,7 +83,7 @@ public class SmartJobScheduler {
      *
      * @return
      */
-    public static List<SmartJobEntity> getJobInfo() {
+    public static List<NexoraJobEntity> getJobInfo() {
         return JOB_FUTURE_MAP.values().stream().map(Pair::getLeft).collect(Collectors.toList());
     }
 
@@ -93,8 +93,8 @@ public class SmartJobScheduler {
      * @param jobId
      * @return
      */
-    public static SmartJobEntity getJobInfo(Integer jobId) {
-        Pair<SmartJobEntity, ScheduledFuture<?>> pair = JOB_FUTURE_MAP.get(jobId);
+    public static NexoraJobEntity getJobInfo(Integer jobId) {
+        Pair<NexoraJobEntity, ScheduledFuture<?>> pair = JOB_FUTURE_MAP.get(jobId);
         if (null == pair) {
             return null;
         }
@@ -107,9 +107,9 @@ public class SmartJobScheduler {
      * @param jobExecute
      * @return
      */
-    public static void addJob(SmartJobExecutor jobExecute) {
+    public static void addJob(NexoraJobExecutor jobExecute) {
         // 任务是否存在
-        SmartJobEntity jobEntity = jobExecute.getJob();
+        NexoraJobEntity jobEntity = jobExecute.getJob();
         Integer jobId = jobEntity.getJobId();
         if (JOB_FUTURE_MAP.containsKey(jobId)) {
             // 移除任务
@@ -120,20 +120,20 @@ public class SmartJobScheduler {
         String triggerType = jobEntity.getTriggerType();
         String triggerValue = jobEntity.getTriggerValue();
         // 优先 cron 表达式
-        if (SmartJobTriggerTypeEnum.CRON.equalsValue(triggerType)) {
+        if (NexoraJobTriggerTypeEnum.CRON.equalsValue(triggerType)) {
             trigger = new CronTrigger(triggerValue);
-        } else if (SmartJobTriggerTypeEnum.FIXED_DELAY.equalsValue(triggerType)) {
-            trigger = new PeriodicTrigger(SmartJobUtil.getFixedDelayVal(triggerValue), TimeUnit.SECONDS);
+        } else if (NexoraJobTriggerTypeEnum.FIXED_DELAY.equalsValue(triggerType)) {
+            trigger = new PeriodicTrigger(NexoraJobUtil.getFixedDelayVal(triggerValue), TimeUnit.SECONDS);
         }
         String jobName = jobEntity.getJobName();
         if (null == trigger) {
-            log.error("==== SmartJob ==== trigger-value not null {}", jobName);
+            log.error("==== NexoraJob ==== trigger-value not null {}", jobName);
             return;
         }
         // 执行任务
         ScheduledFuture<?> schedule = TASK_SCHEDULER.schedule(jobExecute, trigger);
         JOB_FUTURE_MAP.put(jobId, Pair.of(jobEntity, schedule));
-        log.info("==== SmartJob ==== add job:{}", jobName);
+        log.info("==== NexoraJob ==== add job:{}", jobName);
     }
 
     /**
@@ -150,7 +150,7 @@ public class SmartJobScheduler {
         // 结束任务
         stopJob(jobFuture);
         JOB_FUTURE_MAP.remove(jobId);
-        log.info("==== SmartJob ==== remove job:{}", jobId);
+        log.info("==== NexoraJob ==== remove job:{}", jobId);
     }
 
     /**

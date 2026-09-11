@@ -6,7 +6,7 @@ package com.nexoraone.base.module.support.job.core;
  * @author huke
  * @date 2024/6/17 21:30
  */
-public interface SmartJob {
+public interface NexoraJob {
 
     /**
      * 默认方法

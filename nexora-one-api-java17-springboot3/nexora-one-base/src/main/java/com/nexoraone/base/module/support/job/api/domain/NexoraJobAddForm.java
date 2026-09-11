@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import com.nexoraone.base.common.swagger.SchemaEnum;
 import com.nexoraone.base.common.validator.enumeration.CheckEnum;
-import com.nexoraone.base.module.support.job.constant.SmartJobTriggerTypeEnum;
+import com.nexoraone.base.module.support.job.constant.NexoraJobTriggerTypeEnum;
 import org.hibernate.validator.constraints.Length;
 
 /**
@@ -16,7 +16,7 @@ import org.hibernate.validator.constraints.Length;
  * @date 2024/12/19 19:30
  */
 @Data
-public class SmartJobAddForm {
+public class NexoraJobAddForm {
 
     @Schema(description = "任务名称")
     @NotBlank(message = "任务名称不能为空")
@@ -28,8 +28,8 @@ public class SmartJobAddForm {
     @Length(max = 200, message = "任务执行类最多200字符")
     private String jobClass;
 
-    @SchemaEnum(desc = "触发类型", value = SmartJobTriggerTypeEnum.class)
-    @CheckEnum(value = SmartJobTriggerTypeEnum.class, required = true, message = "触发类型错误")
+    @SchemaEnum(desc = "触发类型", value = NexoraJobTriggerTypeEnum.class)
+    @CheckEnum(value = NexoraJobTriggerTypeEnum.class, required = true, message = "触发类型错误")
     private String triggerType;
 
     @Schema(description = "触发配置")

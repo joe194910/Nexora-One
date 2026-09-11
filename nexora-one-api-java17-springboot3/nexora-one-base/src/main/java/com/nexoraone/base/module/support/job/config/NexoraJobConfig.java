@@ -5,17 +5,17 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * smart job 配置
+ * NexoraJob 定时任务配置
  * 与配置文件参数对应
  *
  * @author huke
  * @date 2024/6/17 21:30
  */
-@ConfigurationProperties(prefix = SmartJobConfig.CONFIG_PREFIX)
+@ConfigurationProperties(prefix = NexoraJobConfig.CONFIG_PREFIX)
 @Data
-public class SmartJobConfig {
+public class NexoraJobConfig {
 
-    public static final String CONFIG_PREFIX = "smart.job";
+    public static final String CONFIG_PREFIX = "nexora.job";
 
     /**
      * 任务执行核心线程数 偶数 默认2

@@ -14,7 +14,7 @@ import java.time.LocalDate;
  * @date 2024/6/17 20:50
  */
 @Data
-public class SmartJobLogQueryForm extends PageParam {
+public class NexoraJobLogQueryForm extends PageParam {
 
     @Schema(description = "搜索词|可选")
     @Length(max = 50, message = "搜索词最多50字符")

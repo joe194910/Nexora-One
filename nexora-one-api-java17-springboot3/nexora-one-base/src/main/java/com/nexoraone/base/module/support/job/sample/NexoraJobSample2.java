@@ -3,7 +3,7 @@ package com.nexoraone.base.module.support.job.sample;
 import lombok.extern.slf4j.Slf4j;
 import com.nexoraone.base.module.support.config.ConfigDao;
 import com.nexoraone.base.module.support.config.domain.ConfigEntity;
-import com.nexoraone.base.module.support.job.core.SmartJob;
+import com.nexoraone.base.module.support.job.core.NexoraJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Slf4j
 @Service
-public class SmartJobSample2 implements SmartJob {
+public class NexoraJobSample2 implements NexoraJob {
 
     @Autowired
     private ConfigDao configDao;
@@ -39,7 +39,7 @@ public class SmartJobSample2 implements SmartJob {
 
         configEntity = new ConfigEntity();
         configEntity.setConfigId(2L);
-        configEntity.setRemark("SmartJob Sample2 update");
+        configEntity.setRemark("NexoraJob Sample2 update");
         configDao.updateById(configEntity);
 
         return "执行成功,本次处理数据1条";
