@@ -165,6 +165,11 @@ public class OpenApiPortalService {
             permission = new ApplicationApiPermissionEntity();
             permission.setApplicationId(form.getApplicationId());
             permission.setOpenApiId(form.getOpenApiId());
+        } else if (Objects.equals(permission.getApplyStatus(), 2)
+                && !Objects.equals(permission.getReviewRemark(), "公开API自动授权")) {
+            return ResponseDTO.okMsg("API权限已授权，无需重复申请");
+        } else if (Objects.equals(permission.getApplyStatus(), 1)) {
+            return ResponseDTO.userErrorParam("权限申请正在审核中，请勿重复提交");
         }
         RequestEmployee employee = getRequestEmployee();
         permission.setApplyReason(form.getApplyReason());
@@ -175,7 +180,15 @@ public class OpenApiPortalService {
         permission.setApplyStatus(Objects.equals(api.getPermissionLevel(), 1) ? 2 : 1);
         permission.setReviewRemark(Objects.equals(api.getPermissionLevel(), 1) ? "公开API自动授权" : null);
         if (Objects.equals(api.getPermissionLevel(), 1)) {
+            permission.setReviewerId(null);
+            permission.setReviewerName(null);
             permission.setEffectiveTime(LocalDateTime.now());
+            permission.setExpireTime(null);
+        } else {
+            permission.setReviewerId(null);
+            permission.setReviewerName(null);
+            permission.setEffectiveTime(null);
+            permission.setExpireTime(null);
         }
         if (permission.getPermissionId() == null) {
             permissionDao.insert(permission);
@@ -195,7 +208,13 @@ public class OpenApiPortalService {
                         .eq(applyStatus != null, ApplicationApiPermissionEntity::getApplyStatus, applyStatus)
                         .orderByDesc(ApplicationApiPermissionEntity::getUpdateTime)
                         .orderByDesc(ApplicationApiPermissionEntity::getPermissionId);
-        RequestEmployee employee = getRequestEmployee();
+        if (!platformReviewer) {
+            List<Long> visibleApplicationIds = applicationDataScopeService.getVisibleApplicationIds();
+            if (visibleApplicationIds.isEmpty()) {
+                return ResponseDTO.ok(List.of());
+            }
+            wrapper.in(ApplicationApiPermissionEntity::getApplicationId, visibleApplicationIds);
+        }
         List<ApplicationApiPermissionEntity> permissions = permissionDao.selectList(wrapper);
         List<Map<String, Object>> result = new ArrayList<>();
         for (ApplicationApiPermissionEntity permission : permissions) {

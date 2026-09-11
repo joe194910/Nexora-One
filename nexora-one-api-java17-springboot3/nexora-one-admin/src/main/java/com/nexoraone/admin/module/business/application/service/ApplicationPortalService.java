@@ -181,6 +181,12 @@ public class ApplicationPortalService {
         Long publishedApis = openApiDao.selectCount(new LambdaQueryWrapper<OpenApiEntity>()
                 .eq(OpenApiEntity::getStatus, 4)
                 .eq(OpenApiEntity::getEnabledFlag, true));
+        Long mcpOnlineServices = openApiDao.selectCount(new LambdaQueryWrapper<OpenApiEntity>()
+                .eq(OpenApiEntity::getStatus, 4)
+                .eq(OpenApiEntity::getEnabledFlag, true)
+                .and(item -> item.like(OpenApiEntity::getApiName, "MCP")
+                        .or().like(OpenApiEntity::getApiCode, "MCP")
+                        .or().like(OpenApiEntity::getCategoryName, "MCP")));
 
         LambdaQueryWrapper<ApplicationEntity> applicationReviewWrapper =
                 new LambdaQueryWrapper<ApplicationEntity>().eq(ApplicationEntity::getListingStatus, 1);
@@ -203,7 +209,7 @@ public class ApplicationPortalService {
         Map<String, Long> result = new LinkedHashMap<>();
         result.put("listedApplications", listedApplications);
         result.put("publishedApis", publishedApis);
-        result.put("mcpOnlineServices", 0L);
+        result.put("mcpOnlineServices", mcpOnlineServices);
         result.put("pendingReviews", pendingApplicationReviews + pendingApiReviews);
         return ResponseDTO.ok(result);
     }
@@ -333,14 +339,28 @@ public class ApplicationPortalService {
      * 查询应用运营概览。
      */
     public ResponseDTO<Map<String, Object>> summary() {
+        List<Long> visibleApplicationIds = applicationDataScopeService.getVisibleApplicationIds();
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("total", applicationDao.selectCount(null));
-        result.put("listed", countByStatus(2));
-        result.put("reviewing", countByStatus(1));
-        result.put("unlisted", countByStatus(0) + countByStatus(4));
-        result.put("rejected", countByStatus(3));
-        result.put("visits", visitLogDao.selectCount(null));
-        result.put("favorites", favoriteDao.selectCount(null));
+        if (visibleApplicationIds.isEmpty()) {
+            result.put("total", 0L);
+            result.put("listed", 0L);
+            result.put("reviewing", 0L);
+            result.put("unlisted", 0L);
+            result.put("rejected", 0L);
+            result.put("visits", 0L);
+            result.put("favorites", 0L);
+            return ResponseDTO.ok(result);
+        }
+        result.put("total", (long) visibleApplicationIds.size());
+        result.put("listed", countByStatus(2, visibleApplicationIds));
+        result.put("reviewing", countByStatus(1, visibleApplicationIds));
+        result.put("unlisted", countByStatus(0, visibleApplicationIds)
+                + countByStatus(4, visibleApplicationIds));
+        result.put("rejected", countByStatus(3, visibleApplicationIds));
+        result.put("visits", visitLogDao.selectCount(new LambdaQueryWrapper<ApplicationVisitLogEntity>()
+                .in(ApplicationVisitLogEntity::getApplicationId, visibleApplicationIds)));
+        result.put("favorites", favoriteDao.selectCount(new LambdaQueryWrapper<ApplicationFavoriteEntity>()
+                .in(ApplicationFavoriteEntity::getApplicationId, visibleApplicationIds)));
         return ResponseDTO.ok(result);
     }
 
@@ -349,6 +369,12 @@ public class ApplicationPortalService {
      */
     public ResponseDTO<PageResult<ApplicationVisitLogEntity>> queryVisitLogs(ApplicationVisitLogQueryForm form) {
         LambdaQueryWrapper<ApplicationVisitLogEntity> wrapper = new LambdaQueryWrapper<>();
+        List<Long> visibleApplicationIds = applicationDataScopeService.getVisibleApplicationIds();
+        if (visibleApplicationIds.isEmpty()) {
+            wrapper.eq(ApplicationVisitLogEntity::getApplicationId, -1L);
+        } else {
+            wrapper.in(ApplicationVisitLogEntity::getApplicationId, visibleApplicationIds);
+        }
         if (StringUtils.isNotBlank(form.getSearchWord())) {
             wrapper.and(item -> item.like(ApplicationVisitLogEntity::getApplicationName, form.getSearchWord())
                     .or().like(ApplicationVisitLogEntity::getEmployeeName, form.getSearchWord())
@@ -458,7 +484,10 @@ public class ApplicationPortalService {
             return true;
         }
         if (Objects.equals(scopeType, "ENTERPRISE")) {
-            return employee != null && applicationDataScopeService.canManage(application);
+            return employee != null
+                    && (Objects.equals(application.getCreateUserId(), employee.getEmployeeId())
+                    || applicationDataScopeService.isEnterpriseMember(
+                    application.getEnterpriseId(), employee.getEmployeeId()));
         }
         if (!Objects.equals(scopeType, "SELECTED") || employee == null) {
             return false;
@@ -582,8 +611,9 @@ public class ApplicationPortalService {
     /**
      * 查询指定上架状态的应用数量。
      */
-    private long countByStatus(Integer status) {
+    private long countByStatus(Integer status, List<Long> applicationIds) {
         return applicationDao.selectCount(new LambdaQueryWrapper<ApplicationEntity>()
+                .in(ApplicationEntity::getApplicationId, applicationIds)
                 .eq(ApplicationEntity::getListingStatus, status));
     }
 

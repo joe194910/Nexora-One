@@ -80,6 +80,16 @@ public class ApplicationDataScopeService {
     }
 
     /**
+     * 判断指定员工是否属于目标企业。
+     */
+    public boolean isEnterpriseMember(Long enterpriseId, Long employeeId) {
+        if (enterpriseId == null || employeeId == null) {
+            return false;
+        }
+        return enterpriseEmployeeDao.selectEnterpriseIdByEmployeeId(employeeId).contains(enterpriseId);
+    }
+
+    /**
      * 判断当前员工是否为平台管理员。
      */
     public boolean isPlatformAdministrator() {

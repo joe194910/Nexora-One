@@ -1,7 +1,6 @@
 package com.nexoraone.admin.module.business.application.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -244,24 +243,73 @@ public class ApplicationService {
         if (!editableResult.getOk()) {
             return editableResult;
         }
-        List<Long> distinctIds = form.getOpenApiIdList().stream().filter(Objects::nonNull).distinct().toList();
+        List<Long> distinctIds = Objects.requireNonNullElse(form.getOpenApiIdList(), List.<Long>of())
+                .stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<Long, OpenApiEntity> apiMap = Map.of();
         if (!distinctIds.isEmpty()) {
-            Long enabledCount = openApiDao.selectCount(new LambdaQueryWrapper<OpenApiEntity>()
+            List<OpenApiEntity> availableApis = openApiDao.selectList(new LambdaQueryWrapper<OpenApiEntity>()
                     .in(OpenApiEntity::getOpenApiId, distinctIds)
+                    .eq(OpenApiEntity::getStatus, 4)
                     .eq(OpenApiEntity::getEnabledFlag, true));
-            if (enabledCount != distinctIds.size()) {
-                return ResponseDTO.userErrorParam("申请的API中包含不存在或已停用的接口");
+            if (availableApis.size() != distinctIds.size()) {
+                return ResponseDTO.userErrorParam("申请的API中包含不存在、未上架或已停用的接口");
             }
+            apiMap = availableApis.stream()
+                    .collect(Collectors.toMap(OpenApiEntity::getOpenApiId, Function.identity()));
         }
-        permissionDao.delete(new LambdaQueryWrapper<ApplicationApiPermissionEntity>()
-                .eq(ApplicationApiPermissionEntity::getApplicationId, form.getApplicationId()));
+        Map<Long, ApplicationApiPermissionEntity> existingMap = permissionDao.selectList(
+                        new LambdaQueryWrapper<ApplicationApiPermissionEntity>()
+                                .eq(ApplicationApiPermissionEntity::getApplicationId, form.getApplicationId()))
+                .stream()
+                .collect(Collectors.toMap(ApplicationApiPermissionEntity::getOpenApiId,
+                        Function.identity(), (left, right) -> left));
+        List<Long> removedIds = existingMap.keySet().stream()
+                .filter(openApiId -> !distinctIds.contains(openApiId))
+                .toList();
+        if (!removedIds.isEmpty()) {
+            permissionDao.delete(new LambdaQueryWrapper<ApplicationApiPermissionEntity>()
+                    .eq(ApplicationApiPermissionEntity::getApplicationId, form.getApplicationId())
+                    .in(ApplicationApiPermissionEntity::getOpenApiId, removedIds));
+        }
+        RequestEmployee employee = getRequestEmployee();
         for (Long openApiId : distinctIds) {
-            ApplicationApiPermissionEntity permission = new ApplicationApiPermissionEntity();
-            permission.setApplicationId(form.getApplicationId());
-            permission.setOpenApiId(openApiId);
+            OpenApiEntity api = apiMap.get(openApiId);
+            ApplicationApiPermissionEntity permission = existingMap.get(openApiId);
+            boolean insert = permission == null;
+            if (insert) {
+                permission = new ApplicationApiPermissionEntity();
+                permission.setApplicationId(form.getApplicationId());
+                permission.setOpenApiId(openApiId);
+                permission.setApplicantId(employee == null ? null : employee.getEmployeeId());
+                permission.setApplicantName(employee == null ? null : employee.getActualName());
+            }
             permission.setApplyReason(form.getApplyReason());
-            permission.setApplyStatus(1);
-            permissionDao.insert(permission);
+            if (Objects.equals(api.getPermissionLevel(), 1)) {
+                permission.setApplyStatus(2);
+                permission.setReviewerId(null);
+                permission.setReviewerName(null);
+                permission.setReviewRemark("公开API自动授权");
+                permission.setEffectiveTime(
+                        permission.getEffectiveTime() == null ? LocalDateTime.now() : permission.getEffectiveTime());
+                permission.setExpireTime(null);
+            } else if (insert
+                    || Objects.equals(permission.getApplyStatus(), 3)
+                    || Objects.equals(permission.getReviewRemark(), "公开API自动授权")) {
+                permission.setApplyStatus(1);
+                permission.setReviewerId(null);
+                permission.setReviewerName(null);
+                permission.setReviewRemark(null);
+                permission.setEffectiveTime(null);
+                permission.setExpireTime(null);
+            }
+            if (insert) {
+                permissionDao.insert(permission);
+            } else {
+                permissionDao.updateById(permission);
+            }
         }
         entity.setWorkflowStep(Math.max(entity.getWorkflowStep(), 5));
         applicationDao.updateById(entity);
@@ -273,6 +321,7 @@ public class ApplicationService {
      */
     public ResponseDTO<List<OpenApiEntity>> queryOpenApiCatalog() {
         return ResponseDTO.ok(openApiDao.selectList(new LambdaQueryWrapper<OpenApiEntity>()
+                .eq(OpenApiEntity::getStatus, 4)
                 .eq(OpenApiEntity::getEnabledFlag, true)
                 .orderByAsc(OpenApiEntity::getCategoryName)
                 .orderByAsc(OpenApiEntity::getSort)));
@@ -363,10 +412,6 @@ public class ApplicationService {
             version.setPublishTime(approved ? LocalDateTime.now() : null);
             versionDao.updateById(version);
         }
-        permissionDao.update(null, new LambdaUpdateWrapper<ApplicationApiPermissionEntity>()
-                .eq(ApplicationApiPermissionEntity::getApplicationId, entity.getApplicationId())
-                .set(ApplicationApiPermissionEntity::getApplyStatus, approved ? 2 : 3)
-                .set(ApplicationApiPermissionEntity::getReviewRemark, form.getReviewRemark()));
         addReview(entity.getApplicationId(), approved ? "审核通过并发布" : "审核驳回",
                 form.getReviewStatus(), form.getReviewRemark());
         return ResponseDTO.okMsg(approved ? "审核通过，应用已发布" : "应用已驳回，可修改后重新提交");

@@ -274,11 +274,15 @@ public class OpenApiGatewayService {
      * 根据请求方法和路径匹配已发布的 API 路由。
      */
     private OpenApiRouteContext resolveRoute(String method, String path) {
+        String normalizedMethod = StringUtils.upperCase(StringUtils.trimToEmpty(method));
+        if (StringUtils.isBlank(normalizedMethod) || StringUtils.isBlank(path)) {
+            return null;
+        }
         AntPathMatcher matcher = new AntPathMatcher();
         List<OpenApiEntity> apis = openApiDao.selectList(new LambdaQueryWrapper<OpenApiEntity>()
                 .eq(OpenApiEntity::getStatus, 4)
                 .eq(OpenApiEntity::getEnabledFlag, true)
-                .eq(OpenApiEntity::getRequestMethod, method.toUpperCase()));
+                .eq(OpenApiEntity::getRequestMethod, normalizedMethod));
         for (OpenApiEntity api : apis) {
             OpenApiVersionEntity version = versionDao.selectById(api.getCurrentVersionId());
             if (version != null && Objects.equals(version.getStatus(), 3)
@@ -533,7 +537,10 @@ public class OpenApiGatewayService {
 
     private String canonicalRequest(String method, String requestTarget,
                                     String timestamp, String nonce, byte[] body) {
-        return method.toUpperCase() + "\n" + requestTarget + "\n" + timestamp + "\n" + nonce + "\n"
+        return StringUtils.upperCase(StringUtils.trimToEmpty(method)) + "\n"
+                + Objects.requireNonNullElse(requestTarget, "") + "\n"
+                + Objects.requireNonNullElse(timestamp, "") + "\n"
+                + Objects.requireNonNullElse(nonce, "") + "\n"
                 + sha256(Objects.requireNonNullElse(body, new byte[0]));
     }
 

@@ -433,7 +433,7 @@ public class OpenApiManageService {
         if (StringUtils.isBlank(form.getRequestMethod())) {
             return ResponseDTO.userErrorParam("请求方式不能为空");
         }
-        String method = form.getRequestMethod().toUpperCase();
+        String method = StringUtils.upperCase(StringUtils.trim(form.getRequestMethod()));
         if (!HTTP_METHODS.contains(method)) {
             return ResponseDTO.userErrorParam("不支持的HTTP请求方式");
         }
@@ -538,7 +538,7 @@ public class OpenApiManageService {
         api.setApiName(form.getApiName());
         api.setApiCode(form.getApiCode());
         api.setCategoryName(form.getCategoryName());
-        api.setRequestMethod(form.getRequestMethod().toUpperCase());
+        api.setRequestMethod(StringUtils.upperCase(StringUtils.trim(form.getRequestMethod())));
         api.setRequestPath(form.getGatewayPath());
         api.setApiVersion(form.getVersionNo());
         api.setPermissionLevel(form.getPermissionLevel());
@@ -553,7 +553,7 @@ public class OpenApiManageService {
      */
     private void copyVersion(OpenApiBasicSaveForm form, OpenApiVersionEntity version) {
         version.setVersionNo(form.getVersionNo());
-        version.setRequestMethod(form.getRequestMethod().toUpperCase());
+        version.setRequestMethod(StringUtils.upperCase(StringUtils.trim(form.getRequestMethod())));
         version.setGatewayPath(form.getGatewayPath());
         version.setInternalPath(form.getInternalPath());
         version.setContentType(form.getContentType());
