@@ -42,7 +42,7 @@ public class ApplicationAccessTokenManager {
     /**
      * 根据Access Token读取安全上下文。
      *
-     * @param token Access Token
+     * @param token 访问令牌
      * @return Token上下文，不存在或过期时返回null
      */
     public ApplicationAccessContextVO getContext(String token) {
@@ -55,7 +55,7 @@ public class ApplicationAccessTokenManager {
     /**
      * 撤销指定Access Token。
      *
-     * @param token Access Token
+     * @param token 访问令牌
      */
     public void revoke(String token) {
         if (token != null && !token.isBlank()) {
@@ -66,7 +66,7 @@ public class ApplicationAccessTokenManager {
     /**
      * 获取Token在Redis中的剩余有效期。
      *
-     * @param token Access Token
+     * @param token 访问令牌
      * @return 剩余秒数
      */
     public long getExpire(String token) {

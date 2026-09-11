@@ -30,7 +30,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +41,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * API open platform management service.
+ * API开放平台管理服务。
  */
 @Slf4j
 @Service
@@ -63,7 +66,7 @@ public class OpenApiManageService {
     private ApplicationDataScopeService applicationDataScopeService;
 
     /**
-     * Query the API management list by page.
+     * 分页查询API管理列表。
      */
     public ResponseDTO<PageResult<OpenApiEntity>> query(OpenApiQueryForm form) {
         LambdaQueryWrapper<OpenApiEntity> wrapper = new LambdaQueryWrapper<>();
@@ -93,7 +96,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Query API count summary for the management dashboard.
+     * 查询API管理看板数量汇总。
      */
     public ResponseDTO<Map<String, Long>> summary() {
         Map<String, Long> result = new LinkedHashMap<>();
@@ -107,7 +110,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Query distinct API categories used by existing records.
+     * 查询现有记录使用的API分类。
      */
     public ResponseDTO<List<String>> categories() {
         LambdaQueryWrapper<OpenApiEntity> wrapper = new LambdaQueryWrapper<OpenApiEntity>()
@@ -125,7 +128,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Check whether an API code is available.
+     * 校验API编码是否可用。
      */
     public ResponseDTO<Boolean> checkCode(String apiCode, Long openApiId) {
         if (!isValidApiCode(apiCode)) {
@@ -138,7 +141,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Create an API and its first editable version.
+     * 创建API及其首个可编辑版本。
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<Map<String, Long>> create(OpenApiBasicSaveForm form) {
@@ -185,7 +188,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Update API basic information and the current editable version.
+     * 更新API基本信息和当前可编辑版本。
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<String> updateBasic(OpenApiBasicSaveForm form) {
@@ -216,7 +219,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Replace all request or response parameters for one API version.
+     * 替换指定API版本的全部请求或响应参数。
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<String> saveParameters(OpenApiParameterSaveForm form) {
@@ -273,7 +276,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Replace API request examples, response examples and business error codes.
+     * 替换API请求示例、响应示例和业务错误码。
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<String> saveExamples(OpenApiExampleSaveForm form) {
@@ -322,7 +325,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Query an API and all configuration of its current version.
+     * 查询API及当前版本的全部配置。
      */
     public ResponseDTO<Map<String, Object>> detail(Long openApiId) {
         OpenApiEntity api = openApiDao.selectById(openApiId);
@@ -336,7 +339,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Queries a published API for API market documentation.
+     * 查询已发布API的市场文档信息。
      */
     public ResponseDTO<Map<String, Object>> publishedDetail(Long openApiId) {
         OpenApiEntity api = openApiDao.selectById(openApiId);
@@ -347,7 +350,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Builds API details after data-scope validation.
+     * 在数据权限校验通过后构建API详情。
      */
     private ResponseDTO<Map<String, Object>> buildDetail(OpenApiEntity api) {
         OpenApiVersionEntity version = resolveCurrentVersion(api);
@@ -380,12 +383,12 @@ public class OpenApiManageService {
     }
 
     /**
-     * Enable or disable an existing API without changing its stable primary key.
+     * 停用已上架API，不改变其稳定主键。
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<String> updateStatus(OpenApiStatusForm form) {
-        if (!Set.of(4, 5).contains(form.getStatus())) {
-            return ResponseDTO.userErrorParam("当前阶段仅支持启用或停用API");
+        if (!Objects.equals(form.getStatus(), 5)) {
+            return ResponseDTO.userErrorParam("API上架必须提交平台审核，当前接口仅支持停用");
         }
         OpenApiEntity api = openApiDao.selectById(form.getOpenApiId());
         if (api == null) {
@@ -398,22 +401,20 @@ public class OpenApiManageService {
         if (version == null) {
             return ResponseDTO.userErrorParam("API版本不存在");
         }
-        if (Objects.equals(form.getStatus(), 4)
-                && Objects.requireNonNullElse(api.getWorkflowStep(), 1) < 4) {
-            return ResponseDTO.userErrorParam("请先完成请求参数、响应参数和示例错误码配置");
+        if (!Objects.equals(api.getStatus(), 4)) {
+            return ResponseDTO.userErrorParam("只有已上架API可以停用");
         }
-        boolean enabled = Objects.equals(form.getStatus(), 4);
         api.setStatus(form.getStatus());
-        api.setEnabledFlag(enabled);
+        api.setEnabledFlag(false);
         openApiDao.updateById(api);
-        version.setStatus(enabled ? 3 : 4);
-        version.setLockedFlag(enabled);
+        version.setStatus(4);
+        version.setLockedFlag(true);
         versionDao.updateById(version);
         return ResponseDTO.ok();
     }
 
     /**
-     * Count APIs by one status value.
+     * 按状态统计API数量。
      */
     private long countByStatus(Integer status) {
         LambdaQueryWrapper<OpenApiEntity> wrapper = new LambdaQueryWrapper<OpenApiEntity>()
@@ -423,11 +424,14 @@ public class OpenApiManageService {
     }
 
     /**
-     * Validate API code, method, path and uniqueness constraints.
+     * 校验API编码、请求方式、路径、发布环境和唯一性约束。
      */
     private ResponseDTO<String> validateBasic(OpenApiBasicSaveForm form, OpenApiEntity existing) {
         if (!isValidApiCode(form.getApiCode())) {
             return ResponseDTO.userErrorParam("API编码需以字母开头，仅支持字母、数字、点、短横线、下划线和冒号");
+        }
+        if (StringUtils.isBlank(form.getRequestMethod())) {
+            return ResponseDTO.userErrorParam("请求方式不能为空");
         }
         String method = form.getRequestMethod().toUpperCase();
         if (!HTTP_METHODS.contains(method)) {
@@ -438,6 +442,10 @@ public class OpenApiManageService {
         }
         if (!form.getVersionNo().matches("^v?\\d+\\.\\d+\\.\\d+$")) {
             return ResponseDTO.userErrorParam("接口版本需使用v1.0.0格式");
+        }
+        ResponseDTO<String> environmentValidation = validateEnvironments(form.getEnvironments());
+        if (!environmentValidation.getOk()) {
+            return environmentValidation;
         }
         long codeCount = openApiDao.selectCount(new LambdaQueryWrapper<OpenApiEntity>()
                 .eq(OpenApiEntity::getApiCode, form.getApiCode())
@@ -457,7 +465,58 @@ public class OpenApiManageService {
     }
 
     /**
-     * Check whether the current version can be edited.
+     * 校验发布环境编码和服务基础地址。
+     */
+    private ResponseDTO<String> validateEnvironments(List<OpenApiBasicSaveForm.EnvironmentItem> environments) {
+        if (environments == null || environments.isEmpty()) {
+            return ResponseDTO.userErrorParam("请至少配置一个API发布环境");
+        }
+        Set<String> environmentCodes = new HashSet<>();
+        for (OpenApiBasicSaveForm.EnvironmentItem item : environments) {
+            String environmentCode = StringUtils.trim(item.getEnvironmentCode());
+            if (StringUtils.isBlank(environmentCode) || StringUtils.isBlank(item.getEnvironmentName())) {
+                return ResponseDTO.userErrorParam("环境编码和环境名称不能为空");
+            }
+            if (!environmentCodes.add(StringUtils.lowerCase(environmentCode))) {
+                return ResponseDTO.userErrorParam("环境编码不能重复");
+            }
+            if (!isValidBaseUrl(item.getBaseUrl())) {
+                return ResponseDTO.userErrorParam("环境基础地址必须是有效的HTTP或HTTPS服务地址，且不能包含账号、查询参数或锚点");
+            }
+        }
+        return ResponseDTO.ok();
+    }
+
+    /**
+     * 判断服务基础地址是否可用于网关转发。
+     */
+    private boolean isValidBaseUrl(String baseUrl) {
+        if (StringUtils.isBlank(baseUrl)) {
+            return false;
+        }
+        try {
+            URI uri = new URI(StringUtils.trim(baseUrl));
+            boolean supportedScheme = "http".equalsIgnoreCase(uri.getScheme())
+                    || "https".equalsIgnoreCase(uri.getScheme());
+            return supportedScheme
+                    && StringUtils.isNotBlank(uri.getHost())
+                    && uri.getUserInfo() == null
+                    && uri.getQuery() == null
+                    && uri.getFragment() == null;
+        } catch (URISyntaxException exception) {
+            return false;
+        }
+    }
+
+    /**
+     * 规范化服务基础地址，避免与内部路径拼接时产生重复斜杠。
+     */
+    private String normalizeBaseUrl(String baseUrl) {
+        return StringUtils.removeEnd(StringUtils.trim(baseUrl), "/");
+    }
+
+    /**
+     * 检查当前版本是否允许编辑。
      */
     private ResponseDTO<String> checkEditable(OpenApiEntity api, OpenApiVersionEntity version) {
         if (api == null || version == null || !Objects.equals(version.getOpenApiId(), api.getOpenApiId())) {
@@ -473,7 +532,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Copy form values to the stable API master record.
+     * 将表单数据复制到稳定的API主记录。
      */
     private void copyMaster(OpenApiBasicSaveForm form, OpenApiEntity api) {
         api.setApiName(form.getApiName());
@@ -490,7 +549,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Copy form values to an API version record.
+     * 将表单数据复制到API版本记录。
      */
     private void copyVersion(OpenApiBasicSaveForm form, OpenApiVersionEntity version) {
         version.setVersionNo(form.getVersionNo());
@@ -504,7 +563,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Replace all release environments of one API version.
+     * 替换指定API版本的全部发布环境。
      */
     private void replaceEnvironments(Long versionId, List<OpenApiBasicSaveForm.EnvironmentItem> items) {
         environmentDao.delete(new LambdaQueryWrapper<OpenApiEnvironmentEntity>()
@@ -513,9 +572,9 @@ public class OpenApiManageService {
         for (OpenApiBasicSaveForm.EnvironmentItem item : environments) {
             OpenApiEnvironmentEntity entity = new OpenApiEnvironmentEntity();
             entity.setVersionId(versionId);
-            entity.setEnvironmentCode(item.getEnvironmentCode());
-            entity.setEnvironmentName(item.getEnvironmentName());
-            entity.setBaseUrl(item.getBaseUrl());
+            entity.setEnvironmentCode(StringUtils.lowerCase(StringUtils.trim(item.getEnvironmentCode())));
+            entity.setEnvironmentName(StringUtils.trim(item.getEnvironmentName()));
+            entity.setBaseUrl(normalizeBaseUrl(item.getBaseUrl()));
             entity.setEnabledFlag(!Boolean.FALSE.equals(item.getEnabledFlag()));
             entity.setOnlineDebugFlag(Boolean.TRUE.equals(item.getOnlineDebugFlag()));
             entity.setDescription(item.getDescription());
@@ -524,7 +583,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Resolve the current API version, with a fallback for migrated historical data.
+     * 解析当前API版本，并兼容迁移后的历史数据。
      */
     private OpenApiVersionEntity resolveCurrentVersion(OpenApiEntity api) {
         if (api.getCurrentVersionId() != null) {
@@ -540,7 +599,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Validate the stable API code format.
+     * 校验稳定API编码格式。
      */
     private boolean isValidApiCode(String apiCode) {
         return StringUtils.isNotBlank(apiCode)
@@ -548,7 +607,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Limits API management records to their creator for non-platform administrators.
+     * 非平台管理员仅可查询本人创建的API管理记录。
      */
     private void applyCreatorScope(LambdaQueryWrapper<OpenApiEntity> wrapper) {
         RequestEmployee employee = applicationDataScopeService.requireEmployee();
@@ -558,7 +617,7 @@ public class OpenApiManageService {
     }
 
     /**
-     * Returns whether the current employee may manage an API definition.
+     * 判断当前员工是否可以管理指定API定义。
      */
     private boolean canManage(OpenApiEntity api) {
         RequestEmployee employee = applicationDataScopeService.requireEmployee();
@@ -567,13 +626,13 @@ public class OpenApiManageService {
     }
 
     /**
-     * Read the current employee for audit fields.
+     * 获取当前员工并用于审计字段。
      */
     private RequestEmployee getRequestEmployee() {
         try {
             return AdminRequestUtil.getRequestUser();
         } catch (Exception exception) {
-            log.debug("No logged-in employee was found for API audit fields", exception);
+            log.debug("未获取到用于记录API审计字段的登录员工", exception);
             return null;
         }
     }

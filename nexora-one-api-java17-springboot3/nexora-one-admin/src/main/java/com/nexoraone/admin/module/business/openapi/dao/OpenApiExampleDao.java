@@ -5,7 +5,7 @@ import com.nexoraone.admin.module.business.openapi.domain.entity.OpenApiExampleE
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * API example data access interface.
+ * API示例数据访问接口。
  */
 @Mapper
 public interface OpenApiExampleDao extends BaseMapper<OpenApiExampleEntity> {

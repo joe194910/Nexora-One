@@ -5,7 +5,7 @@ import com.nexoraone.admin.module.business.openapi.domain.entity.OpenApiEnvironm
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * API environment data access interface.
+ * API环境数据访问接口。
  */
 @Mapper
 public interface OpenApiEnvironmentDao extends BaseMapper<OpenApiEnvironmentEntity> {

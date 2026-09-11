@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * API open platform management endpoints.
+ * API开放平台管理接口。
  */
 @RestController
 @RequestMapping("/open-api/manage")
@@ -37,7 +37,7 @@ public class OpenApiManageController {
     private OpenApiManageService openApiManageService;
 
     /**
-     * Query the API management list by page.
+     * 分页查询API管理列表。
      */
     @Operation(summary = "分页查询API管理列表")
     @PostMapping("/query")
@@ -47,7 +47,7 @@ public class OpenApiManageController {
     }
 
     /**
-     * Query management dashboard statistics.
+     * 查询API管理看板统计数据。
      */
     @Operation(summary = "查询API统计")
     @GetMapping("/summary")
@@ -57,7 +57,7 @@ public class OpenApiManageController {
     }
 
     /**
-     * Query existing API categories.
+     * 查询现有API分类。
      */
     @Operation(summary = "查询API分类")
     @GetMapping("/categories")
@@ -67,7 +67,7 @@ public class OpenApiManageController {
     }
 
     /**
-     * Check whether an API code is available.
+     * 校验API编码是否可用。
      */
     @Operation(summary = "校验API编码")
     @GetMapping("/code/check")
@@ -79,7 +79,7 @@ public class OpenApiManageController {
     }
 
     /**
-     * Create an API draft and first version.
+     * 创建API草稿及首个版本。
      */
     @Operation(summary = "创建API")
     @PostMapping("/create")
@@ -89,7 +89,7 @@ public class OpenApiManageController {
     }
 
     /**
-     * Update basic information of an editable API version.
+     * 更新可编辑API版本的基本信息。
      */
     @Operation(summary = "更新API基本信息")
     @PostMapping("/basic/update")
@@ -99,7 +99,7 @@ public class OpenApiManageController {
     }
 
     /**
-     * Save request or response parameter definitions.
+     * 保存请求或响应参数定义。
      */
     @Operation(summary = "保存API参数定义")
     @PostMapping("/parameters/save")
@@ -109,7 +109,7 @@ public class OpenApiManageController {
     }
 
     /**
-     * Save examples, error codes and version change log.
+     * 保存示例、错误码和版本更新说明。
      */
     @Operation(summary = "保存API示例和错误码")
     @PostMapping("/examples/save")
@@ -119,7 +119,7 @@ public class OpenApiManageController {
     }
 
     /**
-     * Query one API and the complete configuration of its current version.
+     * 查询API及其当前版本的完整配置。
      */
     @Operation(summary = "查询API详情")
     @GetMapping("/detail/{openApiId}")
@@ -129,7 +129,7 @@ public class OpenApiManageController {
     }
 
     /**
-     * Enable or disable an API.
+     * 启用或停用API。
      */
     @Operation(summary = "变更API状态")
     @PostMapping("/status/update")

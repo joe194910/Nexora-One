@@ -13,6 +13,8 @@ project:
 # 项目端口和url根路径
 server:
   port: 11024
+  # 统一解析受信任反向代理转发的协议和客户端地址
+  forward-headers-strategy: framework
   servlet:
     context-path: /
 

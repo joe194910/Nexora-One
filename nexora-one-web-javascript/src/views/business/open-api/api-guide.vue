@@ -31,7 +31,9 @@
         <section id="signature" class="open-api-panel">
           <h2 class="open-api-panel__title">3. 生成请求签名</h2>
           <p>签名算法：{{ guide.signatureAlgorithm }}</p>
+          <p>{{ guide.requestTargetNotice }}</p>
           <div class="open-api-code-box"><pre>{{ guide.canonicalRule }}</pre></div>
+          <div class="open-api-code-box"><pre>{{ guide.signatureRule }}</pre></div>
         </section>
         <section id="call" class="open-api-panel">
           <h2 class="open-api-panel__title">4. 调用业务 API</h2>
@@ -50,7 +52,16 @@
   import './open-api.less';
 
   const router = useRouter();
-  const guide = reactive({ tokenPath: '/open/application/oauth/token', grantType: 'client_credentials', tokenTtlSeconds: 7200, signatureAlgorithm: 'HMAC-SHA256', canonicalRule: '', secretNotice: '' });
+  const guide = reactive({
+    tokenPath: '/open-api/oauth/token',
+    grantType: 'client_credentials',
+    tokenTtlSeconds: 7200,
+    signatureAlgorithm: 'HMAC-SHA256',
+    canonicalRule: '',
+    signatureRule: '',
+    requestTargetNotice: '',
+    secretNotice: '',
+  });
   const anchorItems = [
     { key: 'credential', href: '#credential', title: '获取应用凭证' },
     { key: 'token', href: '#token', title: '请求 Access Token' },
@@ -68,10 +79,12 @@
     { name: 'X-Nonce', description: '每次请求唯一随机串' },
     { name: 'X-Signature', description: 'HMAC-SHA256 请求签名' },
   ];
-  const tokenExample = computed(() => `curl -X POST https://api.example.com${guide.tokenPath} \\
+  const configuredApiUrl = import.meta.env.VITE_APP_API_URL || window.location.origin;
+  const apiBaseUrl = new URL(configuredApiUrl, window.location.origin).href.replace(/\/$/, '');
+  const tokenExample = computed(() => `curl -X POST ${apiBaseUrl}${guide.tokenPath} \\
   -H "Content-Type: application/json" \\
   -d '{"app_id":"app_nxo_xxx","app_secret":"仅服务端保存","grant_type":"${guide.grantType}"}'`);
-  const callExample = `curl -X GET "https://api.example.com/open-api/v1/resource" \\
+  const callExample = `curl -X GET "${apiBaseUrl}/open-api/v1/resource" \\
   -H "Authorization: Bearer {access_token}" \\
   -H "X-App-Id: {app_id}" \\
   -H "X-Timestamp: {timestamp}" \\

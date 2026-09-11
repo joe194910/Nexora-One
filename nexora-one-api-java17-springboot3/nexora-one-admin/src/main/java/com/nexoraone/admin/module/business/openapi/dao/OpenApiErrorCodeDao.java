@@ -5,7 +5,7 @@ import com.nexoraone.admin.module.business.openapi.domain.entity.OpenApiErrorCod
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * API error code data access interface.
+ * API错误码数据访问接口。
  */
 @Mapper
 public interface OpenApiErrorCodeDao extends BaseMapper<OpenApiErrorCodeEntity> {

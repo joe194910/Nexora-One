@@ -8,27 +8,27 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * API request or response example.
+ * API请求或响应示例。
  */
 @Data
 @TableName("nexora_one_open_api_example")
 public class OpenApiExampleEntity {
 
-    /** Example primary key. */
+    /** 示例主键。 */
     @TableId(type = IdType.AUTO)
     private Long exampleId;
-    /** API version primary key. */
+    /** API版本主键。 */
     private Long versionId;
-    /** Example type such as request or response. */
+    /** 示例类型，例如请求或响应。 */
     private String exampleType;
-    /** Example display name. */
+    /** 示例显示名称。 */
     private String exampleName;
-    /** Example content. */
+    /** 示例内容。 */
     private String content;
-    /** Display order. */
+    /** 显示顺序。 */
     private Integer sort;
-    /** Creation time. */
+    /** 创建时间。 */
     private LocalDateTime createTime;
-    /** Update time. */
+    /** 更新时间。 */
     private LocalDateTime updateTime;
 }

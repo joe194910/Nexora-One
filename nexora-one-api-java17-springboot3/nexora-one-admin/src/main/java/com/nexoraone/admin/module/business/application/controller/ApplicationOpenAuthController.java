@@ -28,7 +28,7 @@ import java.util.Map;
  * 第三方应用使用App ID和App Secret访问平台的公开认证接口。
  */
 @RestController
-@RequestMapping("/open/application")
+@RequestMapping({"/open-api", "/open/application"})
 @Tag(name = "开放平台-应用认证")
 public class ApplicationOpenAuthController {
 

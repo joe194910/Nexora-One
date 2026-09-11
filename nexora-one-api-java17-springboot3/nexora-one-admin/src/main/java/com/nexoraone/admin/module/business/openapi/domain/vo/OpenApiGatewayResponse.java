@@ -25,4 +25,6 @@ public class OpenApiGatewayResponse {
     private String signature;
     /** 是否已经向真实目标服务发出请求。 */
     private Boolean dispatched;
+    /** 真实目标服务调用耗时，单位毫秒。 */
+    private Long durationMs;
 }

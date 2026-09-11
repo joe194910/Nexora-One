@@ -5,20 +5,20 @@ import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
 /**
- * API management page query conditions.
+ * API管理分页查询条件。
  */
 @Data
 public class OpenApiQueryForm extends PageParam {
 
-    /** API name or code keyword. */
+    /** API名称或编码关键词。 */
     @Length(max = 100, message = "搜索内容最多100个字符")
     private String searchWord;
-    /** API category. */
+    /** API分类。 */
     @Length(max = 100, message = "API分类最多100个字符")
     private String categoryName;
-    /** HTTP request method. */
+    /** HTTP请求方式。 */
     @Length(max = 10, message = "请求方式最多10个字符")
     private String requestMethod;
-    /** API status. */
+    /** API状态。 */
     private Integer status;
 }

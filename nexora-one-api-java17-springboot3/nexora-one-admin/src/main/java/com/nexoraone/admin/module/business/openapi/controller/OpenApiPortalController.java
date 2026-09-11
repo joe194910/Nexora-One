@@ -7,6 +7,7 @@ import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiMarketQuer
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiPermissionApplyForm;
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiPermissionReviewForm;
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiPublishForm;
+import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiPublishReviewForm;
 import com.nexoraone.admin.module.business.openapi.service.OpenApiPortalService;
 import com.nexoraone.base.common.domain.PageResult;
 import com.nexoraone.base.common.domain.ResponseDTO;
@@ -93,12 +94,29 @@ public class OpenApiPortalController {
         return portalService.publishDetail(openApiId);
     }
 
-    /** 上架并发布API。 */
-    @Operation(summary = "上架发布API")
+    /** 提交API发布审核。 */
+    @Operation(summary = "提交API发布审核")
     @PostMapping("/publish")
     @SaCheckPermission("open-api:publish")
     public ResponseDTO<String> publish(@RequestBody @Valid OpenApiPublishForm form) {
         return portalService.publish(form);
+    }
+
+    /** 查询API发布审核记录。 */
+    @Operation(summary = "查询API发布审核记录")
+    @GetMapping("/publish/review/list")
+    @SaCheckPermission("open-api:publish:review")
+    public ResponseDTO<List<Map<String, Object>>> queryPublishReviews(
+            @RequestParam(required = false) Integer reviewStatus) {
+        return portalService.queryPublishReviews(reviewStatus);
+    }
+
+    /** 平台审核API发布申请。 */
+    @Operation(summary = "审核API发布申请")
+    @PostMapping("/publish/review")
+    @SaCheckPermission("open-api:publish:review")
+    public ResponseDTO<String> reviewPublish(@RequestBody @Valid OpenApiPublishReviewForm form) {
+        return portalService.reviewPublish(form);
     }
 
     /** 执行测试环境在线调试。 */

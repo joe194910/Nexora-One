@@ -13,17 +13,18 @@ import com.nexoraone.admin.module.business.application.domain.entity.OpenApiEnti
 import com.nexoraone.admin.module.business.application.service.ApplicationDataScopeService;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiCallLogDao;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiEnvironmentDao;
-import com.nexoraone.admin.module.business.openapi.dao.OpenApiExampleDao;
+import com.nexoraone.admin.module.business.openapi.dao.OpenApiPublishReviewDao;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiVersionDao;
 import com.nexoraone.admin.module.business.openapi.domain.entity.OpenApiCallLogEntity;
 import com.nexoraone.admin.module.business.openapi.domain.entity.OpenApiEnvironmentEntity;
-import com.nexoraone.admin.module.business.openapi.domain.entity.OpenApiExampleEntity;
+import com.nexoraone.admin.module.business.openapi.domain.entity.OpenApiPublishReviewEntity;
 import com.nexoraone.admin.module.business.openapi.domain.entity.OpenApiVersionEntity;
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiDebugForm;
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiMarketQueryForm;
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiPermissionApplyForm;
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiPermissionReviewForm;
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiPublishForm;
+import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiPublishReviewForm;
 import com.nexoraone.admin.module.system.login.domain.RequestEmployee;
 import com.nexoraone.admin.util.AdminRequestUtil;
 import com.nexoraone.base.common.domain.PageResult;
@@ -34,17 +35,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * API开放平台市场、授权、发布、调试和统计服务。
@@ -60,7 +59,7 @@ public class OpenApiPortalService {
     @Resource
     private OpenApiEnvironmentDao environmentDao;
     @Resource
-    private OpenApiExampleDao exampleDao;
+    private OpenApiPublishReviewDao publishReviewDao;
     @Resource
     private ApplicationDao applicationDao;
     @Resource
@@ -73,6 +72,8 @@ public class OpenApiPortalService {
     private OpenApiManageService manageService;
     @Resource
     private ApplicationDataScopeService applicationDataScopeService;
+    @Resource
+    private OpenApiGatewayService gatewayService;
 
     /**
      * 分页查询已上架的API市场。
@@ -254,7 +255,7 @@ public class OpenApiPortalService {
     }
 
     /**
-     * 完成API上架并锁定当前版本。
+     * 提交API发布审核并锁定当前版本。
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<String> publish(OpenApiPublishForm form) {
@@ -271,91 +272,100 @@ public class OpenApiPortalService {
         api.setMarketSummary(form.getMarketSummary());
         api.setSlaDescription(form.getSlaDescription());
         api.setPublishScope(form.getPublishScope());
-        api.setPublishTime(LocalDateTime.now());
-        api.setStatus(4);
-        api.setEnabledFlag(true);
+        long pendingCount = publishReviewDao.selectCount(
+                new LambdaQueryWrapper<OpenApiPublishReviewEntity>()
+                        .eq(OpenApiPublishReviewEntity::getOpenApiId, api.getOpenApiId())
+                        .eq(OpenApiPublishReviewEntity::getReviewStatus, 1));
+        if (pendingCount > 0) {
+            return ResponseDTO.userErrorParam("该API已有待审核的发布申请，请勿重复提交");
+        }
+        api.setPublishTime(null);
+        api.setStatus(3);
+        api.setEnabledFlag(false);
         openApiDao.updateById(api);
-        version.setStatus(3);
+        version.setStatus(2);
         version.setLockedFlag(true);
+        versionDao.updateById(version);
+
+        RequestEmployee employee = getRequestEmployee();
+        OpenApiPublishReviewEntity review = new OpenApiPublishReviewEntity();
+        review.setOpenApiId(api.getOpenApiId());
+        review.setVersionId(version.getVersionId());
+        review.setApplicantId(employee == null ? null : employee.getEmployeeId());
+        review.setApplicantName(employee == null ? "系统" : employee.getActualName());
+        review.setReviewStatus(1);
+        publishReviewDao.insert(review);
+        return ResponseDTO.ok();
+    }
+
+    /**
+     * 查询API发布审核记录。
+     */
+    public ResponseDTO<List<Map<String, Object>>> queryPublishReviews(Integer reviewStatus) {
+        boolean platformReviewer =
+                applicationDataScopeService.hasPlatformPermission("open-api:publish:review");
+        LambdaQueryWrapper<OpenApiPublishReviewEntity> wrapper =
+                new LambdaQueryWrapper<OpenApiPublishReviewEntity>()
+                        .eq(reviewStatus != null, OpenApiPublishReviewEntity::getReviewStatus, reviewStatus)
+                        .orderByDesc(OpenApiPublishReviewEntity::getCreateTime)
+                        .orderByDesc(OpenApiPublishReviewEntity::getReviewId);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (OpenApiPublishReviewEntity review : publishReviewDao.selectList(wrapper)) {
+            OpenApiEntity api = openApiDao.selectById(review.getOpenApiId());
+            if (api == null || !platformReviewer && !canManageApi(api)) {
+                continue;
+            }
+            OpenApiVersionEntity version = versionDao.selectById(review.getVersionId());
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("review", review);
+            item.put("apiName", api.getApiName());
+            item.put("apiCode", api.getApiCode());
+            item.put("requestMethod", api.getRequestMethod());
+            item.put("requestPath", api.getRequestPath());
+            item.put("versionNo", version == null ? api.getApiVersion() : version.getVersionNo());
+            result.add(item);
+        }
+        return ResponseDTO.ok(result);
+    }
+
+    /**
+     * 平台审核API发布申请。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseDTO<String> reviewPublish(OpenApiPublishReviewForm form) {
+        OpenApiPublishReviewEntity review = publishReviewDao.selectById(form.getReviewId());
+        if (review == null || !Objects.equals(review.getReviewStatus(), 1)) {
+            return ResponseDTO.userErrorParam("发布审核记录不存在或已处理");
+        }
+        OpenApiEntity api = openApiDao.selectById(review.getOpenApiId());
+        OpenApiVersionEntity version = versionDao.selectById(review.getVersionId());
+        if (api == null || version == null) {
+            return ResponseDTO.userErrorParam("API或提交版本不存在");
+        }
+        RequestEmployee employee = getRequestEmployee();
+        review.setReviewStatus(form.getReviewStatus());
+        review.setReviewRemark(form.getReviewRemark());
+        review.setReviewerId(employee == null ? null : employee.getEmployeeId());
+        review.setReviewerName(employee == null ? "系统" : employee.getActualName());
+        review.setReviewTime(LocalDateTime.now());
+        publishReviewDao.updateById(review);
+
+        boolean approved = Objects.equals(form.getReviewStatus(), 2);
+        api.setStatus(approved ? 4 : 2);
+        api.setEnabledFlag(approved);
+        api.setPublishTime(approved ? LocalDateTime.now() : null);
+        openApiDao.updateById(api);
+        version.setStatus(approved ? 3 : 1);
+        version.setLockedFlag(approved);
         versionDao.updateById(version);
         return ResponseDTO.ok();
     }
 
     /**
-     * 执行测试环境在线调试并记录调用链路。
-     *
-     * <p>控制台调试使用平台托管身份校验授权，不读取或回显App Secret。</p>
+     * 执行测试环境在线调试并记录真实调用链路。
      */
-    @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<Map<String, Object>> debug(OpenApiDebugForm form) {
-        long start = System.currentTimeMillis();
-        String traceId = UUID.randomUUID().toString().replace("-", "");
-        ApplicationEntity application = applicationDao.selectById(form.getApplicationId());
-        if (!canManage(application)) {
-            return ResponseDTO.userErrorParam("应用不存在或无权管理");
-        }
-        OpenApiEntity api = openApiDao.selectById(form.getOpenApiId());
-        if (api == null || !Boolean.TRUE.equals(api.getEnabledFlag())) {
-            return ResponseDTO.userErrorParam("API不存在或不可用");
-        }
-        if (!Objects.equals(api.getPermissionLevel(), 1)) {
-            long grantCount = permissionDao.selectCount(new LambdaQueryWrapper<ApplicationApiPermissionEntity>()
-                    .eq(ApplicationApiPermissionEntity::getApplicationId, form.getApplicationId())
-                    .eq(ApplicationApiPermissionEntity::getOpenApiId, form.getOpenApiId())
-                    .eq(ApplicationApiPermissionEntity::getApplyStatus, 2));
-            if (grantCount == 0) {
-                return ResponseDTO.userErrorParam("当前应用尚未获得该API授权");
-            }
-        }
-        OpenApiVersionEntity version = versionDao.selectById(api.getCurrentVersionId());
-        OpenApiEnvironmentEntity environment = environmentDao.selectOne(
-                new LambdaQueryWrapper<OpenApiEnvironmentEntity>()
-                        .eq(OpenApiEnvironmentEntity::getVersionId, api.getCurrentVersionId())
-                        .eq(OpenApiEnvironmentEntity::getEnvironmentCode, form.getEnvironmentCode())
-                        .eq(OpenApiEnvironmentEntity::getEnabledFlag, true)
-                        .eq(OpenApiEnvironmentEntity::getOnlineDebugFlag, true)
-                        .last("limit 1"));
-        if (version == null || environment == null) {
-            return ResponseDTO.userErrorParam("该环境未启用在线调试");
-        }
-        ApplicationCredentialEntity credential = credentialDao.selectOne(
-                new LambdaQueryWrapper<ApplicationCredentialEntity>()
-                        .eq(ApplicationCredentialEntity::getApplicationId, form.getApplicationId())
-                        .eq(ApplicationCredentialEntity::getStatus, 1)
-                        .orderByDesc(ApplicationCredentialEntity::getVersionNo)
-                        .last("limit 1"));
-        String nonce = UUID.randomUUID().toString().replace("-", "");
-        long timestamp = System.currentTimeMillis();
-        String bodyHash = sha256(Objects.requireNonNullElse(form.getBody(), ""));
-        String canonicalRequest = version.getRequestMethod() + "\n" + version.getGatewayPath() + "\n"
-                + timestamp + "\n" + nonce + "\n" + bodyHash;
-        OpenApiExampleEntity responseExample = exampleDao.selectOne(
-                new LambdaQueryWrapper<OpenApiExampleEntity>()
-                        .eq(OpenApiExampleEntity::getVersionId, version.getVersionId())
-                        .in(OpenApiExampleEntity::getExampleType, "success_response", "response")
-                        .orderByAsc(OpenApiExampleEntity::getSort)
-                        .last("limit 1"));
-        String responseBody = responseExample == null
-                ? "{\"code\":1,\"message\":\"success\",\"data\":{\"traceId\":\"" + traceId + "\"}}"
-                : responseExample.getContent();
-        long duration = Math.max(System.currentTimeMillis() - start, 1L);
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("traceId", traceId);
-        result.put("httpStatus", 200);
-        result.put("durationMs", duration);
-        result.put("responseBytes", responseBody.getBytes(StandardCharsets.UTF_8).length);
-        result.put("requestUrl", environment.getBaseUrl() + version.getGatewayPath());
-        result.put("requestMethod", version.getRequestMethod());
-        result.put("appId", credential == null ? null : credential.getAppId());
-        result.put("timestamp", timestamp);
-        result.put("nonce", nonce);
-        result.put("canonicalRequest", canonicalRequest);
-        result.put("signature", "由平台服务端托管生成，控制台不展示App Secret");
-        result.put("responseHeaders", Map.of("Content-Type", "application/json", "X-Trace-Id", traceId));
-        result.put("responseBody", responseBody);
-        result.put("dispatchMode", "definition-validation");
-        saveCallLog(traceId, application, credential, api, form.getEnvironmentCode(), 200, duration, responseBody, null);
-        return ResponseDTO.ok(result);
+        return gatewayService.debug(form);
     }
 
     /**
@@ -406,13 +416,16 @@ public class OpenApiPortalService {
      */
     public ResponseDTO<Map<String, Object>> guide() {
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("tokenPath", "/open/application/oauth/token");
+        result.put("tokenPath", "/open-api/oauth/token");
         result.put("grantType", "client_credentials");
         result.put("tokenTtlSeconds", 7200);
         result.put("headers", List.of("Authorization", "X-App-Id", "X-Timestamp", "X-Nonce", "X-Signature"));
         result.put("canonicalRule",
-                "HTTP_METHOD + \"\\n\" + REQUEST_PATH + \"\\n\" + TIMESTAMP + \"\\n\" + NONCE + \"\\n\" + SHA256(REQUEST_BODY)");
+                "HTTP_METHOD + \"\\n\" + REQUEST_TARGET + \"\\n\" + TIMESTAMP + \"\\n\" + NONCE + \"\\n\" + SHA256_HEX(REQUEST_BODY)");
+        result.put("signatureRule",
+                "SIGNING_KEY = SHA256_HEX(APP_SECRET)\nSIGNATURE = HEX_LOWER(HMAC(SIGNING_KEY, CANONICAL_REQUEST))");
         result.put("signatureAlgorithm", "HMAC-SHA256");
+        result.put("requestTargetNotice", "REQUEST_TARGET为原始请求路径；存在查询参数时，必须追加问号和原始查询串。");
         result.put("secretNotice", "App Secret仅允许保存在调用方服务端，禁止写入浏览器、URL、日志或公开仓库。");
         return ResponseDTO.ok(result);
     }
@@ -435,9 +448,36 @@ public class OpenApiPortalService {
                 check("请求响应示例", examples != null && !examples.isEmpty()),
                 check("错误码", errorCodes != null && !errorCodes.isEmpty()),
                 check("测试环境", environments != null && environments.stream()
-                        .anyMatch(item -> Boolean.TRUE.equals(item.getOnlineDebugFlag()))),
+                        .anyMatch(item -> Boolean.TRUE.equals(item.getEnabledFlag())
+                                && Boolean.TRUE.equals(item.getOnlineDebugFlag())
+                                && isValidBaseUrl(item.getBaseUrl()))),
+                check("生产环境", environments != null && environments.stream()
+                        .anyMatch(item -> "prod".equalsIgnoreCase(item.getEnvironmentCode())
+                                && Boolean.TRUE.equals(item.getEnabledFlag())
+                                && isValidBaseUrl(item.getBaseUrl()))),
                 check("网关路由", StringUtils.isNotBlank(version.getInternalPath()))
         );
+    }
+
+    /**
+     * 判断发布环境的服务基础地址是否合法。
+     */
+    private boolean isValidBaseUrl(String baseUrl) {
+        if (StringUtils.isBlank(baseUrl)) {
+            return false;
+        }
+        try {
+            URI uri = new URI(StringUtils.trim(baseUrl));
+            boolean supportedScheme = "http".equalsIgnoreCase(uri.getScheme())
+                    || "https".equalsIgnoreCase(uri.getScheme());
+            return supportedScheme
+                    && StringUtils.isNotBlank(uri.getHost())
+                    && uri.getUserInfo() == null
+                    && uri.getQuery() == null
+                    && uri.getFragment() == null;
+        } catch (URISyntaxException exception) {
+            return false;
+        }
     }
 
     /**
@@ -448,33 +488,6 @@ public class OpenApiPortalService {
     }
 
     /**
-     * 保存一次在线调试调用日志。
-     */
-    private void saveCallLog(String traceId, ApplicationEntity application,
-                             ApplicationCredentialEntity credential, OpenApiEntity api,
-                             String environmentCode, int httpStatus, long duration,
-                             String responseBody, String errorMessage) {
-        OpenApiCallLogEntity logEntity = new OpenApiCallLogEntity();
-        logEntity.setTraceId(traceId);
-        logEntity.setApplicationId(application.getApplicationId());
-        logEntity.setAppId(credential == null ? null : credential.getAppId());
-        logEntity.setOpenApiId(api.getOpenApiId());
-        logEntity.setApiCode(api.getApiCode());
-        logEntity.setEnvironmentCode(environmentCode);
-        logEntity.setRequestMethod(api.getRequestMethod());
-        logEntity.setRequestPath(api.getRequestPath());
-        logEntity.setHttpStatus(httpStatus);
-        logEntity.setSuccessFlag(httpStatus >= 200 && httpStatus < 300);
-        logEntity.setDurationMs(duration);
-        logEntity.setResponseBytes((long) responseBody.getBytes(StandardCharsets.UTF_8).length);
-        logEntity.setErrorMessage(errorMessage);
-        callLogDao.insert(logEntity);
-        api.setTodayCallCount(Objects.requireNonNullElse(api.getTodayCallCount(), 0L) + 1);
-        api.setTotalCallCount(Objects.requireNonNullElse(api.getTotalCallCount(), 0L) + 1);
-        openApiDao.updateById(api);
-    }
-
-    /**
      * 判断当前登录用户是否可以管理指定应用。
      */
     private boolean canManage(ApplicationEntity application) {
@@ -482,6 +495,15 @@ public class OpenApiPortalService {
             return false;
         }
         return applicationDataScopeService.canManage(application);
+    }
+
+    /**
+     * 判断当前登录用户是否可以管理指定API。
+     */
+    private boolean canManageApi(OpenApiEntity api) {
+        RequestEmployee employee = getRequestEmployee();
+        return employee != null && (Boolean.TRUE.equals(employee.getAdministratorFlag())
+                || Objects.equals(api.getCreateUserId(), employee.getEmployeeId()));
     }
 
     /**
@@ -496,19 +518,6 @@ public class OpenApiPortalService {
         result.setList(page.getRecords());
         result.setEmptyFlag(page.getRecords().isEmpty());
         return result;
-    }
-
-    /**
-     * 计算SHA-256十六进制摘要。
-     */
-    private String sha256(String value) {
-        try {
-            return HexFormat.of().formatHex(
-                    MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8)));
-        } catch (Exception exception) {
-            log.error("生成调试请求体摘要失败", exception);
-            return "";
-        }
     }
 
     /**

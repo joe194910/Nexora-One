@@ -10,6 +10,7 @@ import com.nexoraone.admin.module.business.application.dao.*;
 import com.nexoraone.admin.module.business.application.domain.entity.*;
 import com.nexoraone.admin.module.business.application.domain.form.*;
 import com.nexoraone.admin.module.business.application.domain.vo.ApplicationCredentialVO;
+import com.nexoraone.admin.module.business.application.domain.vo.ApplicationSecurityConfigVO;
 import com.nexoraone.admin.module.business.application.manager.ApplicationCredentialManager;
 import com.nexoraone.admin.module.system.login.domain.RequestEmployee;
 import com.nexoraone.admin.util.AdminRequestUtil;
@@ -107,7 +108,7 @@ public class ApplicationService {
         }
         RequestEmployee employee = applicationDataScopeService.requireEmployee();
         if (!applicationDataScopeService.canAssignEnterprise(form.getEnterpriseId())) {
-            return ResponseDTO.userErrorParam("No permission to create an application for this enterprise");
+            return ResponseDTO.userErrorParam("无权为该企业创建应用");
         }
         ApplicationEntity entity = new ApplicationEntity();
         entity.setApplicationName(form.getApplicationName());
@@ -206,7 +207,17 @@ public class ApplicationService {
         if (!editableResult.getOk()) {
             return editableResult;
         }
-        String json = writeJson(form.getData());
+        Object stepData = form.getData();
+        if (Objects.equals(form.getStep(), 4)) {
+            ApplicationSecurityConfigVO securityConfig = objectMapper.convertValue(
+                    form.getData(), ApplicationSecurityConfigVO.class);
+            String validationMessage = securityConfig.validate();
+            if (StringUtils.isNotBlank(validationMessage)) {
+                return ResponseDTO.userErrorParam(validationMessage);
+            }
+            stepData = securityConfig.normalize();
+        }
+        String json = writeJson(stepData);
         switch (form.getStep()) {
             case 3 -> entity.setLoginConfig(json);
             case 4 -> entity.setSecurityConfig(json);

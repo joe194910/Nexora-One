@@ -40,7 +40,7 @@
               <a-input v-model:value="baseForm.contact" placeholder="手机号或企业邮箱" />
             </a-form-item>
             <a-form-item label="应用首页地址">
-              <a-input v-model:value="baseForm.homeUrl" placeholder="https://app.example.com" />
+              <a-input v-model:value="baseForm.homeUrl" placeholder="请输入应用实际首页地址" />
             </a-form-item>
             <a-form-item label="应用图标">
               <Upload
@@ -87,8 +87,8 @@
           <div>
             <strong>平台接入验证</strong>
             <div class="application-page__subtitle">
-              先通过 <code>POST /open/application/oauth/token</code> 换取 Access Token，再请求
-              <code>GET /open/application/connect/ping</code>；请求成功后才会标记为已接入。
+              先通过 <code>POST /open-api/oauth/token</code> 换取 Access Token，再请求
+              <code>GET /open-api/connect/ping</code>；请求成功后才会标记为已接入。
             </div>
           </div>
           <a-input-password
@@ -161,8 +161,6 @@
             <a-form-item class="application-form-span" label="IP 白名单"><a-select v-model:value="securityForm.ipWhitelist" mode="tags" placeholder="输入 IP 或 CIDR 后回车" /></a-form-item>
             <a-form-item label="强制 HTTPS"><a-switch v-model:checked="securityForm.forceHttps" /></a-form-item>
             <a-form-item label="启用防重放"><a-switch v-model:checked="securityForm.replayProtection" /></a-form-item>
-            <a-form-item label="响应数据加密"><a-switch v-model:checked="securityForm.responseEncryption" /></a-form-item>
-            <a-form-item label="敏感字段脱敏"><a-switch v-model:checked="securityForm.maskSensitiveData" /></a-form-item>
           </div>
         </a-form>
       </section>
@@ -334,7 +332,7 @@
     summary: [{ required: true, message: '请输入应用简介' }],
   };
   const loginForm = reactive({ protocol: 'OIDC', homeUrl: '', logoutCallback: '', callbackUrls: [], tokenTtl: 7200, codeTtl: 60, singleLogout: true, autoCreateUser: true });
-  const securityForm = reactive({ authMode: 'SIGNATURE', signatureAlgorithm: 'HMAC-SHA256', signatureHeader: 'X-Signature', timestampHeader: 'X-Timestamp', nonceHeader: 'X-Nonce', replayTtl: 300, qpsLimit: 50, dailyLimit: 100000, timeoutSeconds: 10, ipWhitelist: [], forceHttps: true, replayProtection: true, responseEncryption: false, maskSensitiveData: true });
+  const securityForm = reactive({ authMode: 'SIGNATURE', signatureAlgorithm: 'HMAC-SHA256', signatureHeader: 'X-Signature', timestampHeader: 'X-Timestamp', nonceHeader: 'X-Nonce', replayTtl: 300, qpsLimit: 50, dailyLimit: 100000, timeoutSeconds: 10, ipWhitelist: [], forceHttps: true, replayProtection: true });
   const apiForm = reactive({ openApiIdList: [], applyReason: '' });
   const listingForm = reactive({ marketName: '', subtitle: '', category: '企业服务', tags: [], versionNo: 'v1.0.0', releaseNotes: '', description: '', providerName: 'NexoraOne', contactEmail: '', privacyUrl: '', termsUrl: '', helpUrl: '', bannerUrl: '', screenshotUrls: [] });
   const publishForm = reactive({ scopeType: 'ENTERPRISE', organizationNames: [], roleNames: [], sort: 100, recommendTag: '', portalVisible: true, allowFavorite: true, searchable: true, openMode: 'NEW_TAB' });
@@ -342,7 +340,7 @@
   const authOptions = [
     { value: 'SIGNATURE', label: 'Access Token + 请求签名', description: '推荐生产环境使用' },
     { value: 'TOKEN', label: '仅 Access Token', description: '适合内部低风险系统' },
-    { value: 'IP', label: 'IP 白名单', description: '适合固定服务器调用' },
+    { value: 'IP', label: 'Access Token + IP 白名单', description: '适合固定服务器调用，并限制请求来源地址' },
   ];
   const scopeOptions = [
     { value: 'ENTERPRISE', label: '仅本企业', description: '仅当前企业内可见和使用' },

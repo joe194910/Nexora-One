@@ -8,47 +8,47 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * API request or response parameter definition.
+ * API请求或响应参数定义。
  */
 @Data
 @TableName("nexora_one_open_api_parameter")
 public class OpenApiParameterEntity {
 
-    /** Parameter primary key. */
+    /** 参数主键。 */
     @TableId(type = IdType.AUTO)
     private Long parameterId;
-    /** API version primary key. */
+    /** API版本主键。 */
     private Long versionId;
-    /** Direction: 1 request, 2 response. */
+    /** 参数方向：1请求，2响应。 */
     private Integer direction;
-    /** Parameter location such as header, path, query, body or response. */
+    /** 参数位置，例如请求头、路径、查询参数、请求体或响应体。 */
     private String location;
-    /** Parent parameter primary key for nested structures. */
+    /** 嵌套结构的父参数主键。 */
     private Long parentId;
-    /** Parameter name. */
+    /** 参数名称。 */
     private String parameterName;
-    /** Chinese display name. */
+    /** 中文显示名称。 */
     private String chineseName;
-    /** Data type. */
+    /** 数据类型。 */
     private String dataType;
-    /** Whether the parameter is required. */
+    /** 参数是否必填。 */
     private Boolean requiredFlag;
-    /** Whether the response field may be null. */
+    /** 响应字段是否允许为空。 */
     private Boolean nullableFlag;
-    /** Default value. */
+    /** 默认值。 */
     private String defaultValue;
-    /** Example value. */
+    /** 示例值。 */
     private String exampleValue;
-    /** Validation rule. */
+    /** 校验规则。 */
     private String validationRule;
-    /** Parameter description. */
+    /** 参数说明。 */
     private String description;
-    /** Whether the field requires masking. */
+    /** 字段是否需要脱敏。 */
     private Boolean maskingFlag;
-    /** Display order. */
+    /** 显示顺序。 */
     private Integer sort;
-    /** Creation time. */
+    /** 创建时间。 */
     private LocalDateTime createTime;
-    /** Update time. */
+    /** 更新时间。 */
     private LocalDateTime updateTime;
 }

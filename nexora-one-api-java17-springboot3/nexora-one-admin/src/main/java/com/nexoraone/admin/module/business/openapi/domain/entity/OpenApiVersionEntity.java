@@ -8,55 +8,55 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * API version definition.
+ * API版本定义。
  */
 @Data
 @TableName("nexora_one_open_api_version")
 public class OpenApiVersionEntity {
 
-    /** Version primary key. */
+    /** 版本主键。 */
     @TableId(type = IdType.AUTO)
     private Long versionId;
-    /** Open API primary key. */
+    /** 开放API主键。 */
     private Long openApiId;
-    /** Semantic version number. */
+    /** 语义化版本号。 */
     private String versionNo;
-    /** HTTP request method. */
+    /** HTTP请求方式。 */
     private String requestMethod;
-    /** Public gateway path. */
+    /** 公开网关路径。 */
     private String gatewayPath;
-    /** Internal forwarding path. */
+    /** 内部转发路径。 */
     private String internalPath;
-    /** Request content type. */
+    /** 请求内容类型。 */
     private String contentType;
-    /** Permission level: 1 public, 2 approval required, 3 sensitive. */
+    /** 权限级别：1公开，2申请授权，3敏感审核。 */
     private Integer permissionLevel;
-    /** Request timeout in seconds. */
+    /** 请求超时时间，单位秒。 */
     private Integer timeoutSeconds;
-    /** Version description. */
+    /** 版本说明。 */
     private String description;
-    /** Whether to wrap responses in the unified response structure. */
+    /** 是否使用统一响应结构包装。 */
     private Boolean unifiedResponseFlag;
-    /** Whether response examples and logs require masking. */
+    /** 响应示例和日志是否需要脱敏。 */
     private Boolean dataMaskingFlag;
-    /** Reserved JSON security configuration. */
+    /** 预留JSON安全配置。 */
     private String securityConfig;
-    /** Version change log. */
+    /** 版本更新日志。 */
     private String changeLog;
-    /** Version status: 1 draft, 2 pending, 3 published, 4 disabled, 5 offline. */
+    /** 版本状态：1草稿，2待审核，3已发布，4已停用，5已下线。 */
     private Integer status;
-    /** Whether this version is immutable. */
+    /** 当前版本是否禁止修改。 */
     private Boolean lockedFlag;
-    /** Creator primary key. */
+    /** 创建人主键。 */
     private Long createUserId;
-    /** Creator name. */
+    /** 创建人姓名。 */
     private String createUserName;
-    /** Updater primary key. */
+    /** 更新人主键。 */
     private Long updateUserId;
-    /** Updater name. */
+    /** 更新人姓名。 */
     private String updateUserName;
-    /** Creation time. */
+    /** 创建时间。 */
     private LocalDateTime createTime;
-    /** Update time. */
+    /** 更新时间。 */
     private LocalDateTime updateTime;
 }

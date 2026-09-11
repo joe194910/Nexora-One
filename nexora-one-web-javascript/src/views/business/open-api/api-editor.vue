@@ -103,7 +103,13 @@
               <tr v-for="item in basicForm.environments" :key="item.environmentCode">
                 <td><a-input v-model:value="item.environmentName" :disabled="readOnly" /></td>
                 <td><a-input v-model:value="item.environmentCode" :disabled="readOnly || Boolean(openApiId)" /></td>
-                <td><a-input v-model:value="item.baseUrl" :disabled="readOnly" /></td>
+                <td>
+                  <a-input
+                    v-model:value="item.baseUrl"
+                    :disabled="readOnly"
+                    placeholder="请输入真实服务地址，如 https://service.company.com"
+                  />
+                </td>
                 <td><a-switch v-model:checked="item.enabledFlag" :disabled="readOnly" /></td>
                 <td><a-switch v-model:checked="item.onlineDebugFlag" :disabled="readOnly" /></td>
                 <td><a-input v-model:value="item.description" :disabled="readOnly" /></td>
@@ -256,8 +262,8 @@
           <div class="open-api-reserved__text">
             {{
               currentStep === 4
-                ? '本阶段已预留安全配置字段，签名认证、防重放、限流和网关执行链将在后续模块中统一接入。'
-                : '本阶段已完成 API 定义数据，发布审核、市场展示和版本上线将在后续模块中实现。'
+                ? '安全策略已接入真实网关执行链，包含签名认证、防重放、授权校验、限流和请求转发。'
+                : '保存当前 API 后，可在上架发布页面完善市场资料并提交平台审核。'
             }}
           </div>
         </div>
@@ -350,7 +356,7 @@
       {
         environmentCode: 'test',
         environmentName: '测试环境',
-        baseUrl: 'https://api-test.nexoraone.com',
+        baseUrl: '',
         enabledFlag: true,
         onlineDebugFlag: true,
         description: '用于功能测试和联调',
@@ -358,7 +364,7 @@
       {
         environmentCode: 'prod',
         environmentName: '生产环境',
-        baseUrl: 'https://api.nexoraone.com',
+        baseUrl: '',
         enabledFlag: true,
         onlineDebugFlag: false,
         description: '正式生产环境',
@@ -476,8 +482,50 @@
     return true;
   }
 
+  function validateEnvironments() {
+    if (!basicForm.environments.length) {
+      message.warning('请至少配置一个 API 发布环境');
+      return false;
+    }
+    const environmentCodes = new Set();
+    for (const environment of basicForm.environments) {
+      const environmentCode = environment.environmentCode?.trim().toLowerCase();
+      if (!environmentCode || !environment.environmentName?.trim()) {
+        message.warning('请完整填写环境名称和环境编码');
+        return false;
+      }
+      if (environmentCodes.has(environmentCode)) {
+        message.warning('环境编码不能重复');
+        return false;
+      }
+      environmentCodes.add(environmentCode);
+      try {
+        const baseUrl = new URL(environment.baseUrl?.trim());
+        if (
+          !['http:', 'https:'].includes(baseUrl.protocol) ||
+          baseUrl.username ||
+          baseUrl.password ||
+          baseUrl.search ||
+          baseUrl.hash
+        ) {
+          throw new Error('invalid base url');
+        }
+        environment.baseUrl = baseUrl.href.replace(/\/$/, '');
+        environment.environmentCode = environmentCode;
+        environment.environmentName = environment.environmentName.trim();
+      } catch (error) {
+        message.warning(`请为“${environment.environmentName || environmentCode}”填写有效的 HTTP 或 HTTPS 服务地址`);
+        return false;
+      }
+    }
+    return true;
+  }
+
   async function saveBasic() {
     await basicFormRef.value.validate();
+    if (!validateEnvironments()) {
+      return false;
+    }
     const codeResponse = await openApiApi.checkCode(basicForm.apiCode, openApiId.value);
     codeAvailable.value = Boolean(codeResponse.data);
     if (!codeAvailable.value) {

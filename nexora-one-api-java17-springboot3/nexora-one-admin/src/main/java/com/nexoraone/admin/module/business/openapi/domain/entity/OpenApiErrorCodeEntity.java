@@ -8,31 +8,31 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * API business error code definition.
+ * API业务错误码定义。
  */
 @Data
 @TableName("nexora_one_open_api_error_code")
 public class OpenApiErrorCodeEntity {
 
-    /** Error code primary key. */
+    /** 错误码主键。 */
     @TableId(type = IdType.AUTO)
     private Long errorCodeId;
-    /** API version primary key. */
+    /** API版本主键。 */
     private Long versionId;
-    /** HTTP status code. */
+    /** HTTP状态码。 */
     private Integer httpStatus;
-    /** Business error code. */
+    /** 业务错误码。 */
     private String businessCode;
-    /** Error message. */
+    /** 错误信息。 */
     private String errorMessage;
-    /** Trigger condition. */
+    /** 触发条件。 */
     private String triggerCondition;
-    /** Recommended handling. */
+    /** 处理建议。 */
     private String handlingAdvice;
-    /** Display order. */
+    /** 显示顺序。 */
     private Integer sort;
-    /** Creation time. */
+    /** 创建时间。 */
     private LocalDateTime createTime;
-    /** Update time. */
+    /** 更新时间。 */
     private LocalDateTime updateTime;
 }

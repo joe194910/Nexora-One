@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 /**
  * 开放API目录。
@@ -56,6 +57,8 @@ public class OpenApiEntity {
     private Integer workflowStep;
     /** 今日调用量。 */
     private Long todayCallCount;
+    /** 今日调用量对应的统计日期。 */
+    private LocalDate callCountDate;
     /** 累计调用量。 */
     private Long totalCallCount;
     /** 是否启用。 */

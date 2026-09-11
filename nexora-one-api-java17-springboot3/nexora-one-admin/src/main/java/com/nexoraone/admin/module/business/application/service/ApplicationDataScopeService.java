@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Application data scope service shared by application center and API open platform.
+ * 应用中心和API开放平台共用的数据权限服务。
  */
 @Slf4j
 @Service
@@ -27,14 +27,14 @@ public class ApplicationDataScopeService {
     private ApplicationDao applicationDao;
 
     /**
-     * Adds enterprise and creator ownership scope to an application query.
+     * 为应用查询增加创建人数据范围。
      */
     public void applyScope(LambdaQueryWrapper<ApplicationEntity> wrapper) {
         applyScope(wrapper, null);
     }
 
     /**
-     * Adds ownership scope unless the current employee has the specified platform permission.
+     * 除平台管理员或具有指定平台权限的人员外，仅允许查询本人创建的应用。
      */
     public void applyScope(LambdaQueryWrapper<ApplicationEntity> wrapper, String platformPermission) {
         RequestEmployee employee = requireEmployee();
@@ -42,17 +42,11 @@ public class ApplicationDataScopeService {
                 || platformPermission != null && StpUtil.hasPermission(platformPermission)) {
             return;
         }
-        List<Long> enterpriseIds = getEnterpriseIds(employee);
-        wrapper.and(scope -> {
-            scope.eq(ApplicationEntity::getCreateUserId, employee.getEmployeeId());
-            if (!enterpriseIds.isEmpty()) {
-                scope.or().in(ApplicationEntity::getEnterpriseId, enterpriseIds);
-            }
-        });
+        wrapper.eq(ApplicationEntity::getCreateUserId, employee.getEmployeeId());
     }
 
     /**
-     * Returns whether the current employee can manage an application.
+     * 判断当前员工是否可以管理指定应用。
      */
     public boolean canManage(ApplicationEntity application) {
         if (application == null) {
@@ -64,7 +58,7 @@ public class ApplicationDataScopeService {
     }
 
     /**
-     * Returns all application IDs visible in the current employee's management scope.
+     * 查询当前员工管理范围内的全部应用主键。
      */
     public List<Long> getVisibleApplicationIds() {
         LambdaQueryWrapper<ApplicationEntity> wrapper = new LambdaQueryWrapper<ApplicationEntity>()
@@ -76,7 +70,7 @@ public class ApplicationDataScopeService {
     }
 
     /**
-     * Returns whether the current employee may assign an application to the specified enterprise.
+     * 判断当前员工是否可以把应用归属到指定企业。
      */
     public boolean canAssignEnterprise(Long enterpriseId) {
         RequestEmployee employee = requireEmployee();
@@ -86,45 +80,45 @@ public class ApplicationDataScopeService {
     }
 
     /**
-     * Returns whether the current employee is a platform administrator.
+     * 判断当前员工是否为平台管理员。
      */
     public boolean isPlatformAdministrator() {
         return isPlatformAdministrator(requireEmployee());
     }
 
     /**
-     * Returns whether the current employee is a platform administrator or has a platform permission.
+     * 判断当前员工是否为平台管理员或具有指定平台权限。
      */
     public boolean hasPlatformPermission(String permission) {
         return isPlatformAdministrator(requireEmployee()) || StpUtil.hasPermission(permission);
     }
 
     /**
-     * Returns the current employee and rejects unauthenticated management operations.
+     * 获取当前登录员工，未登录时拒绝继续执行管理操作。
      */
     public RequestEmployee requireEmployee() {
         RequestEmployee employee;
         try {
             employee = AdminRequestUtil.getRequestUser();
         } catch (Exception exception) {
-            log.debug("No logged-in employee was found when checking application data scope", exception);
+            log.debug("检查应用数据权限时未获取到登录员工", exception);
             employee = null;
         }
         if (employee == null || employee.getEmployeeId() == null) {
-            throw new IllegalStateException("Current login has expired");
+            throw new IllegalStateException("当前登录状态已失效");
         }
         return employee;
     }
 
     /**
-     * Returns enterprise IDs associated with an employee.
+     * 查询员工关联的企业主键。
      */
     private List<Long> getEnterpriseIds(RequestEmployee employee) {
         return enterpriseEmployeeDao.selectEnterpriseIdByEmployeeId(employee.getEmployeeId());
     }
 
     /**
-     * Checks the platform administrator flag.
+     * 检查平台管理员标识。
      */
     private boolean isPlatformAdministrator(RequestEmployee employee) {
         return Boolean.TRUE.equals(employee.getAdministratorFlag());

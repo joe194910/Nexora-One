@@ -6,13 +6,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexoraone.admin.module.business.application.dao.ApplicationCredentialDao;
 import com.nexoraone.admin.module.business.application.dao.ApplicationDao;
 import com.nexoraone.admin.module.business.application.domain.entity.ApplicationCredentialEntity;
+import com.nexoraone.admin.module.business.application.domain.entity.ApplicationEntity;
 import com.nexoraone.admin.module.business.application.domain.form.ApplicationCreateForm;
 import com.nexoraone.admin.module.business.application.domain.vo.ApplicationCredentialVO;
 import com.nexoraone.admin.module.business.application.manager.ApplicationAccessTokenManager;
 import com.nexoraone.admin.module.business.application.service.ApplicationService;
+import com.nexoraone.admin.module.system.employee.dao.EmployeeDao;
+import com.nexoraone.admin.module.system.employee.domain.entity.EmployeeEntity;
+import com.nexoraone.admin.module.system.login.domain.RequestEmployee;
+import com.nexoraone.admin.module.system.login.manager.LoginManager;
 import com.nexoraone.base.common.domain.ResponseDTO;
+import com.nexoraone.base.common.util.SmartRequestUtil;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -31,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * App ID/App Secret开放认证链路集成测试。
+ * App ID 与 App Secret 开放认证链路集成测试。
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ApplicationOpenAuthIntegrationTest {
@@ -49,12 +56,32 @@ class ApplicationOpenAuthIntegrationTest {
     private ObjectMapper objectMapper;
     @Resource
     private ApplicationAccessTokenManager accessTokenManager;
+    @Resource
+    private EmployeeDao employeeDao;
+    @Resource
+    private LoginManager loginManager;
 
     private Long applicationId;
     private String activeAccessToken;
 
     /**
-     * 验证客户端凭证换取Token、平台连通性和密钥轮换失效机制。
+     * 使用数据库中的平台管理员建立与正式请求一致的员工上下文。
+     */
+    @BeforeEach
+    void prepareRequestEmployee() {
+        EmployeeEntity employee = employeeDao.selectOne(new LambdaQueryWrapper<EmployeeEntity>()
+                .eq(EmployeeEntity::getAdministratorFlag, true)
+                .eq(EmployeeEntity::getDisabledFlag, false)
+                .eq(EmployeeEntity::getDeletedFlag, false)
+                .last("LIMIT 1"));
+        assertNotNull(employee, "集成测试需要一名可用的平台管理员");
+        RequestEmployee requestEmployee = loginManager.getRequestEmployee(employee.getEmployeeId());
+        assertNotNull(requestEmployee, "无法加载平台管理员登录信息");
+        SmartRequestUtil.setRequestUser(requestEmployee);
+    }
+
+    /**
+     * 验证客户端凭证换取访问令牌、平台连通性和密钥轮换后的失效机制。
      */
     @Test
     void shouldCompleteClientCredentialsFlowAndInvalidateOldTokenAfterSecretReset() throws Exception {
@@ -63,6 +90,9 @@ class ApplicationOpenAuthIntegrationTest {
         applicationId = Long.valueOf(createResult.getData().get("applicationId").toString());
         ApplicationCredentialVO credential =
                 (ApplicationCredentialVO) createResult.getData().get("credential");
+        ApplicationEntity application = applicationDao.selectById(applicationId);
+        application.setListingStatus(2);
+        applicationDao.updateById(application);
 
         JsonNode invalidTokenResponse = requestToken(credential.getAppId(), "invalid-secret");
         assertFalse(invalidTokenResponse.path("ok").asBoolean());
@@ -92,23 +122,23 @@ class ApplicationOpenAuthIntegrationTest {
     }
 
     /**
-     * 构造隔离的临时应用。
+     * 构造相互隔离的临时测试应用。
      */
     private ApplicationCreateForm buildApplicationForm() {
         ApplicationCreateForm form = new ApplicationCreateForm();
         form.setApplicationName("开放认证集成测试");
         form.setApplicationCode("auth-it-" + System.currentTimeMillis());
         form.setApplicationType(2);
-        form.setEnterpriseName("NexoraOne测试企业");
+        form.setEnterpriseName("NexoraOne 测试企业");
         form.setOwnerName("集成测试");
         form.setContact("integration-test@nexoraone.local");
-        form.setSummary("用于验证App ID和App Secret真实接入链路的临时应用。");
-        form.setHomeUrl("https://example.com");
+        form.setSummary("用于验证 App ID 与 App Secret 真实接入链路的临时应用。");
+        form.setHomeUrl("http://127.0.0.1");
         return form;
     }
 
     /**
-     * 通过公开HTTP接口换取Access Token。
+     * 通过公开 HTTP 接口换取访问令牌。
      */
     private JsonNode requestToken(String appId, String appSecret) throws Exception {
         HttpHeaders headers = new HttpHeaders();
@@ -118,18 +148,18 @@ class ApplicationOpenAuthIntegrationTest {
                 "appSecret", appSecret,
                 "grantType", "client_credentials"), headers);
         ResponseEntity<String> response = new RestTemplate().postForEntity(
-                baseUrl() + "/open/application/oauth/token", request, String.class);
+                baseUrl() + "/open-api/oauth/token", request, String.class);
         return objectMapper.readTree(response.getBody());
     }
 
     /**
-     * 携带Bearer Token请求平台连通性接口。
+     * 携带访问令牌请求平台连通性接口。
      */
     private JsonNode requestPing(String accessToken) throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
         ResponseEntity<String> response = new RestTemplate().exchange(
-                baseUrl() + "/open/application/connect/ping",
+                baseUrl() + "/open-api/connect/ping",
                 HttpMethod.GET,
                 new HttpEntity<>(headers),
                 String.class);
@@ -144,18 +174,22 @@ class ApplicationOpenAuthIntegrationTest {
     }
 
     /**
-     * 删除本次测试创建的数据。
+     * 删除本次测试创建的数据和访问令牌。
      */
     @AfterEach
     void cleanUp() {
-        if (activeAccessToken != null) {
-            accessTokenManager.revoke(activeAccessToken);
+        try {
+            if (activeAccessToken != null) {
+                accessTokenManager.revoke(activeAccessToken);
+            }
+            if (applicationId == null) {
+                return;
+            }
+            credentialDao.delete(new LambdaQueryWrapper<ApplicationCredentialEntity>()
+                    .eq(ApplicationCredentialEntity::getApplicationId, applicationId));
+            applicationDao.deleteById(applicationId);
+        } finally {
+            SmartRequestUtil.remove();
         }
-        if (applicationId == null) {
-            return;
-        }
-        credentialDao.delete(new LambdaQueryWrapper<ApplicationCredentialEntity>()
-                .eq(ApplicationCredentialEntity::getApplicationId, applicationId));
-        applicationDao.deleteById(applicationId);
     }
 }

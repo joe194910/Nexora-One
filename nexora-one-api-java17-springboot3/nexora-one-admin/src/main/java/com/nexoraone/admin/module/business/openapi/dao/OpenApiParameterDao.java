@@ -5,7 +5,7 @@ import com.nexoraone.admin.module.business.openapi.domain.entity.OpenApiParamete
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * API parameter data access interface.
+ * API参数数据访问接口。
  */
 @Mapper
 public interface OpenApiParameterDao extends BaseMapper<OpenApiParameterEntity> {

@@ -74,7 +74,7 @@ public class ApplicationCredentialManager {
     /**
      * 根据App ID校验App Secret，校验过程使用恒定时间比较，避免时序攻击。
      *
-     * @param appId App ID
+     * @param appId 应用的App ID
      * @param appSecret App Secret明文
      * @return 校验成功时返回当前有效凭证，否则返回null
      */
@@ -119,10 +119,26 @@ public class ApplicationCredentialManager {
     public boolean verifySignature(ApplicationCredentialEntity credential,
                                    String canonicalRequest,
                                    String suppliedSignature) {
+        return verifySignature(credential, canonicalRequest, suppliedSignature, "HMAC-SHA256");
+    }
+
+    /**
+     * 使用指定算法校验网关请求签名。
+     *
+     * @param credential 当前有效应用凭证
+     * @param canonicalRequest 待签名的规范请求字符串
+     * @param suppliedSignature 调用方提交的请求签名
+     * @param signatureAlgorithm 签名算法
+     * @return 签名是否校验通过
+     */
+    public boolean verifySignature(ApplicationCredentialEntity credential,
+                                   String canonicalRequest,
+                                   String suppliedSignature,
+                                   String signatureAlgorithm) {
         if (credential == null || suppliedSignature == null) {
             return false;
         }
-        byte[] expected = sign(credential.getSecretHash(), canonicalRequest)
+        byte[] expected = sign(credential.getSecretHash(), canonicalRequest, signatureAlgorithm)
                 .getBytes(StandardCharsets.UTF_8);
         byte[] actual = suppliedSignature.trim().toLowerCase()
                 .getBytes(StandardCharsets.UTF_8);
@@ -137,10 +153,24 @@ public class ApplicationCredentialManager {
      * @return 小写十六进制格式的 HMAC-SHA256 签名
      */
     public String signForPlatform(ApplicationCredentialEntity credential, String canonicalRequest) {
+        return signForPlatform(credential, canonicalRequest, "HMAC-SHA256");
+    }
+
+    /**
+     * 使用指定算法为平台托管的在线调试请求生成签名。
+     *
+     * @param credential 当前有效应用凭证
+     * @param canonicalRequest 待签名的规范请求字符串
+     * @param signatureAlgorithm 签名算法
+     * @return 小写十六进制格式的签名
+     */
+    public String signForPlatform(ApplicationCredentialEntity credential,
+                                  String canonicalRequest,
+                                  String signatureAlgorithm) {
         if (credential == null) {
             throw new IllegalArgumentException("应用凭证不存在");
         }
-        return sign(credential.getSecretHash(), canonicalRequest);
+        return sign(credential.getSecretHash(), canonicalRequest, signatureAlgorithm);
     }
 
     /**
@@ -186,20 +216,23 @@ public class ApplicationCredentialManager {
     }
 
     /**
-     * 计算小写十六进制格式的 HMAC-SHA256 签名。
+     * 使用指定算法计算小写十六进制格式的HMAC签名。
      *
      * @param signingKey 签名密钥
      * @param canonicalRequest 待签名的规范请求字符串
+     * @param signatureAlgorithm 签名算法
      * @return 小写十六进制格式的签名
      */
-    private String sign(String signingKey, String canonicalRequest) {
+    private String sign(String signingKey, String canonicalRequest, String signatureAlgorithm) {
         try {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(signingKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            String javaAlgorithm = "HMAC-SHA512".equalsIgnoreCase(signatureAlgorithm)
+                    ? "HmacSHA512" : "HmacSHA256";
+            Mac mac = Mac.getInstance(javaAlgorithm);
+            mac.init(new SecretKeySpec(signingKey.getBytes(StandardCharsets.UTF_8), javaAlgorithm));
             return HexFormat.of().formatHex(
                     mac.doFinal(canonicalRequest.getBytes(StandardCharsets.UTF_8)));
         } catch (Exception exception) {
-            throw new IllegalStateException("计算 HMAC-SHA256 签名失败", exception);
+            throw new IllegalStateException("计算HMAC请求签名失败", exception);
         }
     }
 

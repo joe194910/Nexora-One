@@ -8,31 +8,31 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * API release environment.
+ * API发布环境。
  */
 @Data
 @TableName("nexora_one_open_api_environment")
 public class OpenApiEnvironmentEntity {
 
-    /** Environment primary key. */
+    /** 环境主键。 */
     @TableId(type = IdType.AUTO)
     private Long environmentId;
-    /** API version primary key. */
+    /** API版本主键。 */
     private Long versionId;
-    /** Environment code. */
+    /** 环境编码。 */
     private String environmentCode;
-    /** Environment display name. */
+    /** 环境显示名称。 */
     private String environmentName;
-    /** Environment base URL. */
+    /** 环境基础地址。 */
     private String baseUrl;
-    /** Whether the environment is enabled. */
+    /** 是否启用环境。 */
     private Boolean enabledFlag;
-    /** Whether online debugging is allowed. */
+    /** 是否允许在线调试。 */
     private Boolean onlineDebugFlag;
-    /** Environment description. */
+    /** 环境说明。 */
     private String description;
-    /** Creation time. */
+    /** 创建时间。 */
     private LocalDateTime createTime;
-    /** Update time. */
+    /** 更新时间。 */
     private LocalDateTime updateTime;
 }

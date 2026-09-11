@@ -63,7 +63,7 @@
             <a-descriptions-item label="Nonce">{{ result.nonce }}</a-descriptions-item>
           </a-descriptions>
           <div class="open-api-code-box open-api-debug-response"><pre>{{ formatJson(result.responseBody) }}</pre></div>
-          <a-alert v-if="result.dispatchMode === 'definition-validation'" type="info" show-icon message="当前为平台托管的定义与授权验证，不会向生产环境发起请求。" />
+          <a-alert v-if="result.dispatchMode === 'real-forward'" type="success" show-icon message="请求已由平台网关真实转发到配置的测试环境。" />
         </template>
       </section>
     </div>

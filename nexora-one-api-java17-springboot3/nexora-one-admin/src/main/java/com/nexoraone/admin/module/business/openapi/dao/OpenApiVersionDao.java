@@ -5,7 +5,7 @@ import com.nexoraone.admin.module.business.openapi.domain.entity.OpenApiVersionE
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * API version data access interface.
+ * API版本数据访问接口。
  */
 @Mapper
 public interface OpenApiVersionDao extends BaseMapper<OpenApiVersionEntity> {

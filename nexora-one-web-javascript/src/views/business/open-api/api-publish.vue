@@ -31,10 +31,10 @@
               </a-radio-group>
             </a-form-item>
             <a-form-item label="SLA说明" required><a-textarea v-model:value="form.slaDescription" :rows="3" :maxlength="300" /></a-form-item>
-            <a-alert type="warning" show-icon message="发布后当前版本将锁定；如需修改接口定义，请创建新版本。" />
+            <a-alert type="warning" show-icon message="提交后当前版本将锁定并进入平台审核；审核通过后才会正式上架。" />
             <div class="open-api-publish-actions">
               <a-button @click="goEdit">返回修改</a-button>
-              <a-button type="primary" :disabled="!detail.ready" :loading="publishing" @click="publish">确认上架</a-button>
+              <a-button type="primary" :disabled="!detail.ready" :loading="publishing" @click="publish">提交平台审核</a-button>
             </div>
           </a-form>
         </section>
@@ -88,7 +88,7 @@
     publishing.value = true;
     try {
       await openApiApi.publish(form);
-      message.success('API 已上架发布');
+      message.success('API 发布申请已提交，等待平台审核');
       router.push('/open-api/manage');
     } finally {
       publishing.value = false;

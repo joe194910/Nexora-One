@@ -4,15 +4,15 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
- * API status update form.
+ * API状态更新表单。
  */
 @Data
 public class OpenApiStatusForm {
 
-    /** Open API primary key. */
+    /** 开放API主键。 */
     @NotNull(message = "API主键不能为空")
     private Long openApiId;
-    /** Target status. */
+    /** 目标状态。 */
     @NotNull(message = "目标状态不能为空")
     private Integer status;
 }
