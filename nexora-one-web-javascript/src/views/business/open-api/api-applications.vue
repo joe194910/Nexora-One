@@ -28,10 +28,27 @@
             <a-tag :color="statusMeta(record.permission.applyStatus).color">{{ statusMeta(record.permission.applyStatus).text }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <a-button v-if="record.permission.applyStatus === 1" type="link" @click="openReview(record)" v-privilege="'open-api:grant:review'">
-              审核
-            </a-button>
-            <span v-else class="open-api-muted">{{ record.permission.reviewRemark || '-' }}</span>
+            <template v-if="record.permission.applyStatus === 1">
+              <a-button type="link" @click="openReview(record)" v-privilege="'open-api:grant:review'">审核</a-button>
+              <a-popconfirm
+                title="确认撤销该 API 权限申请？撤销后可重新发起申请。"
+                ok-text="确认撤销"
+                cancel-text="取消"
+                @confirm="revokePermission(record)"
+              >
+                <a-button type="link" danger>撤销申请</a-button>
+              </a-popconfirm>
+            </template>
+            <a-popconfirm
+              v-else-if="record.permission.applyStatus === 2 && record.permissionLevel !== 1"
+              title="确认撤销该 API 授权？撤销后应用将立即无法继续调用此接口。"
+              ok-text="确认撤销"
+              cancel-text="取消"
+              @confirm="revokePermission(record)"
+            >
+              <a-button type="link" danger>撤销授权</a-button>
+            </a-popconfirm>
+            <span v-else class="open-api-muted">{{ record.permission.reviewRemark || (record.permissionLevel === 1 ? '公开 API' : '-') }}</span>
           </template>
         </template>
       </a-table>
@@ -113,6 +130,16 @@
     message.success('审核结果已提交');
     reviewVisible.value = false;
     loadData();
+  }
+
+  async function revokePermission(record) {
+    try {
+      await openApiApi.revokePermission(record.permission.permissionId);
+      message.success(record.permission.applyStatus === 1 ? 'API 权限申请已撤销' : 'API 授权已撤销');
+      loadData();
+    } catch (error) {
+      smartSentry.captureError(error);
+    }
   }
 
   onMounted(loadData);

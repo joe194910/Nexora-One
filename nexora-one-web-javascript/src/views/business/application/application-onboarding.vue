@@ -5,18 +5,26 @@
         <h1 class="application-page__title">{{ applicationId ? '应用接入配置' : '创建应用' }}</h1>
         <div class="application-page__subtitle">完成凭证、登录、安全、API 权限、上架资料和发布范围配置。</div>
       </div>
-      <a-tag v-if="detail.configLocked" color="warning">配置已锁定</a-tag>
+      <a-tag v-if="readOnly" color="warning">仅可查看</a-tag>
     </header>
 
+    <a-alert
+      v-if="readOnly"
+      class="application-readonly-alert"
+      type="info"
+      show-icon
+      message="当前应用已接入或已提交上架，第 1 至 8 步配置均仅支持查看。"
+    />
+
     <section class="application-panel application-steps">
-      <a-steps :current="currentStep - 1" size="small" :items="steps" />
+      <a-steps :current="currentStep - 1" size="small" :items="steps" @change="changeStep" />
     </section>
 
     <a-spin :spinning="loading">
       <section v-if="currentStep === 1" class="application-panel">
         <h2 class="application-panel__title">应用基本信息</h2>
         <a-alert type="info" show-icon message="创建成功后系统自动生成 App ID 和 App Secret，完整密钥仅展示一次。" />
-        <a-form ref="baseFormRef" class="mt16" :model="baseForm" :rules="baseRules" layout="vertical">
+        <a-form ref="baseFormRef" class="mt16" :model="baseForm" :rules="baseRules" layout="vertical" :disabled="readOnly">
           <div class="application-form-grid">
             <a-form-item label="应用名称" name="applicationName">
               <a-input v-model:value="baseForm.applicationName" :maxlength="50" />
@@ -49,6 +57,7 @@
                 :max-size="2"
                 button-text="上传图标"
                 :default-file-list="iconFileList"
+                :disabled="readOnly"
                 @change="changeIcon"
               />
             </a-form-item>
@@ -83,42 +92,40 @@
           </a-space>
         </div>
         <a-alert type="warning" show-icon message="离开本页后无法找回完整 App Secret，只能重新生成；重置后旧密钥立即失效。" />
-        <div class="credential-connect">
-          <div>
-            <strong>平台接入验证</strong>
-            <div class="application-page__subtitle">
-              先通过 <code>POST /open-api/oauth/token</code> 换取 Access Token，再请求
-              <code>GET /open-api/connect/ping</code>；草稿阶段即可验证，成功后才允许提交审核。
-              审核通过前签发的 Token 仅能用于本次连通性验证。
-            </div>
-          </div>
-          <a-input-password
-            v-model:value="connectionSecret"
-            class="credential-connect__secret"
-            placeholder="请输入或粘贴 App Secret"
-          />
-          <a-button type="primary" :loading="testingConnection" @click="testConnection">
-            <ApiOutlined />验证接入
-          </a-button>
-        </div>
         <a-alert
-          v-if="connectionResult.connected"
+          v-if="detail.accessStatus === 2"
           class="mt16"
           type="success"
           show-icon
-          :message="`接入验证通过，密钥版本 v${connectionResult.credentialVersion}，已获得 ${connectionResult.scopes?.length || 0} 个 API scope。`"
+          message="真实接口接入验证已完成"
+          description="平台已收到外部应用使用有效 App ID 和 App Secret 成功换取 Access Token 的请求。"
+        />
+        <a-alert
+          v-else-if="detail.listingStatus === 5"
+          class="mt16"
+          type="info"
+          show-icon
+          message="等待外部应用完成真实接口验证"
+          description="请由外部应用服务端使用 App ID 和 App Secret 调用 POST /open/application/oauth/token（或 /open-api/oauth/token）换取 Access Token。成功签发后接入状态将更新，验证不能在管理页面内完成。"
+        />
+        <a-alert
+          v-else
+          class="mt16"
+          type="info"
+          show-icon
+          message="应用预发布后，外部应用才能使用凭证调用开放接口并完成真实接入验证。"
         />
         <a-space class="mt16">
           <a-button @click="downloadCredential"><DownloadOutlined />下载凭证</a-button>
-          <a-popconfirm title="确认重新生成密钥吗？" @confirm="resetSecret">
-            <a-button danger :disabled="detail.configLocked"><ReloadOutlined />重新生成密钥</a-button>
+          <a-popconfirm title="确认重新生成密钥吗？" :disabled="readOnly || detail.secretResettable === false" @confirm="resetSecret">
+            <a-button danger :disabled="readOnly || detail.secretResettable === false"><ReloadOutlined />重新生成密钥</a-button>
           </a-popconfirm>
         </a-space>
       </section>
 
       <section v-else-if="currentStep === 3" class="application-panel">
         <h2 class="application-panel__title">登录与单点跳转配置</h2>
-        <a-form layout="vertical">
+        <a-form layout="vertical" :disabled="readOnly">
           <a-form-item label="接入协议" required>
             <a-radio-group v-model:value="loginForm.protocol" button-style="solid">
               <a-radio-button value="OIDC">OIDC / OAuth 2.0</a-radio-button>
@@ -129,7 +136,7 @@
           <div class="application-form-grid">
             <a-form-item label="应用首页地址" required><a-input v-model:value="loginForm.homeUrl" /></a-form-item>
             <a-form-item label="单点退出回调地址"><a-input v-model:value="loginForm.logoutCallback" /></a-form-item>
-            <a-form-item class="application-form-span" label="授权回调地址" required>
+            <a-form-item class="application-form-span" label="授权回调地址" :required="loginForm.protocol !== 'DIRECT'">
               <a-select v-model:value="loginForm.callbackUrls" mode="tags" placeholder="输入回调地址后回车，可配置多个" />
             </a-form-item>
             <a-form-item label="Token 有效期（秒）"><a-input-number v-model:value="loginForm.tokenTtl" :min="60" style="width: 100%" /></a-form-item>
@@ -143,13 +150,19 @@
       <section v-else-if="currentStep === 4" class="application-panel">
         <h2 class="application-panel__title">接口鉴权与安全配置</h2>
         <div class="security-options">
-          <div v-for="option in authOptions" :key="option.value" class="security-option" :class="{ active: securityForm.authMode === option.value }" @click="securityForm.authMode = option.value">
-            <a-radio :checked="securityForm.authMode === option.value">{{ option.label }}</a-radio>
+          <div
+            v-for="option in authOptions"
+            :key="option.value"
+            class="security-option"
+            :class="{ active: securityForm.authMode === option.value }"
+            @click="selectAuthMode(option.value)"
+          >
+            <a-radio :checked="securityForm.authMode === option.value" :disabled="readOnly">{{ option.label }}</a-radio>
             <div class="application-page__subtitle">{{ option.description }}</div>
           </div>
         </div>
         <a-divider />
-        <a-form layout="vertical">
+        <a-form layout="vertical" :disabled="readOnly">
           <div class="application-form-grid">
             <a-form-item label="签名算法"><a-select v-model:value="securityForm.signatureAlgorithm"><a-select-option value="HMAC-SHA256">HMAC-SHA256</a-select-option><a-select-option value="HMAC-SHA512">HMAC-SHA512</a-select-option></a-select></a-form-item>
             <a-form-item label="签名请求头"><a-input v-model:value="securityForm.signatureHeader" /></a-form-item>
@@ -177,7 +190,7 @@
             :data-source="filteredApis"
             :columns="apiColumns"
             row-key="openApiId"
-            :row-selection="{ selectedRowKeys: apiForm.openApiIdList, onChange: onApiSelect }"
+            :row-selection="readOnly ? null : { selectedRowKeys: apiForm.openApiIdList, onChange: onApiSelect }"
             :pagination="false"
             size="small"
           >
@@ -188,34 +201,46 @@
             </template>
           </a-table>
         </div>
-        <a-form-item class="mt16" label="申请原因" required>
-          <a-textarea v-model:value="apiForm.applyReason" :rows="3" :maxlength="500" show-count />
-        </a-form-item>
+        <a-form class="application-form-grid mt16" :disabled="readOnly">
+          <a-form-item label="申请环境" required>
+            <a-radio-group v-model:value="apiForm.applyEnvironment">
+              <a-radio value="test">测试环境</a-radio>
+              <a-radio value="prod">生产环境</a-radio>
+            </a-radio-group>
+          </a-form-item>
+          <a-form-item label="使用场景" required>
+            <a-textarea v-model:value="apiForm.useScene" :rows="3" :maxlength="500" show-count />
+          </a-form-item>
+          <a-form-item class="application-form-span" label="申请原因" required>
+            <a-textarea v-model:value="apiForm.applyReason" :rows="3" :maxlength="500" show-count />
+          </a-form-item>
+        </a-form>
       </section>
 
       <section v-else-if="currentStep === 6" class="application-panel">
         <h2 class="application-panel__title">应用上架资料</h2>
-        <a-form layout="vertical">
+        <a-form layout="vertical" :disabled="readOnly">
           <div class="application-form-grid">
             <a-form-item label="应用市场名称" required><a-input v-model:value="listingForm.marketName" /></a-form-item>
-            <a-form-item label="应用副标题" required><a-input v-model:value="listingForm.subtitle" /></a-form-item>
+            <a-form-item label="应用副标题"><a-input v-model:value="listingForm.subtitle" /></a-form-item>
             <a-form-item label="应用分类" required><a-select v-model:value="listingForm.category"><a-select-option value="办公协同">办公协同</a-select-option><a-select-option value="企业服务">企业服务</a-select-option><a-select-option value="数据分析">数据分析</a-select-option><a-select-option value="研发工具">研发工具</a-select-option></a-select></a-form-item>
             <a-form-item label="应用标签"><a-select v-model:value="listingForm.tags" mode="tags" /></a-form-item>
             <a-form-item label="版本号" required><a-input v-model:value="listingForm.versionNo" /></a-form-item>
-            <a-form-item label="更新说明" required><a-input v-model:value="listingForm.releaseNotes" /></a-form-item>
+            <a-form-item label="更新说明"><a-input v-model:value="listingForm.releaseNotes" /></a-form-item>
             <a-form-item class="application-form-span" label="应用详细介绍" required><a-textarea v-model:value="listingForm.description" :rows="5" :maxlength="2000" show-count /></a-form-item>
             <a-form-item label="服务商名称" required><a-input v-model:value="listingForm.providerName" /></a-form-item>
-            <a-form-item label="联系邮箱" required><a-input v-model:value="listingForm.contactEmail" /></a-form-item>
-            <a-form-item label="隐私政策 URL" required><a-input v-model:value="listingForm.privacyUrl" /></a-form-item>
-            <a-form-item label="用户协议 URL" required><a-input v-model:value="listingForm.termsUrl" /></a-form-item>
+            <a-form-item label="联系邮箱"><a-input v-model:value="listingForm.contactEmail" /></a-form-item>
+            <a-form-item label="隐私政策 URL"><a-input v-model:value="listingForm.privacyUrl" /></a-form-item>
+            <a-form-item label="用户协议 URL"><a-input v-model:value="listingForm.termsUrl" /></a-form-item>
             <a-form-item label="帮助文档 URL"><a-input v-model:value="listingForm.helpUrl" /></a-form-item>
-            <a-form-item label="应用封面" required>
+            <a-form-item label="应用封面">
               <Upload
                 accept=".jpg,.jpeg,.png"
                 :max-upload-size="1"
                 :max-size="2"
                 button-text="上传应用封面"
                 :default-file-list="bannerFileList"
+                :disabled="readOnly"
                 @change="changeBanner"
               />
             </a-form-item>
@@ -227,6 +252,7 @@
                 :max-size="2"
                 button-text="上传应用截图"
                 :default-file-list="screenshotFileList"
+                :disabled="readOnly"
                 @change="changeScreenshots"
               />
             </a-form-item>
@@ -237,13 +263,19 @@
       <section v-else-if="currentStep === 7" class="application-panel">
         <h2 class="application-panel__title">发布范围与可见权限</h2>
         <div class="publish-scope">
-          <div v-for="option in scopeOptions" :key="option.value" class="publish-scope__item" :class="{ active: publishForm.scopeType === option.value }" @click="publishForm.scopeType = option.value">
-            <a-radio :checked="publishForm.scopeType === option.value">{{ option.label }}</a-radio>
+          <div
+            v-for="option in scopeOptions"
+            :key="option.value"
+            class="publish-scope__item"
+            :class="{ active: publishForm.scopeType === option.value }"
+            @click="selectPublishScope(option.value)"
+          >
+            <a-radio :checked="publishForm.scopeType === option.value" :disabled="readOnly">{{ option.label }}</a-radio>
             <div class="application-page__subtitle">{{ option.description }}</div>
           </div>
         </div>
         <a-divider />
-        <a-form layout="vertical">
+        <a-form layout="vertical" :disabled="readOnly">
           <div class="application-form-grid">
             <a-form-item label="可见企业 / 组织"><a-select v-model:value="publishForm.organizationNames" mode="tags" /></a-form-item>
             <a-form-item label="可见角色"><a-select v-model:value="publishForm.roleNames" mode="tags" /></a-form-item>
@@ -270,13 +302,27 @@
         <div class="application-panel">
           <h2 class="application-panel__title">提交检查</h2>
           <div class="completion-list">
-            <div v-for="(completed, name) in completion" :key="name" class="completion-item">
+            <button
+              v-for="(completed, name) in displayedCompletion"
+              :key="name"
+              type="button"
+              class="completion-item"
+              :class="{ 'completion-item--pending': !completed }"
+              @click="goToCompletionStep(name)"
+            >
               <span><CheckCircleFilled :style="{ color: completed ? '#22a447' : '#faad14' }" /> {{ name }}</span>
               <span>{{ completed ? '已完成' : '待完成' }}</span>
-            </div>
+            </button>
           </div>
-          <a-form-item class="mt16" label="审核说明"><a-textarea v-model:value="submitForm.submitRemark" :rows="4" :maxlength="500" show-count /></a-form-item>
-          <a-checkbox v-model:checked="submitForm.confirmed">我已确认以上信息真实有效，提交后锁定当前配置。</a-checkbox>
+          <a-form-item class="mt16" label="审核说明">
+            <a-textarea v-model:value="submitForm.submitRemark" :rows="4" :maxlength="500" show-count :disabled="readOnly" />
+          </a-form-item>
+          <a-checkbox
+            v-model:checked="submitForm.confirmed"
+            :disabled="readOnly && Number(detail.listingStatus) !== 5"
+          >
+            {{ confirmationText }}
+          </a-checkbox>
         </div>
       </section>
     </a-spin>
@@ -285,10 +331,41 @@
       <a-button @click="backToList">返回应用列表</a-button>
       <div class="application-footer-actions__right">
         <a-button v-if="currentStep > 1" @click="currentStep--">上一步</a-button>
-        <a-button v-if="currentStep < 8" type="primary" :loading="saving" :disabled="detail.configLocked" @click="saveAndNext">
-          {{ currentStep === 1 ? (applicationId ? '保存并继续' : '创建并继续') : '保存并下一步' }}
+        <a-button
+          v-if="currentStep < 8"
+          type="primary"
+          :loading="saving"
+          @click="readOnly ? navigateToStep(currentStep + 1) : saveAndNext()"
+        >
+          {{ readOnly ? '下一步' : (currentStep === 1 ? (applicationId ? '保存并继续' : '创建并继续') : '保存并下一步') }}
         </a-button>
-        <a-button v-else type="primary" :loading="saving" :disabled="detail.configLocked || !submitForm.confirmed" @click="submitReview">提交审核</a-button>
+        <a-button
+          v-else-if="[0, 3].includes(detail.listingStatus)"
+          type="primary"
+          :loading="saving"
+          :disabled="!submitForm.confirmed"
+          @click="submitPrePublish"
+        >
+          提交预发布
+        </a-button>
+        <a-button
+          v-else-if="detail.listingStatus === 5 && detail.accessStatus !== 2"
+          type="primary"
+          :loading="loading"
+          @click="refreshAccessStatus"
+        >
+          <ReloadOutlined />刷新验证状态
+        </a-button>
+        <a-button
+          v-else-if="detail.listingStatus === 5"
+          type="primary"
+          :loading="saving"
+          :disabled="!submitForm.confirmed"
+          @click="submitReview"
+        >
+          提交上架审核
+        </a-button>
+        <a-button v-else type="primary" disabled>{{ submittedStatusText }}</a-button>
       </div>
     </div>
   </div>
@@ -298,7 +375,7 @@
   import { computed, onMounted, reactive, ref } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { message } from 'ant-design-vue';
-  import { ApiOutlined, AppstoreOutlined, CheckCircleFilled, CopyOutlined, DownloadOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons-vue';
+  import { AppstoreOutlined, CheckCircleFilled, CopyOutlined, DownloadOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons-vue';
   import { applicationApi } from '/@/api/business/application/application-api';
   import Upload from '/@/components/support/file-upload/index.vue';
   import { smartSentry } from '/@/lib/smart-sentry';
@@ -311,18 +388,26 @@
   const loading = ref(false);
   const saving = ref(false);
   const secretVisible = ref(true);
-  const connectionSecret = ref('');
-  const testingConnection = ref(false);
-  const connectionResult = reactive({});
   const maskedText = '****************************';
   const baseFormRef = ref();
   const detail = reactive({});
   const credential = reactive({});
   const completion = reactive({});
+  const prePublishCompletion = reactive({});
   const openApis = ref([]);
   const selectedCategory = ref('');
 
   const steps = ['基本信息', '应用凭证', '登录接入', '接口安全', 'API 权限', '上架资料', '发布范围', '预览提交'].map((title) => ({ title }));
+  const completionStepMap = {
+    基本信息: 1,
+    应用凭证: 2,
+    接入验证: 8,
+    登录接入: 3,
+    接口安全: 4,
+    API权限: 5,
+    上架资料: 6,
+    发布范围: 7,
+  };
   const baseForm = reactive({ applicationName: '', applicationCode: '', applicationType: 1, enterpriseId: null, enterpriseName: '', ownerName: '', contact: '', iconUrl: '', summary: '', homeUrl: '', remark: '' });
   const baseRules = {
     applicationName: [{ required: true, message: '请输入应用名称' }],
@@ -334,7 +419,7 @@
   };
   const loginForm = reactive({ protocol: 'OIDC', homeUrl: '', logoutCallback: '', callbackUrls: [], tokenTtl: 7200, codeTtl: 60, singleLogout: true, autoCreateUser: true });
   const securityForm = reactive({ authMode: 'SIGNATURE', signatureAlgorithm: 'HMAC-SHA256', signatureHeader: 'X-Signature', timestampHeader: 'X-Timestamp', nonceHeader: 'X-Nonce', replayTtl: 300, qpsLimit: 50, dailyLimit: 100000, timeoutSeconds: 10, ipWhitelist: [], forceHttps: true, replayProtection: true });
-  const apiForm = reactive({ openApiIdList: [], applyReason: '' });
+  const apiForm = reactive({ openApiIdList: [], useScene: '', applyEnvironment: 'test', applyReason: '' });
   const listingForm = reactive({ marketName: '', subtitle: '', category: '企业服务', tags: [], versionNo: 'v1.0.0', releaseNotes: '', description: '', providerName: 'NexoraOne', contactEmail: '', privacyUrl: '', termsUrl: '', helpUrl: '', bannerUrl: '', screenshotUrls: [] });
   const publishForm = reactive({ scopeType: 'ENTERPRISE', organizationNames: [], roleNames: [], sort: 100, recommendTag: '', portalVisible: true, allowFavorite: true, searchable: true, openMode: 'NEW_TAB' });
   const submitForm = reactive({ submitRemark: '', confirmed: false });
@@ -357,16 +442,68 @@
   ];
   const apiCategories = computed(() => [...new Set(openApis.value.map((item) => item.categoryName))]);
   const filteredApis = computed(() => selectedCategory.value ? openApis.value.filter((item) => item.categoryName === selectedCategory.value) : openApis.value);
+  const readOnly = computed(() => Boolean(applicationId.value) && (
+    detail.editable === false
+    || Number(detail.accessStatus) === 2
+    || [1, 2, 4, 5].includes(Number(detail.listingStatus))
+    || detail.configLocked === true
+  ));
   const iconFileList = computed(() => buildUploadFileList(baseForm.iconUrl ? [baseForm.iconUrl] : [], 'icon'));
   const bannerFileList = computed(() => buildUploadFileList(listingForm.bannerUrl ? [listingForm.bannerUrl] : [], 'banner'));
   const screenshotFileList = computed(() => buildUploadFileList(listingForm.screenshotUrls || [], 'screenshot'));
+  const displayedCompletion = computed(() => [1, 2, 4, 5].includes(detail.listingStatus)
+    ? completion
+    : prePublishCompletion);
+  const confirmationText = computed(() => detail.listingStatus === 5
+    ? '我已确认以上信息真实有效，同意提交正式上架审核并锁定当前配置。'
+    : '我已确认以上配置真实有效，同意提交预发布并开始接入验证。');
+  const submittedStatusText = computed(() => ({
+    1: '上架审核中',
+    2: '应用已上架',
+    4: '应用已下架',
+  }[detail.listingStatus] || '当前状态不可提交'));
 
   function permissionMeta(value) {
     return { 1: { color: 'green', text: '公开' }, 2: { color: 'blue', text: '申请授权' }, 3: { color: 'red', text: '敏感审核' } }[value];
   }
 
+  function changeStep(stepIndex) {
+    navigateToStep(Number(stepIndex) + 1);
+  }
+
+  function goToCompletionStep(name) {
+    if (name === '接入验证') {
+      refreshAccessStatus();
+      return;
+    }
+    navigateToStep(completionStepMap[name] || 8);
+  }
+
+  function navigateToStep(step) {
+    if (!applicationId.value && step > 1) {
+      message.warning('请先创建应用，再配置后续步骤');
+      return;
+    }
+    currentStep.value = step;
+    if (applicationId.value) {
+      router.replace({
+        path: route.path,
+        query: { ...route.query, applicationId: applicationId.value, step },
+      });
+    }
+  }
+
   function onApiSelect(keys) {
+    if (readOnly.value) return;
     apiForm.openApiIdList = keys;
+  }
+
+  function selectAuthMode(value) {
+    if (!readOnly.value) securityForm.authMode = value;
+  }
+
+  function selectPublishScope(value) {
+    if (!readOnly.value) publishForm.scopeType = value;
   }
 
   function buildUploadFileList(urls, prefix) {
@@ -383,14 +520,17 @@
   }
 
   function changeIcon(files) {
+    if (readOnly.value) return;
     baseForm.iconUrl = getUploadedUrl(files[0]);
   }
 
   function changeBanner(files) {
+    if (readOnly.value) return;
     listingForm.bannerUrl = getUploadedUrl(files[0]);
   }
 
   function changeScreenshots(files) {
+    if (readOnly.value) return;
     listingForm.screenshotUrls = files.map(getUploadedUrl).filter(Boolean);
   }
 
@@ -402,9 +542,14 @@
     Object.assign(securityForm, data.securityConfig || {});
     Object.assign(listingForm, data.listingConfig || {});
     Object.assign(publishForm, data.publishConfig || {});
+    Object.keys(completion).forEach((key) => delete completion[key]);
+    Object.keys(prePublishCompletion).forEach((key) => delete prePublishCompletion[key]);
     Object.assign(completion, data.completion || {});
+    Object.assign(prePublishCompletion, data.prePublishCompletion || {});
     apiForm.openApiIdList = (data.apiPermissions || []).map((item) => item.openApiId);
     apiForm.applyReason = data.apiPermissions?.[0]?.applyReason || '';
+    apiForm.useScene = data.apiPermissions?.[0]?.useScene || '';
+    apiForm.applyEnvironment = data.apiPermissions?.[0]?.applyEnvironment || 'test';
   }
 
   async function loadDetail() {
@@ -430,6 +575,10 @@
   }
 
   async function saveAndNext() {
+    if (readOnly.value) {
+      message.info('当前应用配置仅支持查看');
+      return;
+    }
     saving.value = true;
     try {
       if (currentStep.value === 1) {
@@ -441,33 +590,36 @@
           applicationId.value = response.data.applicationId;
           fillDetail(response.data);
           Object.assign(credential, response.data.credential);
-          connectionSecret.value = response.data.credential?.appSecret || '';
           await router.replace({ path: '/application/onboarding', query: { applicationId: applicationId.value, step: 2 } });
         }
       } else if (currentStep.value === 3) {
-        validateRequired(loginForm.homeUrl && loginForm.callbackUrls.length, '请填写应用首页和授权回调地址');
+        validateRequired(loginForm.homeUrl, '请填写应用首页地址');
+        validateRequired(loginForm.protocol === 'DIRECT' || loginForm.callbackUrls.length, '请填写授权回调地址');
         await applicationApi.saveStep({ applicationId: applicationId.value, step: 3, data: loginForm });
       } else if (currentStep.value === 4) {
         await applicationApi.saveStep({ applicationId: applicationId.value, step: 4, data: securityForm });
       } else if (currentStep.value === 5) {
-        validateRequired(apiForm.openApiIdList.length && apiForm.applyReason, '请选择 API 并填写申请原因');
+        validateRequired(
+          !apiForm.openApiIdList.length
+            || apiForm.applyReason && apiForm.useScene && apiForm.applyEnvironment,
+          '选择 API 后必须完整填写使用场景、申请环境和申请原因'
+        );
         await applicationApi.saveApiPermissions({ applicationId: applicationId.value, ...apiForm });
       } else if (currentStep.value === 6) {
         validateRequired(
           listingForm.marketName
-            && listingForm.subtitle
+            && listingForm.category
             && listingForm.versionNo
-            && listingForm.releaseNotes
             && listingForm.description
-            && listingForm.providerName
-            && listingForm.contactEmail
-            && listingForm.privacyUrl
-            && listingForm.termsUrl
-            && listingForm.bannerUrl,
+            && listingForm.providerName,
           '请完善必填的上架资料'
         );
         await applicationApi.saveStep({ applicationId: applicationId.value, step: 6, data: listingForm });
       } else if (currentStep.value === 7) {
+        validateRequired(
+          publishForm.scopeType !== 'SELECTED' || publishForm.organizationNames.length,
+          '指定范围发布时至少需要选择一个企业或组织'
+        );
         await applicationApi.saveStep({ applicationId: applicationId.value, step: 7, data: publishForm });
       }
       currentStep.value += 1;
@@ -484,6 +636,25 @@
     if (!value) throw new Error(text);
   }
 
+  async function submitPrePublish() {
+    saving.value = true;
+    try {
+      await applicationApi.prePublish({
+        applicationId: applicationId.value,
+        submitRemark: submitForm.submitRemark,
+        confirmed: submitForm.confirmed,
+      });
+      message.success('应用已预发布，请完成 App ID / App Secret 接入验证');
+      submitForm.confirmed = false;
+      await loadDetail();
+      navigateToStep(8);
+    } catch (error) {
+      smartSentry.captureError(error);
+    } finally {
+      saving.value = false;
+    }
+  }
+
   async function submitReview() {
     saving.value = true;
     try {
@@ -498,11 +669,15 @@
   }
 
   async function resetSecret() {
+    if (readOnly.value) {
+      message.info('当前应用配置仅支持查看，不能重新生成密钥');
+      return;
+    }
     try {
       const response = await applicationApi.resetSecret(applicationId.value);
       Object.assign(credential, response.data);
-      connectionSecret.value = response.data.appSecret || '';
-      Object.keys(connectionResult).forEach((key) => delete connectionResult[key]);
+      detail.accessStatus = 1;
+      completion['接入验证'] = false;
       secretVisible.value = true;
       message.success('新密钥已生成');
     } catch (error) {
@@ -510,27 +685,16 @@
     }
   }
 
-  async function testConnection() {
-    const appSecret = connectionSecret.value || credential.appSecret;
-    if (!appSecret) {
-      message.warning('请输入创建时保存的 App Secret，或重新生成密钥后再验证');
-      return;
-    }
-    testingConnection.value = true;
+  async function refreshAccessStatus() {
     try {
-      const response = await applicationApi.testConnection({
-        applicationId: applicationId.value,
-        appId: credential.appId,
-        appSecret,
-      });
-      Object.assign(connectionResult, response.data || {});
-      detail.accessStatus = response.data?.accessStatus;
-      completion['接入验证'] = true;
-      message.success('App ID / App Secret 接入验证通过');
+      await loadDetail();
+      if (detail.accessStatus === 2) {
+        message.success('已获取到外部应用的令牌签发结果');
+      } else {
+        message.info('尚未收到外部应用成功换取 Access Token 的请求');
+      }
     } catch (error) {
       smartSentry.captureError(error);
-    } finally {
-      testingConnection.value = false;
     }
   }
 

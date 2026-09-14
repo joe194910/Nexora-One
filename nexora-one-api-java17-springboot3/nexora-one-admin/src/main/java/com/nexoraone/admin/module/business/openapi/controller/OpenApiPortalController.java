@@ -1,6 +1,7 @@
 package com.nexoraone.admin.module.business.openapi.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
 import com.nexoraone.admin.module.business.application.domain.entity.OpenApiEntity;
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiDebugForm;
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiMarketQueryForm;
@@ -72,10 +73,18 @@ public class OpenApiPortalController {
     /** 查询权限申请与授权记录。 */
     @Operation(summary = "查询API权限记录")
     @GetMapping("/permission/list")
-    @SaCheckPermission("open-api:grant")
+    @SaCheckPermission(value = {"open-api:grant", "open-api:grant:review"}, mode = SaMode.OR)
     public ResponseDTO<List<Map<String, Object>>> queryPermissions(
             @RequestParam(required = false) Integer applyStatus) {
         return portalService.queryPermissions(applyStatus);
+    }
+
+    /** 撤销已经生效的API调用授权。 */
+    @Operation(summary = "撤销API调用授权")
+    @PostMapping("/permission/revoke/{permissionId}")
+    @SaCheckPermission(value = {"open-api:grant", "open-api:grant:review"}, mode = SaMode.OR)
+    public ResponseDTO<String> revokePermission(@PathVariable Long permissionId) {
+        return portalService.revokePermission(permissionId);
     }
 
     /** 管理员审核API权限申请。 */
@@ -109,6 +118,14 @@ public class OpenApiPortalController {
     public ResponseDTO<List<Map<String, Object>>> queryPublishReviews(
             @RequestParam(required = false) Integer reviewStatus) {
         return portalService.queryPublishReviews(reviewStatus);
+    }
+
+    /** 查询API发布审核版本详情。 */
+    @Operation(summary = "查询API发布审核详情")
+    @GetMapping("/publish/review/detail/{reviewId}")
+    @SaCheckPermission("open-api:publish:review")
+    public ResponseDTO<Map<String, Object>> publishReviewDetail(@PathVariable Long reviewId) {
+        return portalService.publishReviewDetail(reviewId);
     }
 
     /** 平台审核API发布申请。 */

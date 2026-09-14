@@ -21,4 +21,4 @@ server:
 # 环境
 spring:
   profiles:
-    active: '@profiles.active@'
+    active: test

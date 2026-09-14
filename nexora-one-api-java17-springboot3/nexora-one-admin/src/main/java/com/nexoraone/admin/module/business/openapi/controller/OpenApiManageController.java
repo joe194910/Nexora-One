@@ -7,6 +7,8 @@ import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiExampleSav
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiParameterSaveForm;
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiQueryForm;
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiStatusForm;
+import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiVersionCreateForm;
+import com.nexoraone.admin.module.business.openapi.domain.vo.OpenApiVersionVO;
 import com.nexoraone.admin.module.business.openapi.service.OpenApiManageService;
 import com.nexoraone.base.common.domain.PageResult;
 import com.nexoraone.base.common.domain.ResponseDTO;
@@ -86,6 +88,38 @@ public class OpenApiManageController {
     @SaCheckPermission("open-api:add")
     public ResponseDTO<Map<String, Long>> create(@RequestBody @Valid OpenApiBasicSaveForm form) {
         return openApiManageService.create(form);
+    }
+
+    /**
+     * 基于当前线上版本创建一个可独立编辑的新版本。
+     */
+    @Operation(summary = "创建API新版本")
+    @PostMapping("/version/create")
+    @SaCheckPermission("open-api:add")
+    public ResponseDTO<Map<String, Long>> createVersion(@RequestBody @Valid OpenApiVersionCreateForm form) {
+        return openApiManageService.createVersion(form);
+    }
+
+    /**
+     * 查询指定API的全部版本记录。
+     */
+    @Operation(summary = "查询API版本记录")
+    @GetMapping("/version/list/{openApiId}")
+    @SaCheckPermission("open-api:detail")
+    public ResponseDTO<List<OpenApiVersionVO>> versionList(@PathVariable Long openApiId) {
+        return openApiManageService.versionList(openApiId);
+    }
+
+    /**
+     * 查询指定API版本的完整配置。
+     */
+    @Operation(summary = "查询指定API版本详情")
+    @GetMapping("/version/detail/{openApiId}/{versionId}")
+    @SaCheckPermission("open-api:detail")
+    public ResponseDTO<Map<String, Object>> versionDetail(
+            @PathVariable Long openApiId,
+            @PathVariable Long versionId) {
+        return openApiManageService.versionDetail(openApiId, versionId);
     }
 
     /**

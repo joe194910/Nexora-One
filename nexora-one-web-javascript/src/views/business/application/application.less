@@ -26,6 +26,10 @@
   color: #7a8498;
 }
 
+.application-readonly-alert {
+  margin-bottom: 14px;
+}
+
 .application-panel {
   margin-bottom: 14px;
   padding: 18px;
@@ -179,6 +183,27 @@
   color: #1677ff;
 }
 
+.credential-management {
+  margin-top: 16px;
+}
+
+.credential-management__value {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.credential-management__value code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.credential-management__notice {
+  margin-top: 16px;
+}
+
 .security-options {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -252,6 +277,23 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 4px;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.completion-item:hover,
+.completion-item:focus-visible {
+  background: #f5f7fa;
+}
+
+.completion-item--pending {
+  font-weight: 500;
 }
 
 .application-hero {
@@ -432,7 +474,7 @@
 
 .application-summary-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 14px;
   margin-bottom: 14px;
 }

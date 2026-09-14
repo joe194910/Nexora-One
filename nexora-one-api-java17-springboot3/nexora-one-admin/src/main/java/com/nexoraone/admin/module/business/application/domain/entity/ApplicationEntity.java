@@ -41,8 +41,10 @@ public class ApplicationEntity {
     private String remark;
     /** 接入状态：1接入中，2已接入，3接入失败。 */
     private Integer accessStatus;
-    /** 上架状态：0未上架，1审核中，2已上架，3已驳回，4已下架。 */
+    /** 上架状态：0草稿，1上架审核中，2已上架，3已驳回，4已下架，5已预发布。 */
     private Integer listingStatus;
+    /** 线上状态：0未发布，2线上运行，4已下架。 */
+    private Integer onlineStatus;
     /** 当前配置步骤。 */
     private Integer workflowStep;
     /** 提交审核后是否锁定配置。 */
@@ -55,6 +57,10 @@ public class ApplicationEntity {
     private String listingConfig;
     /** 发布范围与可见权限JSON。 */
     private String publishConfig;
+    /** 当前正在编辑或审核的应用版本主键。 */
+    private Long currentVersionId;
+    /** 当前对外提供服务的已发布版本主键。 */
+    private Long publishedVersionId;
     /** 创建人主键。 */
     private Long createUserId;
     /** 创建人姓名。 */

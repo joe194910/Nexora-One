@@ -13,6 +13,7 @@
     <a-upload
       :multiple="props.multiple"
       :accept="props.accept"
+      :disabled="props.disabled"
       :before-upload="beforeUpload"
       :customRequest="customRequest"
       :file-list="fileList"
@@ -22,7 +23,7 @@
       @preview="handlePreview"
       @remove="handleRemove"
     >
-      <div v-if="fileList.length < props.maxUploadSize">
+      <div v-if="!props.disabled && fileList.length < props.maxUploadSize">
         <template v-if="listType === 'picture-card'">
           <PlusOutlined />
           <div class="ant-upload-text">
@@ -65,6 +66,10 @@
       default: () => [],
     },
     multiple: {
+      type: Boolean,
+      default: false,
+    },
+    disabled: {
       type: Boolean,
       default: false,
     },

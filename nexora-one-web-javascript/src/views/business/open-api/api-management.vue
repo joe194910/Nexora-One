@@ -72,6 +72,12 @@
           <template v-else-if="column.dataIndex === 'requestMethod'">
             <a-tag class="open-api-method" :color="methodColor(record.requestMethod)">{{ record.requestMethod }}</a-tag>
           </template>
+          <template v-else-if="column.dataIndex === 'apiVersion'">
+            <strong>{{ record.currentVersionNo || record.apiVersion }}</strong>
+            <div v-if="record.currentVersionNo && record.currentVersionNo !== record.apiVersion" class="open-api-muted">
+              线上 {{ record.apiVersion }}
+            </div>
+          </template>
           <template v-else-if="column.dataIndex === 'permissionLevel'">
             <a-tag :color="permissionMeta(record.permissionLevel).color">{{ permissionMeta(record.permissionLevel).text }}</a-tag>
           </template>
@@ -84,12 +90,34 @@
           <template v-else-if="column.dataIndex === 'action'">
             <div class="open-api-actions">
               <a-button type="link" @click="goDetail(record)" v-privilege="'open-api:detail'">详情</a-button>
-              <a-button type="link" :disabled="record.status === 4" @click="goEdit(record)" v-privilege="'open-api:save'">编辑</a-button>
-              <a-button v-if="record.status !== 4" type="link" @click="goPublish(record)" v-privilege="'open-api:publish'">
-                上架
+              <a-button type="link" @click="showVersionHistory(record)" v-privilege="'open-api:detail'">版本记录</a-button>
+              <a-button
+                v-if="canEditCurrentVersion(record)"
+                type="link"
+                @click="goEdit(record)"
+                v-privilege="'open-api:save'"
+              >
+                {{ hasSeparateVersion(record) ? '编辑新版' : '编辑' }}
               </a-button>
+              <a-button
+                v-if="canCreateVersion(record)"
+                type="link"
+                @click="showCreateVersion(record)"
+                v-privilege="'open-api:add'"
+              >
+                创建新版本
+              </a-button>
+              <a-button
+                v-if="canSubmitPublish(record)"
+                type="link"
+                @click="goPublish(record)"
+                v-privilege="'open-api:publish'"
+              >
+                {{ hasSeparateVersion(record) ? '提交新版' : record.status === 5 ? '重新上架' : '上架' }}
+              </a-button>
+              <a-button v-if="isPendingReview(record)" type="link" disabled>审核中</a-button>
               <a-popconfirm
-                v-else
+                v-if="record.status === 4"
                 title="确认停用当前 API？已授权应用将无法继续调用。"
                 ok-text="停用"
                 cancel-text="取消"
@@ -112,6 +140,57 @@
         />
       </div>
     </section>
+
+    <a-modal
+      v-model:open="versionModal.open"
+      title="创建API新版本"
+      ok-text="创建并编辑"
+      cancel-text="取消"
+      :confirm-loading="versionModal.loading"
+      @ok="submitCreateVersion"
+    >
+      <a-form layout="vertical">
+        <a-form-item label="新版本号" required>
+          <a-input
+            v-model:value="versionModal.versionNo"
+            placeholder="例如 v1.0.1"
+            :maxlength="20"
+            @pressEnter="submitCreateVersion"
+          />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+
+    <a-modal v-model:open="historyModal.open" title="API版本记录" :footer="null" width="920px">
+      <a-table
+        :loading="historyModal.loading"
+        :data-source="historyModal.list"
+        :columns="versionColumns"
+        row-key="versionId"
+        :pagination="false"
+        size="middle"
+        :scroll="{ x: 820 }"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'versionNo'">
+            <a-space>
+              <strong>{{ record.versionNo }}</strong>
+              <a-tag v-if="record.currentFlag" color="blue">当前编辑</a-tag>
+              <a-tag v-if="record.publishedFlag" color="green">线上版本</a-tag>
+            </a-space>
+          </template>
+          <template v-else-if="column.dataIndex === 'requestMethod'">
+            <a-tag :color="methodColor(record.requestMethod)">{{ record.requestMethod }}</a-tag>
+          </template>
+          <template v-else-if="column.dataIndex === 'status'">
+            <a-badge :status="versionStatusMeta(record.status).badge" :text="versionStatusMeta(record.status).text" />
+          </template>
+          <template v-else-if="column.dataIndex === 'action'">
+            <a-button type="link" @click="viewHistoryVersion(record)">查看配置</a-button>
+          </template>
+        </template>
+      </a-table>
+    </a-modal>
   </div>
 </template>
 
@@ -138,6 +217,18 @@
   const total = ref(0);
   const categories = ref([]);
   const summary = reactive({ total: 0, published: 0, draft: 0, disabled: 0 });
+  const versionModal = reactive({
+    open: false,
+    loading: false,
+    openApiId: undefined,
+    versionNo: '',
+  });
+  const historyModal = reactive({
+    open: false,
+    loading: false,
+    openApiId: undefined,
+    list: [],
+  });
   const queryForm = reactive({
     pageNum: 1,
     pageSize: 10,
@@ -172,7 +263,15 @@
     { title: '发布状态', dataIndex: 'status', width: 120 },
     { title: '今日调用量', dataIndex: 'todayCallCount', width: 120 },
     { title: '更新时间', dataIndex: 'updateTime', width: 180 },
-    { title: '操作', dataIndex: 'action', fixed: 'right', width: 210 },
+    { title: '操作', dataIndex: 'action', fixed: 'right', width: 360 },
+  ];
+  const versionColumns = [
+    { title: '版本', dataIndex: 'versionNo', width: 220 },
+    { title: '请求方式', dataIndex: 'requestMethod', width: 100 },
+    { title: '网关路径', dataIndex: 'gatewayPath', ellipsis: true, width: 250 },
+    { title: '状态', dataIndex: 'status', width: 110 },
+    { title: '更新时间', dataIndex: 'updateTime', width: 180 },
+    { title: '操作', dataIndex: 'action', fixed: 'right', width: 100 },
   ];
 
   function methodColor(method) {
@@ -195,6 +294,16 @@
       4: { badge: 'success', text: '已上架' },
       5: { badge: 'error', text: '已停用' },
       6: { badge: 'default', text: '已下线' },
+    }[value] || { badge: 'default', text: '未知' };
+  }
+
+  function versionStatusMeta(value) {
+    return {
+      1: { badge: 'default', text: '草稿' },
+      2: { badge: 'processing', text: '待审核' },
+      3: { badge: 'success', text: '已发布' },
+      4: { badge: 'error', text: '已停用' },
+      5: { badge: 'default', text: '已下线' },
     }[value] || { badge: 'default', text: '未知' };
   }
 
@@ -243,6 +352,105 @@
 
   function goEdit(record) {
     router.push({ path: '/open-api/editor', query: { openApiId: record.openApiId, step: Math.min(record.workflowStep || 1, 4) } });
+  }
+
+  function hasSeparateVersion(record) {
+    return Boolean(record.publishedVersionId) && record.currentVersionId !== record.publishedVersionId;
+  }
+
+  function isPendingReview(record) {
+    return record.currentVersionStatus === 2 || record.status === 3;
+  }
+
+  function canEditCurrentVersion(record) {
+    return record.currentVersionStatus === 1 && !isPendingReview(record);
+  }
+
+  function canCreateVersion(record) {
+    return [4, 5].includes(record.status) && !hasSeparateVersion(record) && !isPendingReview(record);
+  }
+
+  function canSubmitPublish(record) {
+    if (isPendingReview(record)) {
+      return false;
+    }
+    if ([1, 2].includes(record.status)) {
+      return true;
+    }
+    if (hasSeparateVersion(record)) {
+      return record.currentVersionStatus === 1;
+    }
+    return record.status === 5;
+  }
+
+  function nextVersion(versionNo) {
+    const match = String(versionNo || '').match(/^(v?)(\d+)\.(\d+)\.(\d+)$/);
+    if (!match) {
+      return 'v1.0.1';
+    }
+    return `${match[1] || 'v'}${match[2]}.${match[3]}.${Number(match[4]) + 1}`;
+  }
+
+  function showCreateVersion(record) {
+    Object.assign(versionModal, {
+      open: true,
+      loading: false,
+      openApiId: record.openApiId,
+      versionNo: nextVersion(record.apiVersion),
+    });
+  }
+
+  async function submitCreateVersion() {
+    const versionNo = versionModal.versionNo.trim();
+    if (!/^v?\d+\.\d+\.\d+$/.test(versionNo)) {
+      message.warning('版本号需使用 v1.0.1 格式');
+      return;
+    }
+    versionModal.loading = true;
+    try {
+      const response = await openApiApi.createVersion({
+        openApiId: versionModal.openApiId,
+        versionNo,
+      });
+      versionModal.open = false;
+      message.success('新版本已创建，请完善配置后提交审核');
+      router.push({
+        path: '/open-api/editor',
+        query: { openApiId: response.data.openApiId, step: 1 },
+      });
+    } catch (error) {
+      smartSentry.captureError(error);
+    } finally {
+      versionModal.loading = false;
+    }
+  }
+
+  async function showVersionHistory(record) {
+    Object.assign(historyModal, {
+      open: true,
+      loading: true,
+      openApiId: record.openApiId,
+      list: [],
+    });
+    try {
+      const response = await openApiApi.versionList(record.openApiId);
+      historyModal.list = response.data || [];
+    } catch (error) {
+      smartSentry.captureError(error);
+    } finally {
+      historyModal.loading = false;
+    }
+  }
+
+  function viewHistoryVersion(record) {
+    router.push({
+      path: '/open-api/detail',
+      query: {
+        openApiId: historyModal.openApiId,
+        versionId: record.versionId,
+        mode: 'detail',
+      },
+    });
   }
 
   function goDetail(record) {

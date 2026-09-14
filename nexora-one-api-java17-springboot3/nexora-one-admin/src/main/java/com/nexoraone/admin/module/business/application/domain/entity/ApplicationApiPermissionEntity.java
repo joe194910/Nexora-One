@@ -30,7 +30,7 @@ public class ApplicationApiPermissionEntity {
     private Long applicantId;
     /** 申请人姓名。 */
     private String applicantName;
-    /** 申请状态：1待审核，2已授权，3已驳回。 */
+    /** 申请状态：1待审核，2已授权，3已驳回，4已撤销。 */
     private Integer applyStatus;
     /** 审核人主键。 */
     private Long reviewerId;

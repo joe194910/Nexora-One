@@ -3,11 +3,20 @@ package com.nexoraone.admin.module.business.application;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexoraone.admin.module.business.application.dao.ApplicationApiPermissionDao;
 import com.nexoraone.admin.module.business.application.dao.ApplicationCredentialDao;
 import com.nexoraone.admin.module.business.application.dao.ApplicationDao;
+import com.nexoraone.admin.module.business.application.dao.ApplicationReviewDao;
+import com.nexoraone.admin.module.business.application.dao.OpenApiDao;
+import com.nexoraone.admin.module.business.application.domain.entity.ApplicationApiPermissionEntity;
 import com.nexoraone.admin.module.business.application.domain.entity.ApplicationCredentialEntity;
 import com.nexoraone.admin.module.business.application.domain.entity.ApplicationEntity;
+import com.nexoraone.admin.module.business.application.domain.entity.ApplicationReviewEntity;
+import com.nexoraone.admin.module.business.application.domain.entity.OpenApiEntity;
+import com.nexoraone.admin.module.business.application.domain.form.ApplicationApiPermissionForm;
 import com.nexoraone.admin.module.business.application.domain.form.ApplicationCreateForm;
+import com.nexoraone.admin.module.business.application.domain.form.ApplicationPrePublishForm;
+import com.nexoraone.admin.module.business.application.domain.form.ApplicationStepSaveForm;
 import com.nexoraone.admin.module.business.application.domain.vo.ApplicationCredentialVO;
 import com.nexoraone.admin.module.business.application.manager.ApplicationAccessTokenManager;
 import com.nexoraone.admin.module.business.application.service.ApplicationService;
@@ -30,6 +39,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -52,6 +63,12 @@ class ApplicationOpenAuthIntegrationTest {
     private ApplicationDao applicationDao;
     @Resource
     private ApplicationCredentialDao credentialDao;
+    @Resource
+    private ApplicationApiPermissionDao permissionDao;
+    @Resource
+    private ApplicationReviewDao reviewDao;
+    @Resource
+    private OpenApiDao openApiDao;
     @Resource
     private ObjectMapper objectMapper;
     @Resource
@@ -81,10 +98,10 @@ class ApplicationOpenAuthIntegrationTest {
     }
 
     /**
-     * 验证草稿应用可完成客户端凭证签发和平台连通性验证，并验证密钥轮换后的失效机制。
+     * 验证应用必须先预发布才能换取令牌，接入前允许轮换密钥，接入后配置转为只读。
      */
     @Test
-    void shouldCompleteClientCredentialsFlowAndInvalidateOldTokenAfterSecretReset() throws Exception {
+    void shouldCompleteClientCredentialsFlowAndLockConfigurationAfterConnected() throws Exception {
         ResponseDTO<Map<String, Object>> createResult = applicationService.create(buildApplicationForm());
         assertTrue(createResult.getOk());
         applicationId = Long.valueOf(createResult.getData().get("applicationId").toString());
@@ -95,30 +112,117 @@ class ApplicationOpenAuthIntegrationTest {
         JsonNode invalidTokenResponse = requestToken(credential.getAppId(), "invalid-secret");
         assertFalse(invalidTokenResponse.path("ok").asBoolean());
 
-        JsonNode tokenResponse = requestToken(credential.getAppId(), credential.getAppSecret());
+        JsonNode draftTokenResponse = requestToken(credential.getAppId(), credential.getAppSecret());
+        assertFalse(draftTokenResponse.path("ok").asBoolean());
+
+        preparePrePublishedApplication();
+        assertEquals(5, applicationDao.selectById(applicationId).getListingStatus());
+
+        ResponseDTO<ApplicationCredentialVO> resetResult = applicationService.resetSecret(applicationId);
+        assertTrue(resetResult.getOk());
+        assertNotNull(resetResult.getData().getAppSecret());
+        assertEquals(1, applicationDao.selectById(applicationId).getAccessStatus());
+
+        JsonNode expiredCredentialResponse = requestToken(credential.getAppId(), credential.getAppSecret());
+        assertFalse(expiredCredentialResponse.path("ok").asBoolean());
+
+        JsonNode tokenResponse =
+                requestToken(resetResult.getData().getAppId(), resetResult.getData().getAppSecret());
         assertTrue(tokenResponse.path("ok").asBoolean());
         assertTrue(tokenResponse.path("data").path("scopes").toString()
                 .contains("application:connect:ping"));
         String accessToken = tokenResponse.path("data").path("access_token").asText();
         activeAccessToken = accessToken;
         assertFalse(accessToken.isBlank());
+        assertEquals(2, applicationDao.selectById(applicationId).getAccessStatus());
 
         JsonNode pingResponse = requestPing(accessToken);
         assertTrue(pingResponse.path("ok").asBoolean());
         assertTrue(pingResponse.path("data").path("connected").asBoolean());
+
+        ResponseDTO<ApplicationCredentialVO> lockedResetResult = applicationService.resetSecret(applicationId);
+        assertFalse(lockedResetResult.getOk());
         assertEquals(2, applicationDao.selectById(applicationId).getAccessStatus());
+    }
 
-        ResponseDTO<ApplicationCredentialVO> resetResult = applicationService.resetSecret(applicationId);
-        assertTrue(resetResult.getOk());
-        assertNotNull(resetResult.getData().getAppSecret());
+    /**
+     * 补齐应用配置并提交预发布，模拟真实的接入准备流程。
+     */
+    private void preparePrePublishedApplication() {
+        Map<String, Object> loginConfig = new LinkedHashMap<>();
+        loginConfig.put("protocol", "OIDC");
+        loginConfig.put("homeUrl", "http://127.0.0.1/application");
+        loginConfig.put("callbackUrls", List.of("http://127.0.0.1/oauth/callback"));
+        loginConfig.put("tokenTtl", 7200);
+        loginConfig.put("codeTtl", 60);
+        saveStep(3, loginConfig);
 
-        JsonNode expiredTokenResponse = requestPing(accessToken);
-        assertFalse(expiredTokenResponse.path("ok").asBoolean());
+        Map<String, Object> securityConfig = new LinkedHashMap<>();
+        securityConfig.put("authMode", "SIGNATURE");
+        securityConfig.put("signatureAlgorithm", "HMAC-SHA256");
+        securityConfig.put("signatureHeader", "X-Signature");
+        securityConfig.put("timestampHeader", "X-Timestamp");
+        securityConfig.put("nonceHeader", "X-Nonce");
+        securityConfig.put("replayTtl", 300);
+        securityConfig.put("qpsLimit", 50);
+        securityConfig.put("dailyLimit", 100000);
+        securityConfig.put("timeoutSeconds", 10);
+        securityConfig.put("ipWhitelist", List.of());
+        securityConfig.put("forceHttps", true);
+        securityConfig.put("replayProtection", true);
+        saveStep(4, securityConfig);
 
-        JsonNode renewedTokenResponse =
-                requestToken(resetResult.getData().getAppId(), resetResult.getData().getAppSecret());
-        assertTrue(renewedTokenResponse.path("ok").asBoolean());
-        activeAccessToken = renewedTokenResponse.path("data").path("access_token").asText();
+        OpenApiEntity openApi = openApiDao.selectOne(new LambdaQueryWrapper<OpenApiEntity>()
+                .eq(OpenApiEntity::getStatus, 4)
+                .eq(OpenApiEntity::getEnabledFlag, true)
+                .last("LIMIT 1"));
+        assertNotNull(openApi, "集成测试需要至少一条已上架且已启用的开放API");
+
+        ApplicationApiPermissionForm permissionForm = new ApplicationApiPermissionForm();
+        permissionForm.setApplicationId(applicationId);
+        permissionForm.setOpenApiIdList(List.of(openApi.getOpenApiId()));
+        permissionForm.setApplyReason("应用接入集成测试");
+        assertTrue(applicationService.saveApiPermissions(permissionForm).getOk());
+
+        Map<String, Object> listingConfig = new LinkedHashMap<>();
+        listingConfig.put("marketName", "开放认证集成测试");
+        listingConfig.put("subtitle", "验证应用开放认证链路");
+        listingConfig.put("category", "研发工具");
+        listingConfig.put("versionNo", "v1.0.0");
+        listingConfig.put("releaseNotes", "集成测试初始版本");
+        listingConfig.put("description", "用于验证App ID、App Secret、Access Token和接入探测的真实调用流程。");
+        listingConfig.put("providerName", "NexoraOne");
+        listingConfig.put("contactEmail", "integration-test@nexoraone.local");
+        listingConfig.put("privacyUrl", "http://127.0.0.1/privacy");
+        listingConfig.put("termsUrl", "http://127.0.0.1/terms");
+        listingConfig.put("bannerUrl", "/file/application/integration-test-banner.png");
+        saveStep(6, listingConfig);
+
+        Map<String, Object> publishConfig = new LinkedHashMap<>();
+        publishConfig.put("scopeType", "ENTERPRISE");
+        publishConfig.put("portalVisible", true);
+        publishConfig.put("sort", 100);
+        publishConfig.put("openMode", "NEW_TAB");
+        saveStep(7, publishConfig);
+
+        ApplicationPrePublishForm prePublishForm = new ApplicationPrePublishForm();
+        prePublishForm.setApplicationId(applicationId);
+        prePublishForm.setConfirmed(true);
+        assertTrue(applicationService.prePublish(prePublishForm).getOk());
+    }
+
+    /**
+     * 保存应用指定步骤的结构化配置。
+     *
+     * @param step 步骤编号
+     * @param data 配置数据
+     */
+    private void saveStep(Integer step, Map<String, Object> data) {
+        ApplicationStepSaveForm form = new ApplicationStepSaveForm();
+        form.setApplicationId(applicationId);
+        form.setStep(step);
+        form.setData(data);
+        assertTrue(applicationService.saveStep(form).getOk());
     }
 
     /**
@@ -185,6 +289,10 @@ class ApplicationOpenAuthIntegrationTest {
             if (applicationId == null) {
                 return;
             }
+            reviewDao.delete(new LambdaQueryWrapper<ApplicationReviewEntity>()
+                    .eq(ApplicationReviewEntity::getApplicationId, applicationId));
+            permissionDao.delete(new LambdaQueryWrapper<ApplicationApiPermissionEntity>()
+                    .eq(ApplicationApiPermissionEntity::getApplicationId, applicationId));
             credentialDao.delete(new LambdaQueryWrapper<ApplicationCredentialEntity>()
                     .eq(ApplicationCredentialEntity::getApplicationId, applicationId));
             applicationDao.deleteById(applicationId);

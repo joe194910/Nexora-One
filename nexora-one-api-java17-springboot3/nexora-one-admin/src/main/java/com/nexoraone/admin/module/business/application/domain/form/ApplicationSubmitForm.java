@@ -17,6 +17,7 @@ public class ApplicationSubmitForm {
     /** 提交补充说明。 */
     private String submitRemark;
     /** 是否确认信息真实有效并同意锁定配置。 */
+    @NotNull(message = "请确认信息真实有效并同意锁定配置")
     @AssertTrue(message = "请确认信息真实有效并同意锁定配置")
     private Boolean confirmed;
 }

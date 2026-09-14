@@ -28,6 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -131,11 +132,78 @@ class ApplicationServiceTest {
     }
 
     /**
+     * 应用完成真实接入后，即使平台管理员也只能查看当前版本配置。
+     */
+    @Test
+    void shouldRejectConfigurationChangesAfterConnectedForAdministrator() {
+        ApplicationEntity application = editableApplication();
+        application.setAccessStatus(2);
+        application.setListingStatus(5);
+        when(applicationDao.selectById(10L)).thenReturn(application);
+        when(applicationDataScopeService.hasPlatformPermission("application:review")).thenReturn(true);
+
+        ApplicationApiPermissionForm form = new ApplicationApiPermissionForm();
+        form.setApplicationId(10L);
+        form.setOpenApiIdList(List.of(101L));
+
+        ResponseDTO<String> result = applicationService.saveApiPermissions(form);
+
+        assertFalse(result.getOk());
+        assertEquals("应用已接入或已提交上架，当前配置仅支持查看", result.getMsg());
+        verifyNoInteractions(openApiDao, permissionDao);
+    }
+
+    /**
+     * 应用提交预发布后，等待真实接入期间也只能查看当前配置。
+     */
+    @Test
+    void shouldRejectConfigurationChangesAfterPrePublished() {
+        ApplicationEntity application = editableApplication();
+        application.setAccessStatus(1);
+        application.setListingStatus(5);
+        when(applicationDao.selectById(10L)).thenReturn(application);
+        when(applicationDataScopeService.canManage(application)).thenReturn(true);
+
+        ApplicationApiPermissionForm form = new ApplicationApiPermissionForm();
+        form.setApplicationId(10L);
+
+        ResponseDTO<String> result = applicationService.saveApiPermissions(form);
+
+        assertFalse(result.getOk());
+        assertEquals("应用已接入或已提交上架，当前配置仅支持查看", result.getMsg());
+        verifyNoInteractions(openApiDao, permissionDao);
+    }
+
+    /**
+     * 应用提交正式上架审核后，当前版本配置只能查看。
+     */
+    @Test
+    void shouldRejectConfigurationChangesAfterListingSubmitted() {
+        ApplicationEntity application = editableApplication();
+        application.setAccessStatus(1);
+        application.setListingStatus(1);
+        application.setConfigLocked(true);
+        when(applicationDao.selectById(10L)).thenReturn(application);
+        when(applicationDataScopeService.canManage(application)).thenReturn(true);
+
+        ApplicationApiPermissionForm form = new ApplicationApiPermissionForm();
+        form.setApplicationId(10L);
+
+        ResponseDTO<String> result = applicationService.saveApiPermissions(form);
+
+        assertFalse(result.getOk());
+        assertEquals("应用已接入或已提交上架，当前配置仅支持查看", result.getMsg());
+        verifyNoInteractions(openApiDao, permissionDao);
+    }
+
+    /**
      * 构造允许继续编辑的应用。
      */
     private ApplicationEntity editableApplication() {
         ApplicationEntity application = new ApplicationEntity();
         application.setApplicationId(10L);
+        application.setAccessStatus(1);
+        application.setListingStatus(0);
         application.setWorkflowStep(4);
         application.setConfigLocked(false);
         return application;

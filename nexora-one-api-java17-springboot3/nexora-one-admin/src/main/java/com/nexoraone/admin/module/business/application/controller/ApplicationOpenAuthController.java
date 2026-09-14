@@ -66,7 +66,7 @@ public class ApplicationOpenAuthController {
     }
 
     /**
-     * 携带Access Token请求平台，验证完整接入链路并标记应用已接入。
+     * 携带Access Token请求平台，验证Bearer Token调用链路。
      */
     @NoNeedLogin
     @Operation(summary = "验证Access Token和平台连通性")

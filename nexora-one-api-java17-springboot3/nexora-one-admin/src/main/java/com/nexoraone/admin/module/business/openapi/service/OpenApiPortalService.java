@@ -120,11 +120,13 @@ public class OpenApiPortalService {
      */
     public ResponseDTO<List<Map<String, Object>>> queryApplications() {
         LambdaQueryWrapper<ApplicationEntity> wrapper = new LambdaQueryWrapper<ApplicationEntity>()
-                .ne(ApplicationEntity::getListingStatus, 4)
                 .orderByDesc(ApplicationEntity::getUpdateTime);
         applicationDataScopeService.applyScope(wrapper);
         List<Map<String, Object>> result = new ArrayList<>();
         for (ApplicationEntity application : applicationDao.selectList(wrapper)) {
+            if (isUnavailableForPermission(application)) {
+                continue;
+            }
             ApplicationCredentialEntity credential = credentialDao.selectOne(
                     new LambdaQueryWrapper<ApplicationCredentialEntity>()
                             .eq(ApplicationCredentialEntity::getApplicationId, application.getApplicationId())
@@ -136,6 +138,7 @@ public class OpenApiPortalService {
             item.put("applicationName", application.getApplicationName());
             item.put("applicationCode", application.getApplicationCode());
             item.put("listingStatus", application.getListingStatus());
+            item.put("onlineStatus", resolveOnlineStatus(application));
             item.put("accessStatus", application.getAccessStatus());
             item.put("appId", credential == null ? null : credential.getAppId());
             result.add(item);
@@ -148,6 +151,10 @@ public class OpenApiPortalService {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<String> applyPermission(OpenApiPermissionApplyForm form) {
+        if (!Objects.equals(form.getApplyEnvironment(), "test")
+                && !Objects.equals(form.getApplyEnvironment(), "prod")) {
+            return ResponseDTO.userErrorParam("申请环境只能选择测试环境或生产环境");
+        }
         ApplicationEntity application = applicationDao.selectById(form.getApplicationId());
         if (!canManage(application)) {
             return ResponseDTO.userErrorParam("应用不存在或无权管理");
@@ -172,8 +179,8 @@ public class OpenApiPortalService {
             return ResponseDTO.userErrorParam("权限申请正在审核中，请勿重复提交");
         }
         RequestEmployee employee = getRequestEmployee();
-        permission.setApplyReason(form.getApplyReason());
-        permission.setUseScene(form.getUseScene());
+        permission.setApplyReason(StringUtils.trim(form.getApplyReason()));
+        permission.setUseScene(StringUtils.trim(form.getUseScene()));
         permission.setApplyEnvironment(form.getApplyEnvironment());
         permission.setApplicantId(employee == null ? null : employee.getEmployeeId());
         permission.setApplicantName(employee == null ? null : employee.getActualName());
@@ -187,6 +194,7 @@ public class OpenApiPortalService {
         } else {
             permission.setReviewerId(null);
             permission.setReviewerName(null);
+            permission.setDailyQuota(null);
             permission.setEffectiveTime(null);
             permission.setExpireTime(null);
         }
@@ -229,9 +237,52 @@ public class OpenApiPortalService {
             item.put("apiName", api == null ? "-" : api.getApiName());
             item.put("apiCode", api == null ? "-" : api.getApiCode());
             item.put("apiVersion", api == null ? "-" : api.getApiVersion());
+            item.put("permissionLevel", api == null ? null : api.getPermissionLevel());
             result.add(item);
         }
         return ResponseDTO.ok(result);
+    }
+
+    /**
+     * 撤销待审核申请或已经生效的API调用授权。
+     *
+     * <p>应用负责人只能撤销自己可管理应用的申请或授权，平台授权审核员可以执行平台撤销。
+     * 公开API不依赖授权记录，不能通过该接口撤销。</p>
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseDTO<String> revokePermission(Long permissionId) {
+        ApplicationApiPermissionEntity permission = permissionDao.selectById(permissionId);
+        if (permission == null
+                || (!Objects.equals(permission.getApplyStatus(), 1)
+                && !Objects.equals(permission.getApplyStatus(), 2))) {
+            return ResponseDTO.userErrorParam("API权限申请不存在或当前状态不能撤销");
+        }
+        boolean granted = Objects.equals(permission.getApplyStatus(), 2);
+        ApplicationEntity application = applicationDao.selectById(permission.getApplicationId());
+        boolean platformReviewer =
+                applicationDataScopeService.hasPlatformPermission("open-api:grant:review");
+        if (!platformReviewer && !canManage(application)) {
+            return ResponseDTO.userErrorParam("无权撤销该应用的API授权");
+        }
+        OpenApiEntity api = openApiDao.selectById(permission.getOpenApiId());
+        if (api != null && Objects.equals(api.getPermissionLevel(), 1)) {
+            return ResponseDTO.userErrorParam("公开API无需授权，不能执行撤销操作");
+        }
+
+        RequestEmployee employee = getRequestEmployee();
+        permission.setApplyStatus(4);
+        permission.setDailyQuota(null);
+        permission.setEffectiveTime(null);
+        permission.setExpireTime(granted ? LocalDateTime.now() : null);
+        if (platformReviewer) {
+            permission.setReviewerId(employee == null ? null : employee.getEmployeeId());
+            permission.setReviewerName(employee == null ? "系统" : employee.getActualName());
+            permission.setReviewRemark(granted ? "平台管理员撤销授权" : "平台管理员撤销待审核申请");
+        } else {
+            permission.setReviewRemark(granted ? "应用负责人主动撤销授权" : "应用负责人主动撤销申请");
+        }
+        permissionDao.updateById(permission);
+        return ResponseDTO.ok();
     }
 
     /**
@@ -239,6 +290,15 @@ public class OpenApiPortalService {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<String> reviewPermission(OpenApiPermissionReviewForm form) {
+        if (!applicationDataScopeService.hasPlatformPermission("open-api:grant:review")) {
+            return ResponseDTO.userErrorParam("无权审核API权限申请");
+        }
+        if (!Objects.equals(form.getApplyStatus(), 2) && !Objects.equals(form.getApplyStatus(), 3)) {
+            return ResponseDTO.userErrorParam("审核结果只能为通过或驳回");
+        }
+        if (Objects.equals(form.getApplyStatus(), 3) && StringUtils.isBlank(form.getReviewRemark())) {
+            return ResponseDTO.userErrorParam("驳回API权限申请时必须填写审核意见");
+        }
         ApplicationApiPermissionEntity permission = permissionDao.selectById(form.getPermissionId());
         if (permission == null || !Objects.equals(permission.getApplyStatus(), 1)) {
             return ResponseDTO.userErrorParam("权限申请不存在或已审核");
@@ -298,9 +358,12 @@ public class OpenApiPortalService {
         if (pendingCount > 0) {
             return ResponseDTO.userErrorParam("该API已有待审核的发布申请，请勿重复提交");
         }
-        api.setPublishTime(null);
-        api.setStatus(3);
-        api.setEnabledFlag(false);
+        boolean hasPublishedVersion = api.getPublishedVersionId() != null;
+        if (!hasPublishedVersion) {
+            api.setPublishTime(null);
+            api.setStatus(3);
+            api.setEnabledFlag(false);
+        }
         openApiDao.updateById(api);
         version.setStatus(2);
         version.setLockedFlag(true);
@@ -339,8 +402,8 @@ public class OpenApiPortalService {
             item.put("review", review);
             item.put("apiName", api.getApiName());
             item.put("apiCode", api.getApiCode());
-            item.put("requestMethod", api.getRequestMethod());
-            item.put("requestPath", api.getRequestPath());
+            item.put("requestMethod", version == null ? api.getRequestMethod() : version.getRequestMethod());
+            item.put("requestPath", version == null ? api.getRequestPath() : version.getGatewayPath());
             item.put("versionNo", version == null ? api.getApiVersion() : version.getVersionNo());
             result.add(item);
         }
@@ -348,10 +411,33 @@ public class OpenApiPortalService {
     }
 
     /**
+     * 查询API发布审核记录绑定版本的完整配置。
+     */
+    public ResponseDTO<Map<String, Object>> publishReviewDetail(Long reviewId) {
+        if (!applicationDataScopeService.hasPlatformPermission("open-api:publish:review")) {
+            return ResponseDTO.userErrorParam("无权查看API发布审核详情");
+        }
+        OpenApiPublishReviewEntity review = publishReviewDao.selectById(reviewId);
+        if (review == null) {
+            return ResponseDTO.userErrorParam("API发布审核记录不存在");
+        }
+        return manageService.publishReviewDetail(review.getOpenApiId(), review.getVersionId());
+    }
+
+    /**
      * 平台审核API发布申请。
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<String> reviewPublish(OpenApiPublishReviewForm form) {
+        if (!applicationDataScopeService.hasPlatformPermission("open-api:publish:review")) {
+            return ResponseDTO.userErrorParam("无权审核API发布申请");
+        }
+        if (!Objects.equals(form.getReviewStatus(), 2) && !Objects.equals(form.getReviewStatus(), 3)) {
+            return ResponseDTO.userErrorParam("审核结果只能为通过或驳回");
+        }
+        if (Objects.equals(form.getReviewStatus(), 3) && StringUtils.isBlank(form.getReviewRemark())) {
+            return ResponseDTO.userErrorParam("驳回API发布申请时必须填写审核意见");
+        }
         OpenApiPublishReviewEntity review = publishReviewDao.selectById(form.getReviewId());
         if (review == null || !Objects.equals(review.getReviewStatus(), 1)) {
             return ResponseDTO.userErrorParam("发布审核记录不存在或已处理");
@@ -370,12 +456,33 @@ public class OpenApiPortalService {
         publishReviewDao.updateById(review);
 
         boolean approved = Objects.equals(form.getReviewStatus(), 2);
-        api.setStatus(approved ? 4 : 2);
-        api.setEnabledFlag(approved);
-        api.setPublishTime(approved ? LocalDateTime.now() : null);
+        if (approved) {
+            OpenApiVersionEntity previousPublishedVersion =
+                    manageService.resolvePublishedVersion(api);
+            if (previousPublishedVersion != null
+                    && !Objects.equals(previousPublishedVersion.getVersionId(), version.getVersionId())) {
+                previousPublishedVersion.setStatus(5);
+                previousPublishedVersion.setLockedFlag(true);
+                versionDao.updateById(previousPublishedVersion);
+            }
+            api.setCurrentVersionId(version.getVersionId());
+            api.setPublishedVersionId(version.getVersionId());
+            api.setStatus(4);
+            api.setEnabledFlag(true);
+            api.setPublishTime(LocalDateTime.now());
+            manageService.syncPublishedFields(api, version);
+            version.setStatus(3);
+            version.setLockedFlag(true);
+        } else {
+            if (api.getPublishedVersionId() == null) {
+                api.setStatus(2);
+                api.setEnabledFlag(false);
+                api.setPublishTime(null);
+            }
+            version.setStatus(1);
+            version.setLockedFlag(false);
+        }
         openApiDao.updateById(api);
-        version.setStatus(approved ? 3 : 1);
-        version.setLockedFlag(approved);
         versionDao.updateById(version);
         return ResponseDTO.ok();
     }
@@ -510,10 +617,36 @@ public class OpenApiPortalService {
      * 判断当前登录用户是否可以管理指定应用。
      */
     private boolean canManage(ApplicationEntity application) {
-        if (application == null || Objects.equals(application.getListingStatus(), 4)) {
+        if (application == null || isUnavailableForPermission(application)) {
             return false;
         }
         return applicationDataScopeService.canManage(application);
+    }
+
+    /**
+     * 判断应用是否处于无可编辑版本的完全下架状态。
+     */
+    private boolean isUnavailableForPermission(ApplicationEntity application) {
+        return application != null
+                && Objects.equals(resolveOnlineStatus(application), 4)
+                && Objects.equals(application.getListingStatus(), 4);
+    }
+
+    /**
+     * 获取应用独立线上状态，并兼容升级前数据。
+     */
+    private Integer resolveOnlineStatus(ApplicationEntity application) {
+        if (application == null) {
+            return 0;
+        }
+        if (application.getOnlineStatus() != null) {
+            return application.getOnlineStatus();
+        }
+        if (application.getPublishedVersionId() != null
+                || Objects.equals(application.getListingStatus(), 2)) {
+            return Objects.equals(application.getListingStatus(), 4) ? 4 : 2;
+        }
+        return 0;
     }
 
     /**

@@ -1,12 +1,11 @@
 package com.nexoraone.admin.module.business.application.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaMode;
 import com.nexoraone.admin.module.business.application.domain.entity.ApplicationVisitLogEntity;
 import com.nexoraone.admin.module.business.application.domain.entity.OpenApiEntity;
 import com.nexoraone.admin.module.business.application.domain.form.*;
 import com.nexoraone.admin.module.business.application.domain.vo.ApplicationCredentialVO;
-import com.nexoraone.admin.module.business.application.domain.vo.ApplicationConnectVO;
-import com.nexoraone.admin.module.business.application.service.ApplicationOpenAuthService;
 import com.nexoraone.admin.module.business.application.service.ApplicationPortalService;
 import com.nexoraone.admin.module.business.application.service.ApplicationService;
 import com.nexoraone.base.common.domain.PageResult;
@@ -31,14 +30,12 @@ public class ApplicationController {
     @Resource
     private ApplicationService applicationService;
     @Resource
-    private ApplicationOpenAuthService openAuthService;
-    @Resource
     private ApplicationPortalService portalService;
 
     /** 分页查询应用接入列表。 */
     @Operation(summary = "分页查询应用接入列表")
     @PostMapping("/query")
-    @SaCheckPermission("application:query")
+    @SaCheckPermission(value = {"application:query", "application:review"}, mode = SaMode.OR)
     public ResponseDTO<PageResult<Map<String, Object>>> query(@RequestBody @Valid ApplicationQueryForm form) {
         return applicationService.query(form);
     }
@@ -54,7 +51,7 @@ public class ApplicationController {
     /** 更新未锁定应用的基本信息。 */
     @Operation(summary = "更新应用基本信息")
     @PostMapping("/base/update")
-    @SaCheckPermission("application:save")
+    @SaCheckPermission(value = {"application:save", "application:review"}, mode = SaMode.OR)
     public ResponseDTO<String> updateBase(@RequestBody @Valid ApplicationBaseUpdateForm form) {
         return applicationService.updateBase(form);
     }
@@ -62,15 +59,24 @@ public class ApplicationController {
     /** 查询应用完整配置和进度。 */
     @Operation(summary = "查询应用完整配置和进度")
     @GetMapping("/detail/{applicationId}")
-    @SaCheckPermission("application:detail")
+    @SaCheckPermission(value = {"application:detail", "application:review"}, mode = SaMode.OR)
     public ResponseDTO<Map<String, Object>> detail(@PathVariable Long applicationId) {
         return applicationService.detail(applicationId);
+    }
+
+    /** 基于当前线上版本创建一个隔离的新草稿版本。 */
+    @Operation(summary = "创建应用新版本")
+    @PostMapping("/version/create")
+    @SaCheckPermission(value = {"application:save", "application:review"}, mode = SaMode.OR)
+    public ResponseDTO<Map<String, Long>> createVersion(
+            @RequestBody @Valid ApplicationVersionCreateForm form) {
+        return applicationService.createVersion(form);
     }
 
     /** 保存流程步骤配置。 */
     @Operation(summary = "保存流程步骤配置")
     @PostMapping("/step/save")
-    @SaCheckPermission("application:save")
+    @SaCheckPermission(value = {"application:save", "application:review"}, mode = SaMode.OR)
     public ResponseDTO<String> saveStep(@RequestBody @Valid ApplicationStepSaveForm form) {
         return applicationService.saveStep(form);
     }
@@ -78,7 +84,7 @@ public class ApplicationController {
     /** 保存API权限申请。 */
     @Operation(summary = "保存API权限申请")
     @PostMapping("/api-permission/save")
-    @SaCheckPermission("application:save")
+    @SaCheckPermission(value = {"application:save", "application:review"}, mode = SaMode.OR)
     public ResponseDTO<String> saveApiPermissions(@RequestBody @Valid ApplicationApiPermissionForm form) {
         return applicationService.saveApiPermissions(form);
     }
@@ -94,18 +100,17 @@ public class ApplicationController {
     /** 重置App Secret。 */
     @Operation(summary = "重置App Secret")
     @PostMapping("/secret/reset/{applicationId}")
-    @SaCheckPermission("application:secret:reset")
+    @SaCheckPermission(value = {"application:secret:reset", "application:review"}, mode = SaMode.OR)
     public ResponseDTO<ApplicationCredentialVO> resetSecret(@PathVariable Long applicationId) {
         return applicationService.resetSecret(applicationId);
     }
 
-    /** 使用当前应用凭证完成一次真实的Token签发和平台接入验证。 */
-    @Operation(summary = "验证App ID和App Secret接入")
-    @PostMapping("/connect/test")
-    @SaCheckPermission("application:save")
-    public ResponseDTO<ApplicationConnectVO> testConnection(
-            @RequestBody @Valid ApplicationConnectTestForm form) {
-        return openAuthService.testConnection(form);
+    /** 提交应用预发布，开放应用凭证接入验证能力。 */
+    @Operation(summary = "提交应用预发布")
+    @PostMapping("/pre-publish")
+    @SaCheckPermission("application:submit")
+    public ResponseDTO<String> prePublish(@RequestBody @Valid ApplicationPrePublishForm form) {
+        return applicationService.prePublish(form);
     }
 
     /** 提交应用上架审核。 */

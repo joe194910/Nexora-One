@@ -1,12 +1,17 @@
-# NexoraOne应用接入认证
+# NexoraOne应用接入、预发布与认证
 
 第三方应用不能直接把App Secret当作业务接口令牌使用。正确流程是：
 
 1. 在应用中心创建应用，安全保存一次性展示的App ID和App Secret。
-2. 服务端使用App ID和App Secret换取短期Access Token。
-3. 携带Access Token请求平台连通性接口。
-4. 连通性请求成功后，应用状态才会变为“已接入”。
-5. 后续调用开放API时继续携带该Access Token，平台按Token中的API scope授权。
+2. 补齐登录接入、接口安全、API权限、上架资料和发布范围配置。
+3. 提交预发布，使应用进入可接入验证状态。
+4. 服务端使用App ID和App Secret成功换取短期Access Token，应用接入状态变为“已接入”。
+5. 可选：携带Access Token请求平台连通性接口，检查Bearer Token调用链路。
+6. 提交正式上架审核，由NexoraOne平台管理员完成审核。
+7. 审核通过并正式上架后，重新换取包含业务API权限的Access Token。
+
+草稿应用不能换取Access Token。预发布阶段签发的Token只包含
+`application:connect:ping`权限，不能提前调用平台业务API。
 
 ## 1. 换取Access Token
 
@@ -43,27 +48,34 @@ curl -X POST "{platformBaseUrl}/open-api/oauth/token" \
     "access_token": "nxo_at_xxx",
     "token_type": "Bearer",
     "expires_in": 7200,
-    "scope": "identity:user:info enterprise:info",
+    "scope": "application:connect:ping",
     "scopes": [
-      "identity:user:info",
-      "enterprise:info"
+      "application:connect:ping"
     ]
   }
 }
 ```
 
 Token有效期读取应用“登录与单点跳转配置”中的`tokenTtl`，平台限制为60到86400秒。
+Access Token成功签发后，应用的`access_status`会立即更新为`2`，无需额外调用验证接口。
+应用正式上架后需要重新换取Token，新Token才会包含审核通过的业务API编码。
 
-## 2. 验证平台连通性
+## 2. 可选：验证平台连通性
 
 ```bash
 curl "{platformBaseUrl}/open-api/connect/ping" \
   -H "Authorization: Bearer {accessToken}"
 ```
 
-请求成功后，应用的`access_status`会更新为`2`，表示凭证签发和Bearer Token请求链路均已验证通过。
+该接口用于检查Access Token和Bearer Token请求链路，不再作为更新应用接入状态的必要步骤。
 
-## 3. 调用后续开放API
+## 3. 提交正式上架审核
+
+接入验证成功后，在应用中心提交正式上架审核。审核由NexoraOne平台侧完成，应用所属企业或创建人不能自行审批。
+
+审核通过前，应用不能调用业务API。审核通过并正式上架后，应重新换取Access Token，再使用新Token调用已授权的开放API。
+
+## 4. 调用后续开放API
 
 后续开放API至少携带：
 
@@ -127,11 +139,11 @@ SIGNATURE = HEX_LOWER(HMAC(SIGNING_KEY, CANONICAL_REQUEST))
 
 HMAC算法使用应用安全配置选择的`HMAC-SHA256`或`HMAC-SHA512`。请求体为空时，对空字节数组计算SHA-256。时间戳允许偏差和随机串防重放有效期由应用安全配置决定。
 
-## 4. 密钥重置
+## 5. 密钥重置
 
 数据库只保存App Secret的SHA-256摘要，不保存明文。重置后密钥版本会递增；旧Access Token即使尚未到期，也会在下一次请求时因为密钥版本不匹配而立即失效。
 
-## 5. 安全要求
+## 6. 安全要求
 
 - App Secret只允许保存在调用方服务端，不得写入浏览器、移动端或公开仓库。
 - 生产环境必须使用HTTPS。

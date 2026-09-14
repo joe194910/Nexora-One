@@ -1,6 +1,7 @@
 package com.nexoraone.admin.module.business.application.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -51,6 +52,14 @@ public class OpenApiEntity {
     private LocalDateTime publishTime;
     /** 当前版本主键。 */
     private Long currentVersionId;
+    /** 当前线上发布版本主键。 */
+    private Long publishedVersionId;
+    /** 当前编辑版本状态，仅用于管理列表展示。 */
+    @TableField(exist = false)
+    private Integer currentVersionStatus;
+    /** 当前编辑版本号，仅用于管理列表展示。 */
+    @TableField(exist = false)
+    private String currentVersionNo;
     /** 发布状态：1草稿，2配置中，3待发布，4已上架，5已停用，6已下线。 */
     private Integer status;
     /** 当前编辑步骤。 */

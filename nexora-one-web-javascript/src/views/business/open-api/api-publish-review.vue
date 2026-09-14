@@ -30,11 +30,12 @@
             </a-tag>
           </template>
           <template v-else-if="column.key === 'action'">
-            <a-space v-if="record.review.reviewStatus === 1">
-              <a-button type="link" @click="openReview(record, 2)">通过</a-button>
-              <a-button type="link" danger @click="openReview(record, 3)">驳回</a-button>
+            <a-space>
+              <a-button type="link" @click="viewDetail(record)">查看详情</a-button>
+              <a-button v-if="record.review.reviewStatus === 1" type="link" @click="openReview(record, 2)">通过</a-button>
+              <a-button v-if="record.review.reviewStatus === 1" type="link" danger @click="openReview(record, 3)">驳回</a-button>
+              <span v-if="record.review.reviewStatus !== 1">{{ record.review.reviewerName || '-' }}</span>
             </a-space>
-            <span v-else>{{ record.review.reviewerName || '-' }}</span>
           </template>
         </template>
       </a-table>
@@ -64,9 +65,11 @@
 <script setup>
   import { onMounted, reactive, ref } from 'vue';
   import { message } from 'ant-design-vue';
+  import { useRouter } from 'vue-router';
   import { openApiApi } from '/@/api/business/open-api/open-api-api';
   import './open-api.less';
 
+  const router = useRouter();
   const loading = ref(false);
   const submitting = ref(false);
   const modalVisible = ref(false);
@@ -100,6 +103,17 @@
       reviewRemark: status === 2 ? '审核通过，允许上架发布。' : '',
     });
     modalVisible.value = true;
+  }
+
+  function viewDetail(record) {
+    router.push({
+      path: '/open-api/detail',
+      query: {
+        openApiId: record.review.openApiId,
+        reviewId: record.review.reviewId,
+        mode: 'detail',
+      },
+    });
   }
 
   async function submitReview() {

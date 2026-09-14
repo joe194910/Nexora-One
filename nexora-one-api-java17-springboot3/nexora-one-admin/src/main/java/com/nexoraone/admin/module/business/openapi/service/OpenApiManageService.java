@@ -20,6 +20,8 @@ import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiExampleSav
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiParameterSaveForm;
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiQueryForm;
 import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiStatusForm;
+import com.nexoraone.admin.module.business.openapi.domain.form.OpenApiVersionCreateForm;
+import com.nexoraone.admin.module.business.openapi.domain.vo.OpenApiVersionVO;
 import com.nexoraone.admin.module.system.login.domain.RequestEmployee;
 import com.nexoraone.admin.util.AdminRequestUtil;
 import com.nexoraone.base.common.domain.PageResult;
@@ -48,8 +50,6 @@ import java.util.Set;
 public class OpenApiManageService {
 
     private static final Set<String> HTTP_METHODS = Set.of("GET", "POST", "PUT", "DELETE", "PATCH");
-    private static final Set<Integer> EDITABLE_STATUS = Set.of(1, 2, 3);
-
     @Resource
     private OpenApiDao openApiDao;
     @Resource
@@ -85,6 +85,11 @@ public class OpenApiManageService {
         applyCreatorScope(wrapper);
         Page<OpenApiEntity> page = openApiDao.selectPage(
                 new Page<>(form.getPageNum(), form.getPageSize(), !Boolean.FALSE.equals(form.getSearchCount())), wrapper);
+        for (OpenApiEntity api : page.getRecords()) {
+            OpenApiVersionEntity currentVersion = resolveCurrentVersion(api);
+            api.setCurrentVersionStatus(currentVersion == null ? null : currentVersion.getStatus());
+            api.setCurrentVersionNo(currentVersion == null ? null : currentVersion.getVersionNo());
+        }
         PageResult<OpenApiEntity> result = new PageResult<>();
         result.setPageNum(page.getCurrent());
         result.setPageSize(page.getSize());
@@ -99,13 +104,31 @@ public class OpenApiManageService {
      * 查询API管理看板数量汇总。
      */
     public ResponseDTO<Map<String, Long>> summary() {
+        LambdaQueryWrapper<OpenApiEntity> wrapper = new LambdaQueryWrapper<>();
+        applyCreatorScope(wrapper);
+        List<OpenApiEntity> apiList = openApiDao.selectList(wrapper);
+
+        long publishedCount = 0L;
+        long draftCount = 0L;
+        long disabledCount = 0L;
+        for (OpenApiEntity api : apiList) {
+            if (Objects.equals(api.getStatus(), 4)) {
+                publishedCount++;
+            }
+            if (Objects.equals(api.getStatus(), 5)) {
+                disabledCount++;
+            }
+            OpenApiVersionEntity currentVersion = resolveCurrentVersion(api);
+            if (currentVersion != null && Objects.equals(currentVersion.getStatus(), 1)) {
+                draftCount++;
+            }
+        }
+
         Map<String, Long> result = new LinkedHashMap<>();
-        LambdaQueryWrapper<OpenApiEntity> totalWrapper = new LambdaQueryWrapper<>();
-        applyCreatorScope(totalWrapper);
-        result.put("total", openApiDao.selectCount(totalWrapper));
-        result.put("published", countByStatus(4));
-        result.put("draft", countByStatus(1));
-        result.put("disabled", countByStatus(5));
+        result.put("total", (long) apiList.size());
+        result.put("published", publishedCount);
+        result.put("draft", draftCount);
+        result.put("disabled", disabledCount);
         return ResponseDTO.ok(result);
     }
 
@@ -188,6 +211,93 @@ public class OpenApiManageService {
     }
 
     /**
+     * 基于当前线上版本创建一个内容完整、互不影响的新草稿版本。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseDTO<Map<String, Long>> createVersion(OpenApiVersionCreateForm form) {
+        OpenApiEntity api = openApiDao.selectById(form.getOpenApiId());
+        if (api == null || !canManage(api)) {
+            return ResponseDTO.userErrorParam("API不存在或无权访问");
+        }
+        if (!Objects.equals(api.getStatus(), 4) && !Objects.equals(api.getStatus(), 5)) {
+            return ResponseDTO.userErrorParam("只有已上架或已停用的API可以创建新版本");
+        }
+        OpenApiVersionEntity publishedVersion = resolvePublishedVersion(api);
+        if (publishedVersion == null) {
+            return ResponseDTO.userErrorParam("API线上版本不存在，无法创建新版本");
+        }
+        if (!Objects.equals(api.getCurrentVersionId(), publishedVersion.getVersionId())) {
+            return ResponseDTO.userErrorParam("当前API已有待编辑或待审核的新版本，请先处理现有版本");
+        }
+        String versionNo = StringUtils.trim(form.getVersionNo());
+        if (StringUtils.isBlank(versionNo) || !versionNo.matches("^v?\\d+\\.\\d+\\.\\d+$")) {
+            return ResponseDTO.userErrorParam("接口版本需使用v1.0.0格式");
+        }
+        long versionCount = versionDao.selectCount(new LambdaQueryWrapper<OpenApiVersionEntity>()
+                .eq(OpenApiVersionEntity::getOpenApiId, api.getOpenApiId())
+                .eq(OpenApiVersionEntity::getVersionNo, versionNo));
+        if (versionCount > 0) {
+            return ResponseDTO.userErrorParam("该API版本号已存在");
+        }
+        long routeCount = versionDao.selectCount(new LambdaQueryWrapper<OpenApiVersionEntity>()
+                .eq(OpenApiVersionEntity::getRequestMethod, publishedVersion.getRequestMethod())
+                .eq(OpenApiVersionEntity::getGatewayPath, publishedVersion.getGatewayPath())
+                .eq(OpenApiVersionEntity::getVersionNo, versionNo));
+        if (routeCount > 0) {
+            return ResponseDTO.userErrorParam("该网关路径和版本已存在");
+        }
+
+        RequestEmployee employee = applicationDataScopeService.requireEmployee();
+        OpenApiVersionEntity newVersion = copyNewVersion(
+                publishedVersion, versionNo, employee);
+        versionDao.insert(newVersion);
+        copyVersionDetails(publishedVersion.getVersionId(), newVersion.getVersionId());
+
+        api.setCurrentVersionId(newVersion.getVersionId());
+        api.setWorkflowStep(Objects.requireNonNullElse(api.getWorkflowStep(), 4));
+        api.setUpdateUserId(employee.getEmployeeId());
+        api.setUpdateUserName(employee.getActualName());
+        openApiDao.updateById(api);
+
+        Map<String, Long> result = new LinkedHashMap<>();
+        result.put("openApiId", api.getOpenApiId());
+        result.put("versionId", newVersion.getVersionId());
+        return ResponseDTO.ok(result);
+    }
+
+    /**
+     * 查询当前用户有权管理的API版本记录。
+     */
+    public ResponseDTO<List<OpenApiVersionVO>> versionList(Long openApiId) {
+        OpenApiEntity api = openApiDao.selectById(openApiId);
+        if (api == null || !canManage(api)) {
+            return ResponseDTO.userErrorParam("API不存在或无权访问");
+        }
+        List<OpenApiVersionVO> result = versionDao.selectList(new LambdaQueryWrapper<OpenApiVersionEntity>()
+                        .eq(OpenApiVersionEntity::getOpenApiId, openApiId)
+                        .orderByDesc(OpenApiVersionEntity::getVersionId))
+                .stream()
+                .map(version -> buildVersionVO(api, version))
+                .toList();
+        return ResponseDTO.ok(result);
+    }
+
+    /**
+     * 查询当前用户有权管理的指定API版本配置。
+     */
+    public ResponseDTO<Map<String, Object>> versionDetail(Long openApiId, Long versionId) {
+        OpenApiEntity api = openApiDao.selectById(openApiId);
+        if (api == null || !canManage(api)) {
+            return ResponseDTO.userErrorParam("API不存在或无权访问");
+        }
+        OpenApiVersionEntity version = versionDao.selectById(versionId);
+        if (version == null || !Objects.equals(version.getOpenApiId(), openApiId)) {
+            return ResponseDTO.userErrorParam("API版本不存在");
+        }
+        return buildDetail(api, version);
+    }
+
+    /**
      * 更新API基本信息和当前可编辑版本。
      */
     @Transactional(rollbackFor = Exception.class)
@@ -207,6 +317,9 @@ public class OpenApiManageService {
         }
         copyMaster(form, api);
         copyVersion(form, version);
+        if (api.getPublishedVersionId() != null) {
+            syncPublishedFields(api, resolvePublishedVersion(api));
+        }
         RequestEmployee employee = getRequestEmployee();
         api.setUpdateUserId(employee == null ? null : employee.getEmployeeId());
         api.setUpdateUserName(employee == null ? null : employee.getActualName());
@@ -346,7 +459,26 @@ public class OpenApiManageService {
         if (api == null || !Objects.equals(api.getStatus(), 4) || !Boolean.TRUE.equals(api.getEnabledFlag())) {
             return ResponseDTO.userErrorParam("API不存在或尚未上架");
         }
-        return buildDetail(api);
+        OpenApiVersionEntity version = resolvePublishedVersion(api);
+        if (version == null || !Objects.equals(version.getStatus(), 3)) {
+            return ResponseDTO.userErrorParam("API线上版本不存在");
+        }
+        return buildDetail(api, version);
+    }
+
+    /**
+     * 平台发布审核人查询指定提交版本的完整配置。
+     */
+    public ResponseDTO<Map<String, Object>> publishReviewDetail(Long openApiId, Long versionId) {
+        if (!applicationDataScopeService.hasPlatformPermission("open-api:publish:review")) {
+            return ResponseDTO.userErrorParam("无权查看API发布审核详情");
+        }
+        OpenApiEntity api = openApiDao.selectById(openApiId);
+        OpenApiVersionEntity version = versionDao.selectById(versionId);
+        if (api == null || version == null || !Objects.equals(version.getOpenApiId(), openApiId)) {
+            return ResponseDTO.userErrorParam("API或提交版本不存在");
+        }
+        return buildDetail(api, version);
     }
 
     /**
@@ -357,6 +489,13 @@ public class OpenApiManageService {
         if (version == null) {
             return ResponseDTO.userErrorParam("API版本不存在");
         }
+        return buildDetail(api, version);
+    }
+
+    /**
+     * 构建指定API版本的完整配置。
+     */
+    private ResponseDTO<Map<String, Object>> buildDetail(OpenApiEntity api, OpenApiVersionEntity version) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("api", api);
         result.put("version", version);
@@ -397,9 +536,9 @@ public class OpenApiManageService {
         if (!canManage(api)) {
             return ResponseDTO.userErrorParam("API不存在或无权访问");
         }
-        OpenApiVersionEntity version = resolveCurrentVersion(api);
+        OpenApiVersionEntity version = resolvePublishedVersion(api);
         if (version == null) {
-            return ResponseDTO.userErrorParam("API版本不存在");
+            return ResponseDTO.userErrorParam("API线上版本不存在");
         }
         if (!Objects.equals(api.getStatus(), 4)) {
             return ResponseDTO.userErrorParam("只有已上架API可以停用");
@@ -411,16 +550,6 @@ public class OpenApiManageService {
         version.setLockedFlag(true);
         versionDao.updateById(version);
         return ResponseDTO.ok();
-    }
-
-    /**
-     * 按状态统计API数量。
-     */
-    private long countByStatus(Integer status) {
-        LambdaQueryWrapper<OpenApiEntity> wrapper = new LambdaQueryWrapper<OpenApiEntity>()
-                .eq(OpenApiEntity::getStatus, status);
-        applyCreatorScope(wrapper);
-        return openApiDao.selectCount(wrapper);
     }
 
     /**
@@ -525,7 +654,9 @@ public class OpenApiManageService {
         if (!canManage(api)) {
             return ResponseDTO.userErrorParam("API不存在或无权访问");
         }
-        if (Boolean.TRUE.equals(version.getLockedFlag()) || !EDITABLE_STATUS.contains(api.getStatus())) {
+        if (!Objects.equals(api.getCurrentVersionId(), version.getVersionId())
+                || Boolean.TRUE.equals(version.getLockedFlag())
+                || !Objects.equals(version.getStatus(), 1)) {
             return ResponseDTO.userErrorParam("当前API版本已锁定，不允许直接修改");
         }
         return ResponseDTO.ok();
@@ -583,6 +714,146 @@ public class OpenApiManageService {
     }
 
     /**
+     * 复制线上版本主记录并初始化新版本的审计信息。
+     */
+    private OpenApiVersionEntity copyNewVersion(OpenApiVersionEntity source, String versionNo,
+                                                RequestEmployee employee) {
+        OpenApiVersionEntity target = new OpenApiVersionEntity();
+        target.setOpenApiId(source.getOpenApiId());
+        target.setVersionNo(versionNo);
+        target.setRequestMethod(source.getRequestMethod());
+        target.setGatewayPath(source.getGatewayPath());
+        target.setInternalPath(source.getInternalPath());
+        target.setContentType(source.getContentType());
+        target.setPermissionLevel(source.getPermissionLevel());
+        target.setTimeoutSeconds(source.getTimeoutSeconds());
+        target.setDescription(source.getDescription());
+        target.setUnifiedResponseFlag(source.getUnifiedResponseFlag());
+        target.setDataMaskingFlag(source.getDataMaskingFlag());
+        target.setSecurityConfig(source.getSecurityConfig());
+        target.setChangeLog(null);
+        target.setStatus(1);
+        target.setLockedFlag(false);
+        target.setCreateUserId(employee.getEmployeeId());
+        target.setCreateUserName(employee.getActualName());
+        target.setUpdateUserId(employee.getEmployeeId());
+        target.setUpdateUserName(employee.getActualName());
+        return target;
+    }
+
+    /**
+     * 复制版本关联的环境、参数、示例和错误码配置。
+     */
+    private void copyVersionDetails(Long sourceVersionId, Long targetVersionId) {
+        for (OpenApiEnvironmentEntity source : environmentDao.selectList(
+                new LambdaQueryWrapper<OpenApiEnvironmentEntity>()
+                        .eq(OpenApiEnvironmentEntity::getVersionId, sourceVersionId)
+                        .orderByAsc(OpenApiEnvironmentEntity::getEnvironmentId))) {
+            OpenApiEnvironmentEntity target = new OpenApiEnvironmentEntity();
+            target.setVersionId(targetVersionId);
+            target.setEnvironmentCode(source.getEnvironmentCode());
+            target.setEnvironmentName(source.getEnvironmentName());
+            target.setBaseUrl(source.getBaseUrl());
+            target.setEnabledFlag(source.getEnabledFlag());
+            target.setOnlineDebugFlag(source.getOnlineDebugFlag());
+            target.setDescription(source.getDescription());
+            environmentDao.insert(target);
+        }
+
+        List<OpenApiParameterEntity> sourceParameters = parameterDao.selectList(
+                new LambdaQueryWrapper<OpenApiParameterEntity>()
+                        .eq(OpenApiParameterEntity::getVersionId, sourceVersionId)
+                        .orderByAsc(OpenApiParameterEntity::getDirection)
+                        .orderByAsc(OpenApiParameterEntity::getSort)
+                        .orderByAsc(OpenApiParameterEntity::getParameterId));
+        Map<Long, Long> parameterIdMap = new LinkedHashMap<>();
+        for (OpenApiParameterEntity source : sourceParameters) {
+            OpenApiParameterEntity target = copyParameter(source, targetVersionId);
+            target.setParentId(null);
+            parameterDao.insert(target);
+            parameterIdMap.put(source.getParameterId(), target.getParameterId());
+        }
+        for (int index = 0; index < sourceParameters.size(); index++) {
+            OpenApiParameterEntity source = sourceParameters.get(index);
+            if (source.getParentId() != null) {
+                OpenApiParameterEntity target = new OpenApiParameterEntity();
+                target.setParameterId(parameterIdMap.get(source.getParameterId()));
+                target.setParentId(parameterIdMap.get(source.getParentId()));
+                parameterDao.updateById(target);
+            }
+        }
+
+        for (OpenApiExampleEntity source : exampleDao.selectList(
+                new LambdaQueryWrapper<OpenApiExampleEntity>()
+                        .eq(OpenApiExampleEntity::getVersionId, sourceVersionId)
+                        .orderByAsc(OpenApiExampleEntity::getSort))) {
+            OpenApiExampleEntity target = new OpenApiExampleEntity();
+            target.setVersionId(targetVersionId);
+            target.setExampleType(source.getExampleType());
+            target.setExampleName(source.getExampleName());
+            target.setContent(source.getContent());
+            target.setSort(source.getSort());
+            exampleDao.insert(target);
+        }
+
+        for (OpenApiErrorCodeEntity source : errorCodeDao.selectList(
+                new LambdaQueryWrapper<OpenApiErrorCodeEntity>()
+                        .eq(OpenApiErrorCodeEntity::getVersionId, sourceVersionId)
+                        .orderByAsc(OpenApiErrorCodeEntity::getSort))) {
+            OpenApiErrorCodeEntity target = new OpenApiErrorCodeEntity();
+            target.setVersionId(targetVersionId);
+            target.setHttpStatus(source.getHttpStatus());
+            target.setBusinessCode(source.getBusinessCode());
+            target.setErrorMessage(source.getErrorMessage());
+            target.setTriggerCondition(source.getTriggerCondition());
+            target.setHandlingAdvice(source.getHandlingAdvice());
+            target.setSort(source.getSort());
+            errorCodeDao.insert(target);
+        }
+    }
+
+    /**
+     * 复制一个API参数定义，主键和父参数由调用方重新设置。
+     */
+    private OpenApiParameterEntity copyParameter(OpenApiParameterEntity source, Long targetVersionId) {
+        OpenApiParameterEntity target = new OpenApiParameterEntity();
+        target.setVersionId(targetVersionId);
+        target.setDirection(source.getDirection());
+        target.setLocation(source.getLocation());
+        target.setParameterName(source.getParameterName());
+        target.setChineseName(source.getChineseName());
+        target.setDataType(source.getDataType());
+        target.setRequiredFlag(source.getRequiredFlag());
+        target.setNullableFlag(source.getNullableFlag());
+        target.setDefaultValue(source.getDefaultValue());
+        target.setExampleValue(source.getExampleValue());
+        target.setValidationRule(source.getValidationRule());
+        target.setDescription(source.getDescription());
+        target.setMaskingFlag(source.getMaskingFlag());
+        target.setSort(source.getSort());
+        return target;
+    }
+
+    /**
+     * 将API版本实体转换为版本记录展示对象。
+     */
+    private OpenApiVersionVO buildVersionVO(OpenApiEntity api, OpenApiVersionEntity version) {
+        OpenApiVersionVO result = new OpenApiVersionVO();
+        result.setVersionId(version.getVersionId());
+        result.setVersionNo(version.getVersionNo());
+        result.setRequestMethod(version.getRequestMethod());
+        result.setGatewayPath(version.getGatewayPath());
+        result.setStatus(version.getStatus());
+        result.setCurrentFlag(Objects.equals(api.getCurrentVersionId(), version.getVersionId()));
+        result.setPublishedFlag(Objects.equals(api.getPublishedVersionId(), version.getVersionId()));
+        result.setChangeLog(version.getChangeLog());
+        result.setCreateUserName(version.getCreateUserName());
+        result.setCreateTime(version.getCreateTime());
+        result.setUpdateTime(version.getUpdateTime());
+        return result;
+    }
+
+    /**
      * 解析当前API版本，并兼容迁移后的历史数据。
      */
     private OpenApiVersionEntity resolveCurrentVersion(OpenApiEntity api) {
@@ -596,6 +867,46 @@ public class OpenApiManageService {
                 .eq(OpenApiVersionEntity::getOpenApiId, api.getOpenApiId())
                 .orderByDesc(OpenApiVersionEntity::getVersionId)
                 .last("limit 1"));
+    }
+
+    /**
+     * 解析当前线上发布版本，并兼容尚未补充线上版本指针的历史数据。
+     */
+    public OpenApiVersionEntity resolvePublishedVersion(OpenApiEntity api) {
+        if (api.getPublishedVersionId() != null) {
+            OpenApiVersionEntity version = versionDao.selectById(api.getPublishedVersionId());
+            if (version != null) {
+                return version;
+            }
+        }
+        if (api.getCurrentVersionId() != null) {
+            OpenApiVersionEntity current = versionDao.selectById(api.getCurrentVersionId());
+            if (current != null
+                    && (Objects.equals(current.getStatus(), 3)
+                    || Objects.equals(current.getStatus(), 4)
+                    || Objects.equals(current.getStatus(), 5))) {
+                return current;
+            }
+        }
+        return versionDao.selectOne(new LambdaQueryWrapper<OpenApiVersionEntity>()
+                .eq(OpenApiVersionEntity::getOpenApiId, api.getOpenApiId())
+                .in(OpenApiVersionEntity::getStatus, 3, 4, 5)
+                .orderByDesc(OpenApiVersionEntity::getVersionId)
+                .last("limit 1"));
+    }
+
+    /**
+     * 将API主记录中的线上路由字段同步为审核通过的版本内容。
+     */
+    public void syncPublishedFields(OpenApiEntity api, OpenApiVersionEntity version) {
+        if (api == null || version == null) {
+            return;
+        }
+        api.setRequestMethod(version.getRequestMethod());
+        api.setRequestPath(version.getGatewayPath());
+        api.setApiVersion(version.getVersionNo());
+        api.setPermissionLevel(version.getPermissionLevel());
+        api.setDescription(version.getDescription());
     }
 
     /**

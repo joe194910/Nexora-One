@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS `nexora_one_application_api_permission` (
     `application_id` BIGINT NOT NULL COMMENT '应用主键',
     `open_api_id` BIGINT NOT NULL COMMENT '开放API主键',
     `apply_reason` VARCHAR(500) DEFAULT NULL COMMENT '申请原因',
-    `apply_status` TINYINT NOT NULL DEFAULT 1 COMMENT '申请状态：1待审核，2已授权，3已驳回',
+    `apply_status` TINYINT NOT NULL DEFAULT 1 COMMENT '申请状态：1待审核，2已授权，3已驳回，4已撤销',
     `review_remark` VARCHAR(500) DEFAULT NULL COMMENT '审核意见',
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',

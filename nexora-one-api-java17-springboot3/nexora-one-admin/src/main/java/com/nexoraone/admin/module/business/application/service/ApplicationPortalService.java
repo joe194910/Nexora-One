@@ -96,14 +96,10 @@ public class ApplicationPortalService {
         RequestEmployee employee = getRequestEmployee();
         Set<Long> favoriteIds = queryFavoriteIds(employee);
         LambdaQueryWrapper<ApplicationEntity> wrapper = new LambdaQueryWrapper<ApplicationEntity>()
-                .eq(ApplicationEntity::getListingStatus, 2)
-                .eq(ApplicationEntity::getAccessStatus, 2)
+                .and(query -> query.eq(ApplicationEntity::getOnlineStatus, 2)
+                        .or(legacy -> legacy.isNull(ApplicationEntity::getOnlineStatus)
+                                .eq(ApplicationEntity::getListingStatus, 2)))
                 .orderByDesc(ApplicationEntity::getUpdateTime);
-        if (StringUtils.isNotBlank(form.getSearchWord())) {
-            wrapper.and(item -> item.like(ApplicationEntity::getApplicationName, form.getSearchWord())
-                    .or().like(ApplicationEntity::getApplicationCode, form.getSearchWord())
-                    .or().like(ApplicationEntity::getSummary, form.getSearchWord()));
-        }
         List<ApplicationEntity> visible = applicationDao.selectList(wrapper).stream()
                 .filter(item -> canView(item, employee))
                 .filter(item -> matchesPortalFilter(item, form, favoriteIds))
@@ -133,12 +129,13 @@ public class ApplicationPortalService {
         RequestEmployee employee = getRequestEmployee();
         LinkedHashSet<String> categories = new LinkedHashSet<>();
         applicationDao.selectList(new LambdaQueryWrapper<ApplicationEntity>()
-                        .eq(ApplicationEntity::getListingStatus, 2)
-                        .eq(ApplicationEntity::getAccessStatus, 2)
+                        .and(query -> query.eq(ApplicationEntity::getOnlineStatus, 2)
+                                .or(legacy -> legacy.isNull(ApplicationEntity::getOnlineStatus)
+                                        .eq(ApplicationEntity::getListingStatus, 2)))
                         .orderByDesc(ApplicationEntity::getUpdateTime))
                 .stream()
                 .filter(item -> canView(item, employee))
-                .map(item -> Objects.toString(readJson(item.getListingConfig()).get("category"), "未分类"))
+                .map(item -> Objects.toString(publishedConfig(item, "listingConfig").get("category"), "未分类"))
                 .forEach(categories::add);
         return ResponseDTO.ok(new ArrayList<>(categories));
     }
@@ -151,8 +148,9 @@ public class ApplicationPortalService {
         Set<Long> favoriteIds = queryFavoriteIds(employee);
         List<Map<String, Object>> applications = applicationDao.selectList(
                         new LambdaQueryWrapper<ApplicationEntity>()
-                                .eq(ApplicationEntity::getListingStatus, 2)
-                                .eq(ApplicationEntity::getAccessStatus, 2)
+                                .and(query -> query.eq(ApplicationEntity::getOnlineStatus, 2)
+                                        .or(legacy -> legacy.isNull(ApplicationEntity::getOnlineStatus)
+                                                .eq(ApplicationEntity::getListingStatus, 2)))
                                 .orderByDesc(ApplicationEntity::getUpdateTime))
                 .stream()
                 .filter(item -> canView(item, employee))
@@ -173,8 +171,9 @@ public class ApplicationPortalService {
         RequestEmployee employee = requireEmployee();
         long listedApplications = applicationDao.selectList(
                         new LambdaQueryWrapper<ApplicationEntity>()
-                                .eq(ApplicationEntity::getListingStatus, 2)
-                                .eq(ApplicationEntity::getAccessStatus, 2))
+                                .and(query -> query.eq(ApplicationEntity::getOnlineStatus, 2)
+                                        .or(legacy -> legacy.isNull(ApplicationEntity::getOnlineStatus)
+                                                .eq(ApplicationEntity::getListingStatus, 2))))
                 .stream()
                 .filter(item -> canView(item, employee))
                 .count();
@@ -224,7 +223,8 @@ public class ApplicationPortalService {
         if (!canView(application, employee)) {
             return ResponseDTO.userErrorParam("应用不存在或当前用户无权访问");
         }
-        if (!Boolean.TRUE.equals(readBoolean(readJson(application.getPublishConfig()), "allowFavorite", true))) {
+        if (!Boolean.TRUE.equals(readBoolean(publishedConfig(application, "publishConfig"),
+                "allowFavorite", true))) {
             return ResponseDTO.userErrorParam("该应用未开放收藏");
         }
         LambdaQueryWrapper<ApplicationFavoriteEntity> wrapper = new LambdaQueryWrapper<ApplicationFavoriteEntity>()
@@ -260,7 +260,9 @@ public class ApplicationPortalService {
             saveVisit(application, employee, null, false, "应用不存在、未上架或当前用户无访问权限");
             return ResponseDTO.userErrorParam("应用不存在、未上架或当前用户无访问权限");
         }
-        if (StringUtils.isBlank(application.getHomeUrl())) {
+        Map<String, Object> snapshot = publishedSnapshot(application);
+        String homeUrl = Objects.toString(snapshot.get("homeUrl"), application.getHomeUrl());
+        if (StringUtils.isBlank(homeUrl)) {
             saveVisit(application, employee, null, false, "应用首页地址未配置");
             return ResponseDTO.userErrorParam("应用首页地址未配置");
         }
@@ -271,7 +273,7 @@ public class ApplicationPortalService {
         }
         String code = generateCode();
         String state = generateCode();
-        Map<String, Object> loginConfig = readJson(application.getLoginConfig());
+        Map<String, Object> loginConfig = nestedMap(snapshot.get("loginConfig"));
         int ttl = Math.min(Math.max(readInt(loginConfig, "codeTtl", 300), 60), 600);
         String redirectUri = firstCallback(loginConfig);
         ApplicationSsoAuthCodeEntity authCode = new ApplicationSsoAuthCodeEntity();
@@ -284,7 +286,7 @@ public class ApplicationPortalService {
         authCode.setExpiresTime(LocalDateTime.now().plusSeconds(ttl));
         authCode.setUsedFlag(false);
         authCodeDao.insert(authCode);
-        String launchUrl = UriComponentsBuilder.fromUriString(application.getHomeUrl())
+        String launchUrl = UriComponentsBuilder.fromUriString(homeUrl)
                 .queryParam("nexora_code", code)
                 .queryParam("state", state)
                 .build()
@@ -293,7 +295,8 @@ public class ApplicationPortalService {
         saveVisit(application, employee, launchUrl, true, null);
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("launchUrl", launchUrl);
-        result.put("openMode", Objects.toString(readJson(application.getPublishConfig()).get("openMode"), "NEW_TAB"));
+        result.put("openMode", Objects.toString(
+                nestedMap(snapshot.get("publishConfig")).get("openMode"), "NEW_TAB"));
         result.put("expiresIn", ttl);
         return ResponseDTO.ok(result);
     }
@@ -345,17 +348,27 @@ public class ApplicationPortalService {
             result.put("total", 0L);
             result.put("listed", 0L);
             result.put("reviewing", 0L);
+            result.put("prePublished", 0L);
             result.put("unlisted", 0L);
             result.put("rejected", 0L);
             result.put("visits", 0L);
             result.put("favorites", 0L);
             return ResponseDTO.ok(result);
         }
+        List<ApplicationEntity> visibleApplications = applicationDao.selectBatchIds(visibleApplicationIds);
+        long listed = visibleApplications.stream()
+                .filter(this::isOnline)
+                .count();
+        long unlisted = visibleApplications.stream()
+                .filter(item -> Objects.equals(resolveOnlineStatus(item), 4)
+                        || (item.getPublishedVersionId() == null
+                        && Objects.equals(item.getListingStatus(), 0)))
+                .count();
         result.put("total", (long) visibleApplicationIds.size());
-        result.put("listed", countByStatus(2, visibleApplicationIds));
+        result.put("listed", listed);
         result.put("reviewing", countByStatus(1, visibleApplicationIds));
-        result.put("unlisted", countByStatus(0, visibleApplicationIds)
-                + countByStatus(4, visibleApplicationIds));
+        result.put("prePublished", countByStatus(5, visibleApplicationIds));
+        result.put("unlisted", unlisted);
         result.put("rejected", countByStatus(3, visibleApplicationIds));
         result.put("visits", visitLogDao.selectCount(new LambdaQueryWrapper<ApplicationVisitLogEntity>()
                 .in(ApplicationVisitLogEntity::getApplicationId, visibleApplicationIds)));
@@ -393,6 +406,9 @@ public class ApplicationPortalService {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<String> updateStatus(ApplicationStatusUpdateForm form) {
+        if (!applicationDataScopeService.hasPlatformPermission("application:status")) {
+            return ResponseDTO.userErrorParam("无权变更应用上架状态");
+        }
         if (!Objects.equals(form.getListingStatus(), 2) && !Objects.equals(form.getListingStatus(), 4)) {
             return ResponseDTO.userErrorParam("目标状态只支持上架或下架");
         }
@@ -400,17 +416,20 @@ public class ApplicationPortalService {
         if (application == null) {
             return ResponseDTO.userErrorParam("应用不存在");
         }
+        Integer onlineStatus = resolveOnlineStatus(application);
         if (Objects.equals(form.getListingStatus(), 2)
-                && !List.of(2, 4).contains(application.getListingStatus())) {
+                && !Objects.equals(onlineStatus, 2)
+                && !Objects.equals(onlineStatus, 4)) {
             return ResponseDTO.userErrorParam("只有已发布或已下架的应用可以重新上架");
         }
-        application.setListingStatus(form.getListingStatus());
-        application.setConfigLocked(true);
+        application.setOnlineStatus(form.getListingStatus());
+        if (Objects.equals(application.getCurrentVersionId(), application.getPublishedVersionId())) {
+            application.setListingStatus(form.getListingStatus());
+            application.setConfigLocked(true);
+        }
         applicationDao.updateById(application);
-        ApplicationVersionEntity version = versionDao.selectOne(new LambdaQueryWrapper<ApplicationVersionEntity>()
-                .eq(ApplicationVersionEntity::getApplicationId, application.getApplicationId())
-                .orderByDesc(ApplicationVersionEntity::getSubmitTime)
-                .last("limit 1"));
+        ApplicationVersionEntity version = application.getPublishedVersionId() == null
+                ? null : versionDao.selectById(application.getPublishedVersionId());
         if (version != null) {
             version.setVersionStatus(Objects.equals(form.getListingStatus(), 2) ? 2 : 4);
             versionDao.updateById(version);
@@ -448,10 +467,27 @@ public class ApplicationPortalService {
      */
     private boolean matchesPortalFilter(ApplicationEntity application, ApplicationPortalQueryForm form,
                                         Set<Long> favoriteIds) {
-        Map<String, Object> listing = readJson(application.getListingConfig());
-        Map<String, Object> publish = readJson(application.getPublishConfig());
+        Map<String, Object> snapshot = publishedSnapshot(application);
+        Map<String, Object> listing = nestedMap(snapshot.get("listingConfig"));
+        Map<String, Object> publish = nestedMap(snapshot.get("publishConfig"));
         if (!readBoolean(publish, "searchable", true)) {
             return false;
+        }
+        if (StringUtils.isNotBlank(form.getSearchWord())) {
+            String searchWord = StringUtils.lowerCase(form.getSearchWord());
+            boolean matched = java.util.Arrays.asList(
+                            snapshot.get("applicationName"),
+                            snapshot.get("applicationCode"),
+                            snapshot.get("summary"),
+                            listing.get("marketName"),
+                            listing.get("subtitle"),
+                            listing.get("description"))
+                    .stream()
+                    .map(value -> StringUtils.lowerCase(Objects.toString(value, "")))
+                    .anyMatch(value -> value.contains(searchWord));
+            if (!matched) {
+                return false;
+            }
         }
         if (StringUtils.isNotBlank(form.getCategoryName())
                 && !Objects.equals(form.getCategoryName(), Objects.toString(listing.get("category"), "未分类"))) {
@@ -468,11 +504,14 @@ public class ApplicationPortalService {
      * 判断当前用户是否具备应用可见权限。
      */
     private boolean canView(ApplicationEntity application, RequestEmployee employee) {
-        if (application == null || !Objects.equals(application.getListingStatus(), 2)
-                || !Objects.equals(application.getAccessStatus(), 2)) {
+        if (!isOnline(application)) {
             return false;
         }
-        Map<String, Object> publish = readJson(application.getPublishConfig());
+        Map<String, Object> snapshot = publishedSnapshot(application);
+        if (snapshot.isEmpty() || !Objects.equals(readInteger(snapshot.get("accessStatus")), 2)) {
+            return false;
+        }
+        Map<String, Object> publish = nestedMap(snapshot.get("publishConfig"));
         if (!readBoolean(publish, "portalVisible", true)) {
             return false;
         }
@@ -484,10 +523,12 @@ public class ApplicationPortalService {
             return true;
         }
         if (Objects.equals(scopeType, "ENTERPRISE")) {
+            Long createUserId = readLong(snapshot.get("createUserId"), application.getCreateUserId());
+            Long enterpriseId = readLong(snapshot.get("enterpriseId"), application.getEnterpriseId());
             return employee != null
-                    && (Objects.equals(application.getCreateUserId(), employee.getEmployeeId())
+                    && (Objects.equals(createUserId, employee.getEmployeeId())
                     || applicationDataScopeService.isEnterpriseMember(
-                    application.getEnterpriseId(), employee.getEmployeeId()));
+                    enterpriseId, employee.getEmployeeId()));
         }
         if (!Objects.equals(scopeType, "SELECTED") || employee == null) {
             return false;
@@ -507,20 +548,23 @@ public class ApplicationPortalService {
      */
     private Map<String, Object> toPortalMap(ApplicationEntity application, boolean favorite,
                                             RequestEmployee employee) {
-        Map<String, Object> listing = readJson(application.getListingConfig());
-        Map<String, Object> publish = readJson(application.getPublishConfig());
+        Map<String, Object> snapshot = publishedSnapshot(application);
+        Map<String, Object> listing = nestedMap(snapshot.get("listingConfig"));
+        Map<String, Object> publish = nestedMap(snapshot.get("publishConfig"));
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("applicationId", application.getApplicationId());
-        item.put("applicationName", application.getApplicationName());
-        item.put("applicationCode", application.getApplicationCode());
-        item.put("applicationType", application.getApplicationType());
-        item.put("enterpriseName", application.getEnterpriseName());
-        item.put("summary", application.getSummary());
-        item.put("iconUrl", application.getIconUrl());
-        item.put("homeUrl", application.getHomeUrl());
-        item.put("listingStatus", application.getListingStatus());
-        item.put("marketName", Objects.toString(listing.get("marketName"), application.getApplicationName()));
-        item.put("subtitle", Objects.toString(listing.get("subtitle"), application.getSummary()));
+        item.put("applicationName", snapshot.get("applicationName"));
+        item.put("applicationCode", snapshot.get("applicationCode"));
+        item.put("applicationType", snapshot.get("applicationType"));
+        item.put("enterpriseName", snapshot.get("enterpriseName"));
+        item.put("summary", snapshot.get("summary"));
+        item.put("iconUrl", snapshot.get("iconUrl"));
+        item.put("homeUrl", snapshot.get("homeUrl"));
+        item.put("listingStatus", 2);
+        item.put("marketName", Objects.toString(
+                listing.get("marketName"), Objects.toString(snapshot.get("applicationName"), "")));
+        item.put("subtitle", Objects.toString(
+                listing.get("subtitle"), Objects.toString(snapshot.get("summary"), "")));
         item.put("category", Objects.toString(listing.get("category"), "未分类"));
         item.put("tags", listing.getOrDefault("tags", List.of()));
         item.put("versionNo", Objects.toString(listing.get("versionNo"), "v1.0.0"));
@@ -606,6 +650,104 @@ public class ApplicationPortalService {
             return Objects.toString(list.get(0), null);
         }
         return null;
+    }
+
+    /**
+     * 读取应用当前对外发布版本的完整快照。
+     */
+    private Map<String, Object> publishedSnapshot(ApplicationEntity application) {
+        if (application == null) {
+            return new LinkedHashMap<>();
+        }
+        if (application.getPublishedVersionId() != null) {
+            ApplicationVersionEntity version = versionDao.selectById(application.getPublishedVersionId());
+            if (version != null
+                    && Objects.equals(version.getApplicationId(), application.getApplicationId())
+                    && Objects.equals(version.getVersionStatus(), 2)
+                    && isOnline(application)) {
+                Map<String, Object> snapshot = readJson(version.getConfigSnapshot());
+                if (!snapshot.isEmpty()) {
+                    return snapshot;
+                }
+            }
+        }
+        if (!isOnline(application)) {
+            return new LinkedHashMap<>();
+        }
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("applicationName", application.getApplicationName());
+        snapshot.put("applicationCode", application.getApplicationCode());
+        snapshot.put("applicationType", application.getApplicationType());
+        snapshot.put("enterpriseId", application.getEnterpriseId());
+        snapshot.put("enterpriseName", application.getEnterpriseName());
+        snapshot.put("summary", application.getSummary());
+        snapshot.put("iconUrl", application.getIconUrl());
+        snapshot.put("homeUrl", application.getHomeUrl());
+        snapshot.put("accessStatus", application.getAccessStatus());
+        snapshot.put("createUserId", application.getCreateUserId());
+        snapshot.put("loginConfig", readJson(application.getLoginConfig()));
+        snapshot.put("listingConfig", readJson(application.getListingConfig()));
+        snapshot.put("publishConfig", readJson(application.getPublishConfig()));
+        return snapshot;
+    }
+
+    /**
+     * 判断应用当前是否存在可对外访问的线上版本。
+     */
+    private boolean isOnline(ApplicationEntity application) {
+        return application != null && Objects.equals(resolveOnlineStatus(application), 2);
+    }
+
+    /**
+     * 获取独立线上状态，并兼容历史数据。
+     */
+    private Integer resolveOnlineStatus(ApplicationEntity application) {
+        if (application == null) {
+            return 0;
+        }
+        if (application.getOnlineStatus() != null) {
+            return application.getOnlineStatus();
+        }
+        if (application.getPublishedVersionId() != null
+                || Objects.equals(application.getListingStatus(), 2)) {
+            return Objects.equals(application.getListingStatus(), 4) ? 4 : 2;
+        }
+        return 0;
+    }
+
+    /**
+     * 从已发布版本中读取指定配置节点。
+     */
+    private Map<String, Object> publishedConfig(ApplicationEntity application, String key) {
+        return nestedMap(publishedSnapshot(application).get(key));
+    }
+
+    /**
+     * 将快照中的配置节点转换为Map。
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> nestedMap(Object value) {
+        return value instanceof Map<?, ?> map ? (Map<String, Object>) map : new LinkedHashMap<>();
+    }
+
+    /**
+     * 将快照值转换为整数。
+     */
+    private Integer readInteger(Object value) {
+        return value instanceof Number number ? number.intValue() : null;
+    }
+
+    /**
+     * 将快照值转换为长整数，并在无值时使用默认值。
+     */
+    private Long readLong(Object value, Long defaultValue) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value != null && StringUtils.isNumeric(value.toString())) {
+            return Long.valueOf(value.toString());
+        }
+        return defaultValue;
     }
 
     /**

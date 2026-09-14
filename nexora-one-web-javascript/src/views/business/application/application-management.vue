@@ -53,16 +53,50 @@
             <a-tag :color="record.applicationType === 1 ? 'blue' : 'purple'">{{ record.applicationType === 1 ? '企业应用' : '第三方应用' }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'listingStatus'">
-            <a-tag :color="listingMeta(record.listingStatus).color">{{ listingMeta(record.listingStatus).text }}</a-tag>
+            <a-space direction="vertical" :size="2">
+              <a-tag :color="listingMeta(record).color">{{ listingMeta(record).text }}</a-tag>
+              <a-tag v-if="record.onlineFlag && record.listingStatus !== 2" color="green">线上版运行中</a-tag>
+            </a-space>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <div class="application-actions">
-              <a-button type="link" @click="detail(record)">详情</a-button>
-              <a-button type="link" :disabled="record.configLocked" @click="configure(record)">配置</a-button>
-              <a-popconfirm v-if="record.listingStatus === 2" title="下架后用户将无法进入该应用，确认下架吗？" @confirm="changeStatus(record, 4)">
+              <a-button v-if="$privilege('application:detail') || $privilege('application:review')" type="link" @click="detail(record)">详情</a-button>
+              <a-button
+                v-if="record.editable !== false && ($privilege('application:save') || $privilege('application:review'))"
+                type="link"
+                @click="configure(record)"
+              >
+                配置
+              </a-button>
+              <a-button
+                v-if="[0, 3].includes(record.listingStatus)"
+                type="link"
+                :disabled="record.workflowStep < 7 || record.editable === false"
+                :title="record.workflowStep < 7 ? '请先完成登录接入、安全配置、API权限、上架资料和发布范围' : ''"
+                @click="configure(record, 8)"
+                v-privilege="'application:submit'"
+              >
+                提交预发布
+              </a-button>
+              <a-button
+                v-if="record.listingStatus === 5"
+                type="link"
+                @click="configure(record, 8)"
+                v-privilege="'application:submit'"
+              >
+                {{ record.accessStatus === 2 ? '提交上架审核' : '查看接入状态' }}
+              </a-button>
+              <a-popconfirm v-if="record.onlineFlag" title="下架后用户将无法进入该应用，确认下架吗？" @confirm="changeStatus(record, 4)">
                 <a-button type="link" danger v-privilege="'application:status'">下架</a-button>
               </a-popconfirm>
-              <a-button v-else-if="record.listingStatus === 4" type="link" @click="changeStatus(record, 2)" v-privilege="'application:status'">重新上架</a-button>
+              <a-button
+                v-else-if="record.onlineStatus === 4 && record.publishedVersionId"
+                type="link"
+                @click="changeStatus(record, 2)"
+                v-privilege="'application:status'"
+              >
+                重新上架
+              </a-button>
             </div>
           </template>
         </template>
@@ -77,7 +111,7 @@
 <script setup>
   import { onMounted, reactive, ref } from 'vue';
   import { useRouter } from 'vue-router';
-  import { AppstoreOutlined, AuditOutlined, CheckCircleOutlined, HistoryOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, StopOutlined } from '@ant-design/icons-vue';
+  import { AppstoreOutlined, AuditOutlined, CheckCircleOutlined, CloudUploadOutlined, HistoryOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, StopOutlined } from '@ant-design/icons-vue';
   import { message } from 'ant-design-vue';
   import { applicationApi } from '/@/api/business/application/application-api';
   import { smartSentry } from '/@/lib/smart-sentry';
@@ -91,14 +125,15 @@
   const queryForm = reactive({ pageNum: 1, pageSize: 10, searchWord: '', applicationType: undefined, listingStatus: undefined });
   const summaryItems = [
     { key: 'total', label: '应用总数', icon: AppstoreOutlined },
-    { key: 'listed', label: '已上架', icon: CheckCircleOutlined },
+    { key: 'listed', label: '线上运行', icon: CheckCircleOutlined },
     { key: 'reviewing', label: '审核中', icon: AuditOutlined },
-    { key: 'unlisted', label: '未上架 / 已下架', icon: StopOutlined },
+    { key: 'prePublished', label: '已预发布', icon: CloudUploadOutlined },
+    { key: 'unlisted', label: '草稿 / 已下架', icon: StopOutlined },
     { key: 'visits', label: '累计访问', icon: HistoryOutlined },
   ];
   const listingOptions = [
     { value: 0, label: '未上架' }, { value: 1, label: '审核中' }, { value: 2, label: '已上架' },
-    { value: 3, label: '已驳回' }, { value: 4, label: '已下架' },
+    { value: 3, label: '已驳回' }, { value: 4, label: '已下架' }, { value: 5, label: '已预发布' },
   ];
   const columns = [
     { title: '应用信息', dataIndex: 'applicationName', width: 320 },
@@ -110,11 +145,12 @@
     { title: '操作', dataIndex: 'action', fixed: 'right', width: 230 },
   ];
 
-  function listingMeta(value) {
+  function listingMeta(record) {
     return {
       0: { color: 'default', text: '未上架' }, 1: { color: 'processing', text: '审核中' },
       2: { color: 'success', text: '已上架' }, 3: { color: 'error', text: '已驳回' }, 4: { color: 'default', text: '已下架' },
-    }[value] || { color: 'default', text: '未知' };
+      5: { color: 'cyan', text: '已预发布' },
+    }[record.listingStatus] || { color: 'default', text: '未知' };
   }
 
   async function queryData() {
@@ -131,8 +167,12 @@
   }
 
   async function loadSummary() {
-    const response = await applicationApi.summary();
-    Object.assign(summary, response.data);
+    try {
+      const response = await applicationApi.summary();
+      Object.assign(summary, response.data);
+    } catch (error) {
+      smartSentry.captureError(error);
+    }
   }
 
   function search() {
@@ -149,8 +189,11 @@
     router.push({ path: '/application/detail', query: { applicationId: record.applicationId } });
   }
 
-  function configure(record) {
-    router.push({ path: '/application/onboarding', query: { applicationId: record.applicationId, step: Math.min((record.workflowStep || 1) + 1, 8) } });
+  function configure(record, step) {
+    router.push({
+      path: '/application/onboarding',
+      query: { applicationId: record.applicationId, step: step || Math.min((record.workflowStep || 1) + 1, 8) },
+    });
   }
 
   async function changeStatus(record, listingStatus) {

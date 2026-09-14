@@ -20,7 +20,7 @@ public class ApplicationVersionEntity {
     private Long applicationId;
     /** 版本号。 */
     private String versionNo;
-    /** 版本状态：1审核中，2已发布，3已驳回，4已下架。 */
+    /** 版本状态：0草稿，1审核中，2已发布，3已驳回，4已下架，5已预发布。 */
     private Integer versionStatus;
     /** 提交时完整配置快照。 */
     private String configSnapshot;

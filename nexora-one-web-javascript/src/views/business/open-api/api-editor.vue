@@ -310,7 +310,8 @@
   const currentStep = ref(Math.max(0, Math.min(Number(route.query.step || 1) - 1, 5)));
   const openApiId = ref(route.query.openApiId ? Number(route.query.openApiId) : undefined);
   const versionId = ref();
-  const readOnly = computed(() => route.query.mode === 'detail');
+  const historyVersionId = computed(() => (route.query.versionId ? Number(route.query.versionId) : undefined));
+  const readOnly = computed(() => route.query.mode === 'detail' || Boolean(historyVersionId.value));
   const codeAvailable = ref();
   const categories = ref([]);
   const requestParameters = ref([]);
@@ -633,7 +634,11 @@
     if (!openApiId.value) return;
     loading.value = true;
     try {
-      const response = await openApiApi.detail(openApiId.value);
+      const response = route.query.reviewId
+        ? await openApiApi.publishReviewDetail(route.query.reviewId)
+        : historyVersionId.value
+          ? await openApiApi.versionDetail(openApiId.value, historyVersionId.value)
+          : await openApiApi.detail(openApiId.value);
       const detail = response.data;
       const api = detail.api || {};
       const version = detail.version || {};
@@ -684,7 +689,9 @@
   }
 
   onMounted(() => {
-    loadCategories();
+    if (!readOnly.value) {
+      loadCategories();
+    }
     loadDetail();
   });
 </script>

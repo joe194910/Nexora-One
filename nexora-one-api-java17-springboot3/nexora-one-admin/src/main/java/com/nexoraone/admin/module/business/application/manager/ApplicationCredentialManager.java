@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.Objects;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -65,7 +66,7 @@ public class ApplicationCredentialManager {
         String secret = generateSecret();
         current.setSecretHash(sha256(secret));
         current.setSecretHint(secret.substring(secret.length() - 4));
-        current.setVersionNo(current.getVersionNo() + 1);
+        current.setVersionNo(Objects.requireNonNullElse(current.getVersionNo(), 0) + 1);
         current.setLastResetTime(LocalDateTime.now());
         credentialDao.updateById(current);
         return toVO(current, secret);
@@ -87,7 +88,7 @@ public class ApplicationCredentialManager {
                         .eq(ApplicationCredentialEntity::getAppId, appId)
                         .eq(ApplicationCredentialEntity::getStatus, 1)
                         .last("limit 1"));
-        if (entity == null) {
+        if (entity == null || entity.getSecretHash() == null) {
             return null;
         }
         byte[] expected = entity.getSecretHash().getBytes(StandardCharsets.UTF_8);

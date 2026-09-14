@@ -187,8 +187,9 @@ public class OpenApiGatewayService {
             return ResponseDTO.userErrorParam("API 不存在或尚未上架");
         }
         ApplicationEntity application = applicationDao.selectById(form.getApplicationId());
-        if (application == null || !Objects.equals(application.getListingStatus(), 2)) {
-            return ResponseDTO.userErrorParam("应用不存在或尚未上架");
+        if (!isApplicationOnline(application)
+                || !Objects.equals(application.getAccessStatus(), 2)) {
+            return ResponseDTO.userErrorParam("应用不存在、尚未上架或未完成接入验证");
         }
         if (!applicationDataScopeService.canManage(application)) {
             return ResponseDTO.userErrorParam("无权使用该应用进行在线调试");
@@ -196,10 +197,10 @@ public class OpenApiGatewayService {
         if (!hasPermission(application.getApplicationId(), api)) {
             return ResponseDTO.userErrorParam("当前应用尚未获得该 API 的有效授权");
         }
-        OpenApiVersionEntity version = versionDao.selectById(api.getCurrentVersionId());
+        OpenApiVersionEntity version = resolvePublishedVersion(api);
         OpenApiEnvironmentEntity environment = getEnvironment(
                 version == null ? null : version.getVersionId(), form.getEnvironmentCode(), true);
-        if (version == null || environment == null) {
+        if (version == null || !Objects.equals(version.getStatus(), 3) || environment == null) {
             return ResponseDTO.userErrorParam("该环境未启用在线调试");
         }
         ApplicationCredentialEntity credential = getCredential(application.getApplicationId());
@@ -281,17 +282,26 @@ public class OpenApiGatewayService {
         AntPathMatcher matcher = new AntPathMatcher();
         List<OpenApiEntity> apis = openApiDao.selectList(new LambdaQueryWrapper<OpenApiEntity>()
                 .eq(OpenApiEntity::getStatus, 4)
-                .eq(OpenApiEntity::getEnabledFlag, true)
-                .eq(OpenApiEntity::getRequestMethod, normalizedMethod));
+                .eq(OpenApiEntity::getEnabledFlag, true));
         for (OpenApiEntity api : apis) {
-            OpenApiVersionEntity version = versionDao.selectById(api.getCurrentVersionId());
+            OpenApiVersionEntity version = resolvePublishedVersion(api);
             if (version != null && Objects.equals(version.getStatus(), 3)
+                    && Objects.equals(normalizedMethod, version.getRequestMethod())
                     && matcher.match(version.getGatewayPath(), path)) {
                 return new OpenApiRouteContext(api, version,
                         matcher.extractUriTemplateVariables(version.getGatewayPath(), path));
             }
         }
         return null;
+    }
+
+    /**
+     * 解析当前线上发布版本，并兼容尚未迁移线上版本指针的历史数据。
+     */
+    private OpenApiVersionEntity resolvePublishedVersion(OpenApiEntity api) {
+        Long versionId = api.getPublishedVersionId() == null
+                ? api.getCurrentVersionId() : api.getPublishedVersionId();
+        return versionId == null ? null : versionDao.selectById(versionId);
     }
 
     /**
@@ -670,6 +680,21 @@ public class OpenApiGatewayService {
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("应用接口安全配置格式不正确", exception);
         }
+    }
+
+    /**
+     * 判断应用是否存在可调用开放API的线上版本。
+     */
+    private boolean isApplicationOnline(ApplicationEntity application) {
+        if (application == null) {
+            return false;
+        }
+        if (application.getOnlineStatus() != null) {
+            return Objects.equals(application.getOnlineStatus(), 2);
+        }
+        return !Objects.equals(application.getListingStatus(), 4)
+                && (application.getPublishedVersionId() != null
+                || Objects.equals(application.getListingStatus(), 2));
     }
 
     /**

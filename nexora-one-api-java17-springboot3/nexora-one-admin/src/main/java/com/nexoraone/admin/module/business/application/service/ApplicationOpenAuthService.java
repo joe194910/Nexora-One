@@ -6,12 +6,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexoraone.admin.module.business.application.dao.ApplicationApiPermissionDao;
 import com.nexoraone.admin.module.business.application.dao.ApplicationDao;
+import com.nexoraone.admin.module.business.application.dao.ApplicationVersionDao;
 import com.nexoraone.admin.module.business.application.dao.OpenApiDao;
 import com.nexoraone.admin.module.business.application.domain.entity.ApplicationApiPermissionEntity;
 import com.nexoraone.admin.module.business.application.domain.entity.ApplicationCredentialEntity;
 import com.nexoraone.admin.module.business.application.domain.entity.ApplicationEntity;
+import com.nexoraone.admin.module.business.application.domain.entity.ApplicationVersionEntity;
 import com.nexoraone.admin.module.business.application.domain.entity.OpenApiEntity;
-import com.nexoraone.admin.module.business.application.domain.form.ApplicationConnectTestForm;
 import com.nexoraone.admin.module.business.application.domain.form.ApplicationTokenForm;
 import com.nexoraone.admin.module.business.application.domain.vo.ApplicationAccessContextVO;
 import com.nexoraone.admin.module.business.application.domain.vo.ApplicationAccessTokenVO;
@@ -39,6 +40,15 @@ import java.time.LocalDateTime;
 @Service
 public class ApplicationOpenAuthService {
 
+    /** 正式上架审核中。 */
+    private static final int LISTING_STATUS_REVIEWING = 1;
+    /** 已上架。 */
+    private static final int LISTING_STATUS_LISTED = 2;
+    /** 已下架。 */
+    private static final int LISTING_STATUS_UNLISTED = 4;
+    /** 已预发布。 */
+    private static final int LISTING_STATUS_PRE_PUBLISHED = 5;
+
     /** 应用在提交审核前用于验证平台连通性的专用权限。 */
     public static final String CONNECTION_VERIFICATION_SCOPE = "application:connect:ping";
 
@@ -49,6 +59,8 @@ public class ApplicationOpenAuthService {
 
     @Resource
     private ApplicationDao applicationDao;
+    @Resource
+    private ApplicationVersionDao versionDao;
     @Resource
     private OpenApiDao openApiDao;
     @Resource
@@ -79,21 +91,27 @@ public class ApplicationOpenAuthService {
         if (application == null) {
             return ResponseDTO.userErrorParam("应用不存在或已停用");
         }
-        if (Objects.equals(application.getListingStatus(), 4)) {
-            return ResponseDTO.userErrorParam("应用已下架，无法签发Access Token");
+        if (!hasPublishedService(application)
+                && !Objects.equals(application.getListingStatus(), LISTING_STATUS_PRE_PUBLISHED)
+                && !Objects.equals(application.getListingStatus(), LISTING_STATUS_REVIEWING)
+                && !Objects.equals(application.getListingStatus(), LISTING_STATUS_LISTED)) {
+            return ResponseDTO.userErrorParam("应用尚未预发布，暂不能使用 App ID 和 App Secret 换取 Access Token");
         }
 
-        long ttlSeconds = resolveTokenTtl(application.getLoginConfig());
+        Map<String, Object> serviceSnapshot = resolveServiceSnapshot(application);
+        Map<String, Object> loginConfig = nestedMap(serviceSnapshot.get("loginConfig"));
+        long ttlSeconds = resolveTokenTtl(loginConfig);
         List<String> scopes = new ArrayList<>();
         scopes.add(CONNECTION_VERIFICATION_SCOPE);
-        if (Objects.equals(application.getListingStatus(), 2)) {
+        if (hasPublishedService(application)) {
             scopes.addAll(queryGrantedScopes(application.getApplicationId()));
         }
         long now = System.currentTimeMillis();
 
         ApplicationAccessContextVO context = new ApplicationAccessContextVO();
         context.setApplicationId(application.getApplicationId());
-        context.setApplicationName(application.getApplicationName());
+        context.setApplicationName(Objects.toString(
+                serviceSnapshot.get("applicationName"), application.getApplicationName()));
         context.setAppId(credential.getAppId());
         context.setCredentialVersion(credential.getVersionNo());
         context.setScopes(scopes);
@@ -101,6 +119,7 @@ public class ApplicationOpenAuthService {
         context.setExpiresAt(now + ttlSeconds * 1000);
 
         String accessToken = accessTokenManager.issue(context, ttlSeconds);
+        updateConnectedStatus(application);
         ApplicationAccessTokenVO result = new ApplicationAccessTokenVO();
         result.setAccessToken(accessToken);
         result.setTokenType("Bearer");
@@ -143,14 +162,24 @@ public class ApplicationOpenAuthService {
             return ResponseDTO.userErrorParam("Access Token已因应用密钥变更而失效");
         }
         ApplicationEntity application = applicationDao.selectById(context.getApplicationId());
-        if (application == null || Objects.equals(application.getListingStatus(), 4)) {
+        if (application == null) {
             accessTokenManager.revoke(accessToken);
-            return ResponseDTO.userErrorParam("应用不存在或已下架");
+            return ResponseDTO.userErrorParam("应用不存在");
         }
         boolean connectionVerification = markConnected
                 && Objects.equals(requiredScope, CONNECTION_VERIFICATION_SCOPE);
-        if (!connectionVerification && !Objects.equals(application.getListingStatus(), 2)) {
+        if (connectionVerification
+                && !Objects.equals(application.getListingStatus(), LISTING_STATUS_PRE_PUBLISHED)
+                && !Objects.equals(application.getListingStatus(), LISTING_STATUS_REVIEWING)
+                && !Objects.equals(application.getListingStatus(), LISTING_STATUS_LISTED)) {
+            return ResponseDTO.userErrorParam("应用尚未预发布，不能执行接入验证");
+        }
+        if (!connectionVerification && !hasPublishedService(application)) {
             return ResponseDTO.userErrorParam("应用尚未通过平台审核并上架，暂时只能进行接入验证");
+        }
+        if (!connectionVerification && application.getPublishedVersionId() == null
+                && !Objects.equals(application.getAccessStatus(), 2)) {
+            return ResponseDTO.userErrorParam("应用尚未完成接入验证，暂不能调用业务API");
         }
         if (connectionVerification
                 && (context.getScopes() == null
@@ -162,9 +191,8 @@ public class ApplicationOpenAuthService {
                 && !queryGrantedScopes(context.getApplicationId()).contains(requiredScope)) {
             return ResponseDTO.userErrorParam("当前应用未获得API权限：" + requiredScope);
         }
-        if (markConnected && !Objects.equals(application.getAccessStatus(), 2)) {
-            application.setAccessStatus(2);
-            applicationDao.updateById(application);
+        if (markConnected) {
+            updateConnectedStatus(application);
         }
 
         ApplicationConnectVO result = buildConnectResult(context, currentCredential,
@@ -175,30 +203,34 @@ public class ApplicationOpenAuthService {
     }
 
     /**
-     * 在管理控制台中使用当前明文密钥完成一次签发和校验，确认应用真实可接入平台。
-     *
-     * @param form 控制台连通性测试参数
-     * @return 连通性测试结果
+     * 外部应用成功完成凭证认证后标记为已接入。
      */
-    public ResponseDTO<ApplicationConnectVO> testConnection(ApplicationConnectTestForm form) {
-        ApplicationTokenForm tokenForm = new ApplicationTokenForm();
-        tokenForm.setAppId(form.getAppId());
-        tokenForm.setAppSecret(form.getAppSecret());
-        tokenForm.setGrantType(CLIENT_CREDENTIALS);
-        ResponseDTO<ApplicationAccessTokenVO> tokenResult = issueToken(tokenForm);
-        if (!tokenResult.getOk()) {
-            return ResponseDTO.error(tokenResult);
+    private void updateConnectedStatus(ApplicationEntity application) {
+        if (!Objects.equals(application.getAccessStatus(), 2)) {
+            application.setAccessStatus(2);
+            applicationDao.updateById(application);
         }
-        if (!Objects.equals(form.getApplicationId(), tokenResult.getData().getApplicationId())) {
-            accessTokenManager.revoke(tokenResult.getData().getAccessToken());
-            return ResponseDTO.userErrorParam("App ID不属于当前应用");
-        }
+    }
 
-        String accessToken = tokenResult.getData().getAccessToken();
-        ResponseDTO<ApplicationConnectVO> connectResult = authorize(
-                "Bearer " + accessToken, CONNECTION_VERIFICATION_SCOPE, true);
-        accessTokenManager.revoke(accessToken);
-        return connectResult;
+    /**
+     * 判断应用是否已有可持续提供服务的线上版本。
+     */
+    private boolean hasPublishedService(ApplicationEntity application) {
+        if (application == null) {
+            return false;
+        }
+        boolean online = application.getOnlineStatus() == null
+                ? !Objects.equals(application.getListingStatus(), LISTING_STATUS_UNLISTED)
+                && (application.getPublishedVersionId() != null
+                || Objects.equals(application.getListingStatus(), LISTING_STATUS_LISTED))
+                : Objects.equals(application.getOnlineStatus(), LISTING_STATUS_LISTED);
+        if (!online || application.getPublishedVersionId() == null) {
+            return online && Objects.equals(application.getListingStatus(), LISTING_STATUS_LISTED);
+        }
+        ApplicationVersionEntity version = versionDao.selectById(application.getPublishedVersionId());
+        return version != null
+                && Objects.equals(version.getApplicationId(), application.getApplicationId())
+                && Objects.equals(version.getVersionStatus(), 2);
     }
 
     /**
@@ -236,9 +268,8 @@ public class ApplicationOpenAuthService {
     /**
      * 从应用登录配置中读取Token有效期，并限制在安全范围内。
      */
-    private long resolveTokenTtl(String loginConfig) {
-        Map<String, Object> config = readJson(loginConfig);
-        Object value = config.get("tokenTtl");
+    private long resolveTokenTtl(Map<String, Object> loginConfig) {
+        Object value = loginConfig.get("tokenTtl");
         if (value == null) {
             return DEFAULT_TOKEN_TTL_SECONDS;
         }
@@ -248,6 +279,37 @@ public class ApplicationOpenAuthService {
         } catch (NumberFormatException exception) {
             return DEFAULT_TOKEN_TTL_SECONDS;
         }
+    }
+
+    /**
+     * 获取本次凭证请求应使用的应用配置快照。
+     *
+     * <p>新版本预发布时使用当前配置完成接入验证，其余阶段优先使用线上版本，
+     * 防止草稿或审核中配置影响现有线上调用。</p>
+     */
+    private Map<String, Object> resolveServiceSnapshot(ApplicationEntity application) {
+        if (application.getPublishedVersionId() != null
+                && !Objects.equals(application.getListingStatus(), LISTING_STATUS_PRE_PUBLISHED)) {
+            ApplicationVersionEntity version = versionDao.selectById(application.getPublishedVersionId());
+            if (version != null && Objects.equals(version.getApplicationId(), application.getApplicationId())) {
+                Map<String, Object> snapshot = readJson(version.getConfigSnapshot());
+                if (!snapshot.isEmpty()) {
+                    return snapshot;
+                }
+            }
+        }
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("applicationName", application.getApplicationName());
+        snapshot.put("loginConfig", readJson(application.getLoginConfig()));
+        return snapshot;
+    }
+
+    /**
+     * 将快照中的配置节点转换为Map。
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> nestedMap(Object value) {
+        return value instanceof Map<?, ?> map ? (Map<String, Object>) map : new LinkedHashMap<>();
     }
 
     /**

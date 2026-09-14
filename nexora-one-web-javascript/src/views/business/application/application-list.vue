@@ -68,14 +68,37 @@
             <a-badge :status="accessMeta(record.accessStatus).status" :text="accessMeta(record.accessStatus).text" />
           </template>
           <template v-else-if="column.dataIndex === 'listingStatus'">
-            <a-tag :color="listingMeta(record.listingStatus).color">{{ listingMeta(record.listingStatus).text }}</a-tag>
+            <a-space direction="vertical" :size="2">
+              <a-tag :color="listingMeta(record).color">{{ listingMeta(record).text }}</a-tag>
+              <a-tag v-if="record.onlineFlag && record.listingStatus !== 2" color="green">线上版运行中</a-tag>
+            </a-space>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <div class="application-actions">
-              <a-button type="link" @click="goDetail(record)" v-privilege="'application:detail'">详情</a-button>
-              <a-button type="link" :disabled="record.configLocked" @click="goConfigure(record)" v-privilege="'application:save'">配置</a-button>
-              <a-button type="link" :disabled="record.workflowStep < 7 || record.configLocked" @click="goConfigure(record, 8)" v-privilege="'application:submit'">
-                提交上架
+              <a-button v-if="$privilege('application:detail') || $privilege('application:review')" type="link" @click="goDetail(record)">详情</a-button>
+              <a-button
+                v-if="record.editable !== false && ($privilege('application:save') || $privilege('application:review'))"
+                type="link"
+                @click="goConfigure(record)"
+              >
+                配置
+              </a-button>
+              <a-button
+                v-if="[0, 3].includes(record.listingStatus)"
+                type="link"
+                :disabled="record.workflowStep < 7 || record.editable === false"
+                @click="goConfigure(record, 8)"
+                v-privilege="'application:submit'"
+              >
+                提交预发布
+              </a-button>
+              <a-button
+                v-else-if="record.listingStatus === 5"
+                type="link"
+                @click="goConfigure(record, 8)"
+                v-privilege="'application:submit'"
+              >
+                {{ record.accessStatus === 2 ? '提交上架审核' : '查看接入状态' }}
               </a-button>
             </div>
           </template>
@@ -114,6 +137,7 @@
     { value: 2, label: '已上架' },
     { value: 3, label: '已驳回' },
     { value: 4, label: '已下架' },
+    { value: 5, label: '已预发布' },
   ];
   const columns = [
     { title: '应用信息', dataIndex: 'applicationName', width: 330 },
@@ -129,14 +153,15 @@
     return { 1: { status: 'processing', text: '接入中' }, 2: { status: 'success', text: '已接入' }, 3: { status: 'error', text: '接入失败' } }[value] || { status: 'default', text: '未知' };
   }
 
-  function listingMeta(value) {
+  function listingMeta(record) {
     return {
       0: { color: 'default', text: '未上架' },
       1: { color: 'processing', text: '审核中' },
       2: { color: 'success', text: '已上架' },
       3: { color: 'error', text: '已驳回' },
       4: { color: 'default', text: '已下架' },
-    }[value] || { color: 'default', text: '未知' };
+      5: { color: 'cyan', text: '已预发布' },
+    }[record.listingStatus] || { color: 'default', text: '未知' };
   }
 
   async function queryData() {

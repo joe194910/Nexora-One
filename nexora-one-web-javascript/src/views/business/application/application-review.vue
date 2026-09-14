@@ -21,8 +21,8 @@
           <template v-else-if="column.dataIndex === 'applicationType'">{{ record.applicationType === 1 ? '企业内部应用' : '第三方应用' }}</template>
           <template v-else-if="column.dataIndex === 'action'">
             <a-space>
-              <a-button type="link" @click="goDetail(record)">查看详情</a-button>
-              <a-button type="primary" @click="openReview(record)">处理审核</a-button>
+              <a-button v-privilege="'application:review'" type="link" @click="goDetail(record)">查看详情</a-button>
+              <a-button v-privilege="'application:review'" type="primary" @click="openReview(record)">处理审核</a-button>
             </a-space>
           </template>
         </template>
