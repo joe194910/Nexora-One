@@ -117,6 +117,40 @@ public class AiRuntimeService {
     /**
      * 调用 OpenAI 兼容的对话接口。
      */
+    /** 为用户助手执行多轮对话，沿用平台模型服务的鉴权、用量和审计口径。 */
+    public Map<String, Object> assistantChat(Long modelId, JSONArray history, String systemPrompt,
+                                              String question, Long assistantId) {
+        AiModelEntity model = modelDao.selectById(modelId);
+        if (model == null || !"CHAT".equalsIgnoreCase(model.getModelType()) || !Boolean.TRUE.equals(model.getEnabledFlag()))
+            throw new IllegalArgumentException("请选择已启用的对话模型");
+        AiModelServiceEntity service = modelServiceDao.selectById(model.getServiceId());
+        if (service == null || !Boolean.TRUE.equals(service.getEnabledFlag()))
+            throw new IllegalStateException("对话模型所属服务不可用");
+        AiPlatformForm.ModelDebug source = new AiPlatformForm.ModelDebug();
+        source.setPrompt(question);
+        source.setSourceName("智能助手");
+        AiCallLogEntity callLog = createCallLog("kb_" + UUID.fastUUID().toString(true), model, service, source);
+        callLog.setSourceType("ASSISTANT");
+        callLog.setAssistantId(assistantId);
+        long start = System.currentTimeMillis();
+        try {
+            JSONArray messages = new JSONArray();
+            if (StrUtil.isNotBlank(systemPrompt))
+                messages.add(JSONUtil.createObj().set("role", "system").set("content", systemPrompt));
+            messages.addAll(history);
+            messages.add(JSONUtil.createObj().set("role", "user").set("content", question));
+            Map<String, Object> result = sendChat(model, service, messages);
+            fillSuccessLog(callLog, model, result, start);
+            result.put("traceId", callLog.getTraceId());
+            return result;
+        } catch (Exception exception) {
+            fillFailureLog(callLog, exception, start);
+            throw exception;
+        } finally {
+            callLogDao.insert(callLog);
+        }
+    }
+
     private Map<String, Object> invokeChat(AiModelEntity model, AiModelServiceEntity service,
                                            String prompt, String systemPrompt) {
         JSONArray messages = new JSONArray();
@@ -124,6 +158,11 @@ public class AiRuntimeService {
             messages.add(JSONUtil.createObj().set("role", "system").set("content", systemPrompt));
         }
         messages.add(JSONUtil.createObj().set("role", "user").set("content", prompt));
+        return sendChat(model, service, messages);
+    }
+
+    /** 发送已构造的消息数组，避免助手与调试走两套响应解析。 */
+    private Map<String, Object> sendChat(AiModelEntity model, AiModelServiceEntity service, JSONArray messages) {
         JSONObject requestBody = JSONUtil.createObj()
                 .set("model", model.getModelCode())
                 .set("messages", messages)

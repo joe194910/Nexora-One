@@ -254,6 +254,11 @@ public class AiDocumentWorkflowService {
 
     /** 文档上传后安全持久化文件，并自动创建四阶段解析任务。 */
     public ResponseDTO<AiParseTaskEntity> upload(Long baseId, MultipartFile file) {
+        return upload(baseId, file, false);
+    }
+
+    /** 用户文档删除后重建时允许保留旧任务审计记录，不沿用已清理的历史向量。 */
+    public ResponseDTO<AiParseTaskEntity> upload(Long baseId, MultipartFile file, boolean rebuildDeletedDocument) {
         AiKnowledgeBaseEntity base = baseDao.selectById(baseId);
         if (base == null) return ResponseDTO.userErrorParam("知识库不存在");
         AiDocumentParseConfigEntity plan = planDao.selectById(base.getParsePlanId());
@@ -275,7 +280,7 @@ public class AiDocumentWorkflowService {
                     .eq(AiParseTaskEntity::getKnowledgeBaseId, baseId).eq(AiParseTaskEntity::getFileHash, hash)
                     .in(AiParseTaskEntity::getStatus, "QUEUED", "RUNNING")) > 0)
                 return ResponseDTO.userErrorParam("相同文件正在处理，请等待任务完成");
-            if ("SKIP".equals(plan.getDuplicateStrategy()) && taskDao.selectCount(new LambdaQueryWrapper<AiParseTaskEntity>()
+            if (!rebuildDeletedDocument && "SKIP".equals(plan.getDuplicateStrategy()) && taskDao.selectCount(new LambdaQueryWrapper<AiParseTaskEntity>()
                     .eq(AiParseTaskEntity::getKnowledgeBaseId, baseId).eq(AiParseTaskEntity::getFileHash, hash)
                     .eq(AiParseTaskEntity::getStatus, "SUCCESS")) > 0)
                 return ResponseDTO.userErrorParam("相同文件已成功入库");
