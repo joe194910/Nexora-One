@@ -95,7 +95,10 @@ SET p.`plan_name` = COALESCE(p.`plan_name`, CONCAT('旧版解析方案 ', p.`con
     p.`default_flag` = CASE WHEN p.`config_id` = (SELECT MIN(x.`config_id`) FROM
       (SELECT `config_id` FROM `nexora_one_ai_document_parse_config`) x) THEN 1 ELSE p.`default_flag` END,
     p.`parser_service_id` = COALESCE(p.`parser_service_id`,
-      (SELECT MIN(s.`parse_service_id`) FROM `nexora_one_ai_parse_service` s WHERE s.`service_type` = 'TIKA'));
+      (SELECT MIN(s.`parse_service_id`) FROM `nexora_one_ai_parse_service` s WHERE s.`service_type` = 'TIKA'))
+WHERE p.`plan_name` IS NULL OR p.`parser_service_id` IS NULL
+   OR (p.`default_flag` = 0 AND p.`config_id` = (
+     SELECT MIN(x.`config_id`) FROM (SELECT `config_id` FROM `nexora_one_ai_document_parse_config`) x));
 
 -- 旧默认配置曾宣称支持图片但未配置 OCR，迁移后避免生成必然失败的图片任务。
 UPDATE `nexora_one_ai_document_parse_config`
@@ -128,8 +131,8 @@ INSERT INTO `t_menu`
  `disabled_flag`, `deleted_flag`, `create_user_id`, `update_user_id`, `create_time`, `update_time`)
 VALUES
 (865, '知识库', 2, 839, 35, '/ai-platform/knowledge-bases', '/business/ai/knowledge-bases.vue',
-  1, NULL, 'ai:knowledge:query', 'BookOutlined', 0, 0, 1, 0, 0, 1, 1, NOW(), NOW())
-ON DUPLICATE KEY UPDATE `component`=VALUES(`component`), `menu_name`=VALUES(`menu_name`);
+  1, NULL, 'ai:knowledge:query', 'BookOutlined', 0, 0, 1, 0, 0, 1, 1, NOW(), NOW()) AS incoming
+ON DUPLICATE KEY UPDATE `component`=incoming.`component`, `menu_name`=incoming.`menu_name`;
 
 INSERT INTO `t_menu`
 (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `perms_type`, `api_perms`,
@@ -144,8 +147,8 @@ VALUES
 (872, '操作解析任务', 3, 860, 20, 2, 'ai:parse-task:operate', 'ai:parse-task:operate', 0, 0, 0, 1, 1, NOW(), NOW()),
 (873, '查询知识库', 3, 865, 10, 2, 'ai:knowledge:query', 'ai:knowledge:query', 0, 0, 0, 1, 1, NOW(), NOW()),
 (874, '维护知识库', 3, 865, 20, 2, 'ai:knowledge:save', 'ai:knowledge:save', 0, 0, 0, 1, 1, NOW(), NOW()),
-(875, '上传文档', 3, 865, 30, 2, 'ai:knowledge:upload', 'ai:knowledge:upload', 0, 0, 0, 1, 1, NOW(), NOW())
-ON DUPLICATE KEY UPDATE `api_perms`=VALUES(`api_perms`), `web_perms`=VALUES(`web_perms`);
+(875, '上传文档', 3, 865, 30, 2, 'ai:knowledge:upload', 'ai:knowledge:upload', 0, 0, 0, 1, 1, NOW(), NOW()) AS incoming
+ON DUPLICATE KEY UPDATE `api_perms`=incoming.`api_perms`, `web_perms`=incoming.`web_perms`;
 
 INSERT INTO `t_role_menu` (`role_id`, `menu_id`, `create_time`, `update_time`)
 SELECT 1, m.`menu_id`, NOW(), NOW() FROM `t_menu` m
