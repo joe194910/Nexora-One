@@ -50,3 +50,26 @@
 - [ ] Pixel comparison against the supplied screenshots could not be completed because the authenticated dynamic route cannot load without those backend dependencies.
 
 final result: source and build verification passed; authenticated runtime verification pending local services and database migration.
+
+## AI 平台管理设计验收
+
+日期：2026-09-15
+
+### 已验证
+
+- 六个独立页面与对应 API 均已加入项目，页面使用现有 Vue 3 / Ant Design Vue 体系。
+- 前端生产构建通过；Java 17 后端模块完整编译通过。
+- 本地 Vite 服务 `http://127.0.0.1:8081/` 返回 HTTP 200。
+- 响应式 CSS 为窄屏提供单列布局、摘要区重排、查询区重排与标题操作区换行；宽表格保留水平滚动。
+
+### 尚需环境验收
+
+- 本次浏览器连接器未提供可用浏览器实例，无法截取桌面/移动视口并检查实际像素、遮挡及交互状态。
+- AI 页面使用动态菜单与权限。实际路由和数据需要执行 `20260915-ai-platform.sql`，运行后端并登录系统后验收。
+- 外部模型服务、Qdrant、OCR 的连接效果依赖现场服务与密钥；当前只验证代码路径，不记录虚假的连接成功。
+- “解析测试”执行 Apache Tika 文本提取，图片或无文本扫描件可通过配置的 HTTP OCR 接口识别，再按已保存规则切片预览；图片提取、任务并发和重复文件策略属于后续知识库处理链路的配置，不应将此测试视为入库验收。
+
+### 待复核视口
+
+- 桌面：1440 x 900，检查表格固定操作列、侧边抽屉、统计图表。
+- 移动：390 x 844，检查标题/操作换行、筛选单列、表格横向滚动、解析配置与日志详情。
