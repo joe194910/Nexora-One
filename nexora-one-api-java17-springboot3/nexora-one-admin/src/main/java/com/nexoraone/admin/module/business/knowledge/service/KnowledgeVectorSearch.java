@@ -100,6 +100,42 @@ public class KnowledgeVectorSearch {
         }
     }
 
+    /** 按任务筛选实际存储的文档切片，以 Qdrant 游标分页避免大文档全量加载。 */
+    public Map<String, Object> chunks(KnowledgeDocument document, String offset) {
+        AiKnowledgeBaseEntity base = ingestBases.selectById(document.getIngestBaseId());
+        if (base == null) throw new IllegalStateException("文档入库集合已不存在");
+        AiVectorDatabaseEntity vector = vectors.selectById(base.getVectorDatabaseId());
+        if (vector == null) throw new IllegalStateException("原向量实例已不存在");
+        JSONObject filter = JSONUtil.createObj().set("must", JSONUtil.parseArray(List.of(
+                JSONUtil.createObj().set("key", "taskId")
+                        .set("match", JSONUtil.createObj().set("value", document.getTaskId())))));
+        JSONObject body = JSONUtil.createObj().set("filter", filter).set("limit", 30)
+                .set("with_payload", true).set("with_vector", false);
+        if (StrUtil.isNotBlank(offset)) body.set("offset", offset);
+        String url = StrUtil.removeSuffix(vector.getServiceUrl(), "/") + "/collections/"
+                + base.getCollectionName() + "/points/scroll";
+        try (HttpResponse response = vectorRequest(HttpRequest.post(url).body(body.toString()), vector).execute()) {
+            ensureOk(response);
+            JSONObject result = JSONUtil.parseObj(response.body()).getJSONObject("result");
+            if (result == null) throw new IllegalStateException("Qdrant 未返回切片列表");
+            JSONArray points = result.getJSONArray("points");
+            List<Map<String, Object>> items = new ArrayList<>();
+            if (points != null) {
+                for (int i = 0; i < points.size(); i++) {
+                    JSONObject point = points.getJSONObject(i);
+                    JSONObject payload = point.getJSONObject("payload");
+                    if (payload == null || !document.getTaskId().equals(payload.getLong("taskId"))) continue;
+                    items.add(Map.of("pointId", point.getStr("id"), "chunkIndex", payload.getInt("chunkIndex"),
+                            "text", payload.getStr("text")));
+                }
+            }
+            Map<String, Object> page = new LinkedHashMap<>();
+            page.put("items", items);
+            page.put("nextOffset", result.getStr("next_page_offset"));
+            return page;
+        }
+    }
+
     /** 按平台 OpenAI 兼容协议获取完整查询 embedding。 */
     private JSONArray embedding(AiModelEntity model, AiModelServiceEntity provider, String question) {
         String url = StrUtil.removeSuffix(provider.getBaseUrl(), "/");

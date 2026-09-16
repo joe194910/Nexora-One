@@ -1,6 +1,7 @@
 package com.nexoraone.admin.module.business.knowledge.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -36,6 +37,14 @@ public class KnowledgeDocument {
     private Long ingestBaseId;
     /** PROCESSING、READY 或 FAILED。 */
     private String status;
+    /** 解析任务生成的切片数，不持久化到用户文档表。 */
+    @TableField(exist = false) private Integer chunkCount;
+    /** 已写入向量库的切片数，不持久化到用户文档表。 */
+    @TableField(exist = false) private Integer indexedCount;
+    /** 当前解析阶段，不持久化到用户文档表。 */
+    @TableField(exist = false) private String currentStage;
+    /** 任务失败原因，不持久化到用户文档表。 */
+    @TableField(exist = false) private String errorMessage;
     /** 创建时间。 */
     private LocalDateTime createTime;
     /** 最后更新时间。 */

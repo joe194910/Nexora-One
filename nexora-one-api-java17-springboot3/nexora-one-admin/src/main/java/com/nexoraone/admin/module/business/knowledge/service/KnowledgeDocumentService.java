@@ -31,6 +31,7 @@ public class KnowledgeDocumentService {
     @Resource private AiModelDao models;
     @Resource private AiVectorDatabaseDao vectors;
     @Resource private AiParseTaskDao tasks;
+    @Resource private AiParseStepDao steps;
     @Resource private AiDocumentWorkflowService workflow;
     @Resource private KnowledgeMinioStorage storage;
     @Resource private KnowledgeVectorSearch vectorSearch;
@@ -134,6 +135,26 @@ public class KnowledgeDocumentService {
         return Map.of("document", document, "task", result.getData());
     }
 
+    /** 仅查看本人已入库文档的真实向量切片，不暴露向量记录给知识库选择器。 */
+    public Map<String, Object> chunks(Long id, String offset) {
+        KnowledgeDocument document = owned(id);
+        refresh(document);
+        if (!"READY".equals(document.getStatus()))
+            throw new IllegalArgumentException("文档尚未完成向量化");
+        return vectorSearch.chunks(document, offset);
+    }
+
+    /** 请求取消本人尚未结束的解析任务；已写入的点由底层任务负责清理。 */
+    public void cancel(Long id) {
+        KnowledgeDocument document = owned(id);
+        AiParseTaskEntity task = tasks.selectById(document.getTaskId());
+        if (task == null || !List.of("QUEUED", "RUNNING").contains(task.getStatus()))
+            throw new IllegalArgumentException("该任务已经结束，无法取消");
+        ResponseDTO<String> result = workflow.cancel(task.getTaskId());
+        if (!Boolean.TRUE.equals(result.getOk())) throw new IllegalStateException(result.getMsg());
+        refresh(document);
+    }
+
     /** 失败任务从 MinIO 恢复工作文件后再调用现有重试逻辑。 */
     public void retry(Long id) {
         KnowledgeDocument document = owned(id);
@@ -164,7 +185,13 @@ public class KnowledgeDocumentService {
                 .eq(KnowledgeBaseDocument::getDocumentId, id)) > 0)
             throw new IllegalArgumentException("文档已关联知识库，请先解除关联");
         AiParseTaskEntity task = tasks.selectById(document.getTaskId());
-        if (task != null && List.of("QUEUED", "RUNNING").contains(task.getStatus())) workflow.cancel(task.getTaskId());
+        if (task != null && List.of("QUEUED", "RUNNING").contains(task.getStatus()))
+            throw new IllegalArgumentException("任务正在处理，请先取消并等待后台处理停止后再删除");
+        if (task != null && "CANCELLED".equals(task.getStatus()) && task.getStartTime() != null
+                && steps.selectCount(new LambdaQueryWrapper<AiParseStepEntity>()
+                    .eq(AiParseStepEntity::getTaskId, task.getTaskId())
+                    .eq(AiParseStepEntity::getStatus, "CANCELLED")) == 0)
+            throw new IllegalArgumentException("后台正在清理取消的任务，请稍后再删除");
         if (task != null) vectorSearch.delete(document);
         storage.delete(document.getObjectKey());
         documents.deleteById(id);
@@ -183,6 +210,10 @@ public class KnowledgeDocumentService {
     public void refresh(KnowledgeDocument document) {
         AiParseTaskEntity task = document.getTaskId() == null ? null : tasks.selectById(document.getTaskId());
         if (task == null) return;
+        document.setChunkCount(task.getChunkCount());
+        document.setIndexedCount(task.getIndexedCount());
+        document.setCurrentStage(task.getCurrentStage());
+        document.setErrorMessage(task.getErrorMessage());
         String status = "SUCCESS".equals(task.getStatus()) && task.getChunkCount() != null
                 && task.getChunkCount() > 0 && task.getChunkCount().equals(task.getIndexedCount()) ? "READY"
                 : List.of("FAILED", "CANCELLED").contains(task.getStatus()) ? "FAILED" : "PROCESSING";

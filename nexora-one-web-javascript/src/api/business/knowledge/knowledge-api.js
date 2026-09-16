@@ -5,12 +5,14 @@ export const knowledgeApi = {
   options: () => getRequest('/knowledge/options'),
   documents: (params) => getRequest('/knowledge/documents', params),
   detail: (id) => getRequest(`/knowledge/documents/${id}`),
+  chunks: (id, offset) => getRequest(`/knowledge/documents/${id}/chunks`, offset ? { offset } : {}),
   upload: (file, planId) => {
     const data = new FormData();
     data.append('file', file);
     return request({ method: 'post', url: '/knowledge/documents/upload', params: planId ? { planId } : {}, data });
   },
   retry: (id) => postRequest(`/knowledge/documents/${id}/retry`),
+  cancel: (id) => postRequest(`/knowledge/documents/${id}/cancel`),
   deleteDocument: (id) => postRequest(`/knowledge/documents/${id}/delete`),
   /** 流式文件由统一鉴权请求下载，兼容 RFC 5987 的中文文件名。 */
   download: async (record) => {

@@ -9,7 +9,8 @@ import com.nexoraone.admin.module.business.knowledge.dao.KnowledgeMappers.*;
 import com.nexoraone.admin.module.business.knowledge.domain.*;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -22,6 +23,7 @@ public class KnowledgeChatService {
     @Resource private AiRuntimeService runtime;
     @Resource private ConversationDao conversations;
     @Resource private MessageDao messages;
+    @Resource private PlatformTransactionManager transactionManager;
 
     /** 列出当前助手的会话；跨用户、跨助手的会话不可读取。 */
     public List<KnowledgeConversation> conversations(Long assistantId) {
@@ -47,7 +49,6 @@ public class KnowledgeChatService {
     }
 
     /** 查询真实 Qdrant 命中，调用平台对话模型并保存完整问答。 */
-    @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> chat(Long assistantId, KnowledgeForms.Chat form) {
         KnowledgeAssistant assistant = catalog.ownedAssistant(assistantId);
         if (!Boolean.TRUE.equals(assistant.getEnabledFlag()))
@@ -80,8 +81,10 @@ public class KnowledgeChatService {
                 prompt, form.getQuestion(), assistantId);
         String answer = (String) response.get("content");
         if (StrUtil.isBlank(answer)) throw new IllegalStateException("对话模型没有返回回答");
-        KnowledgeConversation saved = saveExchange(assistantId, conversation, form.getQuestion(), answer,
-                assistant.getShowCitations() ? hits : List.of());
+        KnowledgeConversation current = conversation;
+        KnowledgeConversation saved = new TransactionTemplate(transactionManager).execute(status ->
+                saveExchange(assistantId, current, form.getQuestion(), answer,
+                        Boolean.TRUE.equals(assistant.getShowCitations()) ? hits : List.of()));
         Map<String, Object> result = new LinkedHashMap<>(response);
         result.put("conversationId", saved.getConversationId());
         result.put("citations", Boolean.TRUE.equals(assistant.getShowCitations()) ? hits : List.of());

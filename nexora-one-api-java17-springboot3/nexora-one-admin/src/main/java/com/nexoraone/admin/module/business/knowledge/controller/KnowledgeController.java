@@ -53,6 +53,22 @@ public class KnowledgeController {
         return ResponseDTO.ok(documents.detail(id));
     }
 
+    /** 分页查看本人文档在 Qdrant 中实际存在的切片。 */
+    @GetMapping("/documents/{id}/chunks") @Operation(summary = "文档切片")
+    @SaCheckPermission("knowledge:document:query")
+    public ResponseDTO<Map<String, Object>> chunks(@PathVariable Long id,
+                                                     @RequestParam(required = false) String offset) {
+        return ResponseDTO.ok(documents.chunks(id, offset));
+    }
+
+    /** 取消本人正在处理的文档任务。 */
+    @PostMapping("/documents/{id}/cancel") @Operation(summary = "取消处理")
+    @SaCheckPermission("knowledge:document:write")
+    public ResponseDTO<String> cancel(@PathVariable Long id) {
+        documents.cancel(id);
+        return ResponseDTO.ok();
+    }
+
     /** 按当前用户权限从 MinIO 下载源文件。 */
     @GetMapping("/documents/{id}/download") @Operation(summary = "下载原文档")
     @SaCheckPermission("knowledge:document:query")
