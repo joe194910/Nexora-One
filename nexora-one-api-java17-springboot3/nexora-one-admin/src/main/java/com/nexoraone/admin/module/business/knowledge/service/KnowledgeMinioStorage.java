@@ -19,6 +19,9 @@ public class KnowledgeMinioStorage {
     @Value("${knowledge.minio.bucket:${KNOWLEDGE_MINIO_BUCKET:nexora-knowledge}}") private String bucket;
     @Value("${knowledge.minio.access-key:${KNOWLEDGE_MINIO_ACCESS_KEY:}}") private String accessKey;
     @Value("${knowledge.minio.secret-key:${KNOWLEDGE_MINIO_SECRET_KEY:}}") private String secretKey;
+    @Value("${knowledge.minio.region:${KNOWLEDGE_MINIO_REGION:us-east-1}}") private String region;
+    @Value("${knowledge.minio.path-style-access:${KNOWLEDGE_MINIO_PATH_STYLE_ACCESS:true}}")
+    private boolean pathStyleAccess;
 
     /** 上传文档对象，首次使用时检测存储桶是否已创建。 */
     public void put(String key, byte[] bytes, String contentType) {
@@ -53,8 +56,8 @@ public class KnowledgeMinioStorage {
     private S3Client client() {
         if (StrUtil.hasBlank(endpoint, accessKey, secretKey))
             throw new IllegalStateException("请配置 knowledge.minio.endpoint、access-key 和 secret-key");
-        return S3Client.builder().region(Region.US_EAST_1).endpointOverride(URI.create(endpoint))
+        return S3Client.builder().region(Region.of(region)).endpointOverride(URI.create(endpoint))
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
-                .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build()).build();
+                .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(pathStyleAccess).build()).build();
     }
 }

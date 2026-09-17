@@ -1,6 +1,6 @@
 <template>
-  <div class="knowledge-page">
-    <header class="knowledge-header"><div><h1>智能助手</h1><p>关联知识库并进行有来源的 AI 问答</p></div>
+  <div class="knowledge-page" :class="{'knowledge-page--chat':active}">
+    <header v-if="!active" class="knowledge-header"><div><h1>智能助手</h1><p>关联知识库并进行有来源的 AI 问答</p></div>
       <a-button type="primary" @click="edit()"><PlusOutlined />新建助手</a-button></header>
     <section v-if="!active" class="knowledge-panel"><a-table :data-source="rows" :loading="loading" :row-key="r=>r.assistant.assistantId" :scroll="{x:820}" :pagination="{pageSize:10}">
       <a-table-column title="助手" :width="190"><template #default="{record}"><strong>{{record.assistant.assistantName}}</strong></template></a-table-column>
@@ -12,17 +12,21 @@
         <a-popconfirm title="删除助手及全部会话？知识库和文档不会被删除。" @confirm="remove(record)"><a-button type="link" danger>删除</a-button></a-popconfirm></template></a-table-column>
     </a-table></section>
     <template v-else><div class="knowledge-header"><a-space><a-button @click="active=null"><ArrowLeftOutlined /></a-button><strong>{{active.assistant.assistantName}}</strong><span class="knowledge-muted">{{active.baseIds.map(id=>bases.find(b=>b.base.baseId===id)?.base.baseName).filter(Boolean).join('、')}}</span></a-space><a-button @click="newConversation"><PlusOutlined />新会话</a-button></div>
-      <div class="knowledge-chat"><aside class="knowledge-chat__side"><a-list :data-source="conversations" size="small"><template #renderItem="{item}"><a-list-item style="cursor:pointer" @click="selectConversation(item)">
-        <a-space><MessageOutlined /><span :style="{fontWeight:conversationId===item.conversationId?600:400}">{{item.title}}</span></a-space>
+      <div class="knowledge-chat"><aside class="knowledge-chat__side"><a-list :data-source="conversations" size="small"><template #renderItem="{item}"><a-list-item class="knowledge-chat__conversation" :class="{'knowledge-chat__conversation--active':conversationId===item.conversationId}" @click="selectConversation(item)">
+        <a-space><MessageOutlined /><span>{{item.title}}</span></a-space>
         <a-popconfirm title="删除此会话？" @confirm.stop="deleteConversation(item)"><a-button type="text" size="small" @click.stop><DeleteOutlined /></a-button></a-popconfirm></a-list-item></template></a-list>
       </aside><main class="knowledge-chat__main"><div ref="messageArea" class="knowledge-chat__messages">
         <a-empty v-if="!messages.length" description="开始提问" />
         <div v-for="(entry,index) in messages" :key="index" class="knowledge-chat__bubble" :class="{'knowledge-chat__bubble--user':entry.role==='user'}">
-          {{entry.content}}<div v-if="entry.role==='assistant'&&citations(entry).length" class="knowledge-chat__citation">
+          <MarkdownContent v-if="entry.role==='assistant'" :content="entry.content" />
+          <div v-else class="knowledge-chat__plain">{{entry.content}}</div>
+          <div v-if="entry.role==='assistant'&&citations(entry).length" class="knowledge-chat__citation">
             <div v-for="hit in citations(entry)" :key="`${hit.documentId}-${hit.chunkIndex}`"><FileTextOutlined /> {{hit.fileName}} · 切片 {{hit.chunkIndex}} · 相似度 {{Number(hit.score).toFixed(3)}}</div></div>
         </div><div v-if="sending" class="knowledge-chat__bubble">正在生成回答…</div>
-      </div><div class="knowledge-chat__composer"><a-textarea v-model:value="question" :rows="2" :maxlength="4000" placeholder="输入问题" @keydown.ctrl.enter="send" />
-        <div style="display:flex;justify-content:flex-end;margin-top:8px"><a-button type="primary" :loading="sending" :disabled="!question.trim()" @click="send"><SendOutlined />发送</a-button></div></div></main></div>
+      </div><div class="knowledge-chat__composer"><div class="knowledge-chat__composer-box">
+        <a-textarea v-model:value="question" class="knowledge-chat__input" :auto-size="{minRows:2,maxRows:5}" :maxlength="4000" placeholder="发送消息" @keydown="handleQuestionKeydown" />
+        <a-tooltip title="发送"><a-button class="knowledge-chat__send" type="primary" shape="circle" :loading="sending" :disabled="!question.trim()" aria-label="发送" @click="send"><ArrowUpOutlined /></a-button></a-tooltip>
+      </div></div></main></div>
     </template>
     <a-drawer v-model:open="drawer" :title="form.assistantId?'编辑智能助手':'新建智能助手'" width="min(550px, 100vw)">
       <a-form layout="vertical"><a-form-item label="助手名称" required><a-input v-model:value="form.assistantName" :maxlength="100" /></a-form-item>
@@ -38,17 +42,21 @@
   </div>
 </template>
 <script setup>
-import { nextTick, onMounted, reactive, ref } from 'vue';
-import { PlusOutlined, ArrowLeftOutlined, MessageOutlined, DeleteOutlined, FileTextOutlined, SendOutlined } from '@ant-design/icons-vue';
+import { nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { PlusOutlined, ArrowLeftOutlined, ArrowUpOutlined, MessageOutlined, DeleteOutlined, FileTextOutlined } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 import { knowledgeApi as api } from '/@/api/business/knowledge/knowledge-api';
+import MarkdownContent from './components/markdown-content.vue';
 import './knowledge.less';
+const route=useRoute(),router=useRouter();
 const rows=ref([]),bases=ref([]),models=ref([]),loading=ref(false),drawer=ref(false),saving=ref(false),active=ref(null),conversations=ref([]),conversationId=ref(null),messages=ref([]),question=ref(''),sending=ref(false),messageArea=ref(null);
-const form=reactive({assistantId:null,assistantName:'',modelId:undefined,systemPrompt:'',baseIds:[],topK:5,scoreThreshold:0.65,showCitations:true,enabledFlag:true});
+const initialized=ref(false);
+const form=reactive({assistantId:null,assistantName:'',modelId:undefined,systemPrompt:'',baseIds:[],topK:5,scoreThreshold:0.3,showCitations:true,enabledFlag:true});
 /** 获取本人助手、知识库和可选对话模型。 */
 async function load(){loading.value=true;try{const [assistants,baseRows,options]=await Promise.all([api.assistants(),api.bases({}),api.options()]);rows.value=assistants.data||[];bases.value=baseRows.data||[];models.value=options.data.chatModels||[];}finally{loading.value=false;}}
 /** 编辑模型与多个知识库的关联配置。 */
-function edit(row){Object.assign(form,{assistantId:row?.assistant.assistantId||null,assistantName:row?.assistant.assistantName||'',modelId:row?.assistant.modelId||undefined,systemPrompt:row?.assistant.systemPrompt||'',baseIds:[...(row?.baseIds||[])],topK:row?.assistant.topK||5,scoreThreshold:Number(row?.assistant.scoreThreshold??0.65),showCitations:row?.assistant.showCitations??true,enabledFlag:row?.assistant.enabledFlag??true});drawer.value=true;}
+function edit(row){Object.assign(form,{assistantId:row?.assistant.assistantId||null,assistantName:row?.assistant.assistantName||'',modelId:row?.assistant.modelId||undefined,systemPrompt:row?.assistant.systemPrompt||'',baseIds:[...(row?.baseIds||[])],topK:row?.assistant.topK||5,scoreThreshold:Number(row?.assistant.scoreThreshold??0.3),showCitations:row?.assistant.showCitations??true,enabledFlag:row?.assistant.enabledFlag??true});drawer.value=true;}
 /** 保存助手配置，服务端复核所有知识库归属。 */
 async function save(){if(!form.assistantName.trim()||!form.modelId)return message.warning('请填写助手名称并选择对话模型');saving.value=true;try{await api.saveAssistant({...form});drawer.value=false;message.success('助手已保存');await load();}finally{saving.value=false;}}
 /** 删除助手及其会话。 */
@@ -63,6 +71,8 @@ async function reloadConversations(){if(active.value)conversations.value=(await 
 async function selectConversation(item){conversationId.value=item.conversationId;messages.value=(await api.messages(active.value.assistant.assistantId,item.conversationId)).data||[];scrollBottom();}
 /** 删除一段本人会话。 */
 async function deleteConversation(item){await api.deleteConversation(active.value.assistant.assistantId,item.conversationId);if(conversationId.value===item.conversationId)newConversation();await reloadConversations();}
+/** 回车发送，Shift + Enter 换行，并避开中文输入法的候选词确认事件。 */
+function handleQuestionKeydown(event){if(event.key!=='Enter'||event.shiftKey||event.isComposing||event.keyCode===229)return;event.preventDefault();send();}
 /** 按后端真实检索和模型响应发送问题，失败时回滚临时消息。 */
 async function send(){if(!question.value.trim()||sending.value)return;const text=question.value.trim();question.value='';messages.value.push({role:'user',content:text});sending.value=true;scrollBottom();
   try{const result=(await api.chat(active.value.assistant.assistantId,{conversationId:conversationId.value,question:text})).data;
@@ -72,5 +82,14 @@ async function send(){if(!question.value.trim()||sending.value)return;const text
 function citations(entry){try{return JSON.parse(entry.citationsJson||'[]');}catch{return [];}}
 /** 新消息出现后滚动到可见区域。 */
 async function scrollBottom(){await nextTick();if(messageArea.value)messageArea.value.scrollTop=messageArea.value.scrollHeight;}
-onMounted(load);
+/** 处理首页知识库入口，直接打开关联助手，并可自动发送首页填写的问题。 */
+async function handleKnowledgeEntry(){if(!initialized.value)return;const assistantId=Number(route.query.assistantId);if(!assistantId)return;
+  const row=rows.value.find(item=>item.assistant.assistantId===assistantId&&item.assistant.enabledFlag);
+  if(!row){message.warning('未找到可用的知识库问答助手');return;}
+  const initialQuestion=Array.isArray(route.query.question)?route.query.question[0]:route.query.question;
+  await openChat(row);await router.replace({path:route.path});
+  if(initialQuestion?.trim()){question.value=initialQuestion.trim();await send();}}
+async function initialize(){await load();initialized.value=true;await handleKnowledgeEntry();}
+watch(()=>[route.query.assistantId,route.query.question],handleKnowledgeEntry);
+onMounted(initialize);
 </script>

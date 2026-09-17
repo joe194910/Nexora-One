@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS `nexora_one_kb_assistant` (
   `system_prompt` TEXT COMMENT '系统提示词',
   `model_id` BIGINT NOT NULL COMMENT '对话模型',
   `top_k` INT NOT NULL DEFAULT 5 COMMENT '检索数量',
-  `score_threshold` DECIMAL(5,4) NOT NULL DEFAULT 0.6500 COMMENT '相似度阈值',
+  `score_threshold` DECIMAL(5,4) NOT NULL DEFAULT 0.3000 COMMENT '相似度阈值',
   `show_citations` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '展示引用',
   `enabled_flag` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '启用',
   `create_time` DATETIME NOT NULL COMMENT '创建时间',

@@ -67,7 +67,7 @@
   </div>
 </template>
 <script setup>
-  import { message, notification, Button } from 'ant-design-vue';
+  import { message } from 'ant-design-vue';
   import { onMounted, onUnmounted, reactive, ref } from 'vue';
   import { useRouter } from 'vue-router';
   import { loginApi } from '/@/api/system/login-api';
@@ -88,7 +88,6 @@
   import { buildRoutes } from '/@/router/index';
   import { smartSentry } from '/@/lib/smart-sentry';
   import { encryptData } from '/@/lib/encrypt';
-  import { h } from 'vue';
   import { localSave } from '/@/utils/local-util';
   import LocalStorageKeyConst from '/@/constants/local-storage-key-const';
   import { useDictStore } from '/@/store/modules/system/dict';
@@ -121,22 +120,6 @@
       }
     };
 
-    notification['success']({
-      message: '温馨提示',
-      description: 'NexoraOne 提供 9种 登录背景风格哦！',
-      duration: 8,
-      onClick: () => {},
-      btn: () =>
-        h(
-          Button,
-          {
-            type: 'primary',
-            size: 'small',
-            onClick: () => {},
-          },
-          { default: () => '去看看' }
-        ),
-    });
   });
 
   onUnmounted(() => {

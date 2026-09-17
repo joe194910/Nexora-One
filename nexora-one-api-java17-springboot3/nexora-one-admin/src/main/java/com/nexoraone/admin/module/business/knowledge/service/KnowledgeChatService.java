@@ -116,10 +116,12 @@ public class KnowledgeChatService {
             conversation.setAssistantId(assistantId);
             conversation.setTitle(StrUtil.maxLength(question, 100));
             conversation.setCreateTime(now);
+            conversation.setUpdateTime(now);
             conversations.insert(conversation);
+        } else {
+            conversation.setUpdateTime(now);
+            conversations.updateById(conversation);
         }
-        conversation.setUpdateTime(now);
-        conversations.updateById(conversation);
         KnowledgeMessage user = new KnowledgeMessage();
         user.setConversationId(conversation.getConversationId());
         user.setRole("user");

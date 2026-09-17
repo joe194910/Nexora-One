@@ -22,3 +22,13 @@ server:
 spring:
   profiles:
     active: dev
+
+# 知识库源文件使用独立 MinIO。
+knowledge:
+  minio:
+    endpoint: http://127.0.0.1:9000
+    bucket: nexora-knowledge
+    access-key: nexora_admin
+    secret-key: NexoraMinio2026
+    region: us-east-1
+    path-style-access: true

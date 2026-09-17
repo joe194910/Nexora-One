@@ -580,11 +580,24 @@ public class AiDocumentWorkflowService {
         String key = decrypt(database.getApiKeyCipher());
         try (HttpResponse response = vectorRequest(HttpRequest.get(collectionUrl), database, key).execute()) {
             if (response.getStatus() == 404) {
-                JSONObject configuration = JSONUtil.createObj().set("vectors", JSONUtil.createObj()
-                        .set("size", dimension).set("distance", "Cosine"));
-                try (HttpResponse created = vectorRequest(HttpRequest.put(collectionUrl).body(configuration.toString())
-                        .header("Content-Type", "application/json"), database, key).execute()) { ensureOk(created); }
-            } else ensureOk(response);
+                createCollection(collectionUrl, database, key, dimension);
+            } else {
+                ensureOk(response);
+                JSONObject collection = JSONUtil.parseObj(response.body()).getJSONObject("result");
+                Integer actualDimension = collection == null ? null : collection.getByPath(
+                        "config.params.vectors.size", Integer.class);
+                long pointCount = collection == null ? 0L : collection.getLong("points_count", 0L);
+                if (actualDimension != null && actualDimension != dimension) {
+                    if (pointCount > 0) {
+                        throw new IllegalStateException("Qdrant 集合已有 " + pointCount + " 条向量，当前维度 "
+                                + actualDimension + " 与模型维度 " + dimension + " 不一致，请更换集合或重新建库");
+                    }
+                    try (HttpResponse deleted = vectorRequest(HttpRequest.delete(collectionUrl), database, key).execute()) {
+                        ensureOk(deleted);
+                    }
+                    createCollection(collectionUrl, database, key, dimension);
+                }
+            }
         }
         clearPoints(base, task);
         for (int i = 0; i < chunks.size(); i++) {
@@ -612,6 +625,16 @@ public class AiDocumentWorkflowService {
                     .eq(AiParseTaskEntity::getTaskId, task.getTaskId()).set(AiParseTaskEntity::getIndexedCount, i + 1));
         }
         return chunks.size();
+    }
+
+    /** 创建与当前向量模型维度一致的 Qdrant 集合。 */
+    private void createCollection(String collectionUrl, AiVectorDatabaseEntity database, String key, int dimension) {
+        JSONObject configuration = JSONUtil.createObj().set("vectors", JSONUtil.createObj()
+                .set("size", dimension).set("distance", "Cosine"));
+        try (HttpResponse created = vectorRequest(HttpRequest.put(collectionUrl).body(configuration.toString())
+                .header("Content-Type", "application/json"), database, key).execute()) {
+            ensureOk(created);
+        }
     }
 
     /** 仅清除当前任务的部分向量，避免重试或取消误删历史成功版本。 */

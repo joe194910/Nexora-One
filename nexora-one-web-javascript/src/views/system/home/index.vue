@@ -58,30 +58,67 @@
         <WorkbenchTitle title="智能助手" icon-color="#1677ff">
           <template #icon><RobotOutlined /></template>
         </WorkbenchTitle>
-        <button class="more-button" type="button" @click="showMore('智能助手')">更多</button>
+        <button class="more-button assistant-more-button" type="button" @click="showMore('助手')">
+          全部助手
+          <RightOutlined />
+        </button>
 
-        <p class="section-description">基于企业知识库的智能助手，助你更高效地工作</p>
-        <div class="assistant-input">
-          <a-textarea
-            v-model:value="assistantQuestion"
-            :maxlength="500"
-            :rows="4"
-            show-count
-            placeholder="请输入你的问题，例如：&#10;如何接入 API？&#10;MCP 服务如何配置？&#10;..."
-          />
-        </div>
-        <div class="assistant-actions">
-          <div class="assistant-shortcuts">
-            <a-button v-for="shortcut in assistantShortcuts" :key="shortcut.label" @click="applyShortcut(shortcut)">
-              <component :is="shortcut.icon" />
-              {{ shortcut.label }}
-            </a-button>
+        <a-spin :spinning="knowledgeLoading">
+          <div v-if="assistantList.length" class="assistant-workspace">
+            <nav class="assistant-selector" aria-label="智能助手列表">
+              <button
+                v-for="item in assistantList"
+                :key="item.assistantId"
+                type="button"
+                :class="{ 'assistant-selector__item--active': selectedAssistantId === item.assistantId }"
+                :disabled="!item.enabledFlag"
+                @click="selectAssistant(item)"
+              >
+                <span class="assistant-selector__icon" :class="`assistant-selector__icon--${item.tone}`">
+                  <component :is="item.icon" />
+                </span>
+                <span>{{ item.assistantName }}</span>
+              </button>
+            </nav>
+
+            <div v-if="selectedAssistant" class="assistant-console">
+              <div class="assistant-intro">
+                <span class="assistant-avatar"><RobotOutlined /></span>
+                <div>
+                  <h3>{{ greeting }}，我是{{ selectedAssistant.assistantName }}</h3>
+                  <p>
+                    我可以基于{{ selectedAssistant.baseNames.length ? selectedAssistant.baseNames.join('、') : '关联知识库' }}回答你的问题
+                  </p>
+                </div>
+              </div>
+
+              <div class="assistant-shortcuts">
+                <button
+                  v-for="shortcut in assistantShortcuts"
+                  :key="shortcut.label"
+                  type="button"
+                  @click="applyShortcut(shortcut)"
+                >
+                  {{ shortcut.label }}
+                </button>
+              </div>
+
+              <div class="assistant-composer">
+                <a-input
+                  v-model:value="assistantQuestion"
+                  :maxlength="500"
+                  placeholder="请输入问题..."
+                  @keydown="handleAssistantKeydown"
+                />
+                <a-button type="primary" class="send-button" :disabled="!assistantQuestion.trim()" @click="sendQuestion">
+                  <SendOutlined />
+                  发送
+                </a-button>
+              </div>
+            </div>
           </div>
-          <a-button type="primary" class="send-button" @click="sendQuestion">
-            <SendOutlined />
-            发送
-          </a-button>
-        </div>
+          <a-empty v-else class="assistant-empty" description="暂无可用智能助手" />
+        </a-spin>
       </section>
 
       <section class="workbench-section list-section">
@@ -99,17 +136,26 @@
       </section>
 
       <section class="workbench-section list-section knowledge-section">
-        <WorkbenchTitle title="最近知识库" icon-color="#1677ff">
+        <WorkbenchTitle title="我的知识库" icon-color="#1677ff">
           <template #icon><FileTextOutlined /></template>
         </WorkbenchTitle>
         <button class="more-button" type="button" @click="showMore('知识库')">更多</button>
-        <ul class="information-list">
-          <li v-for="item in knowledgeList" :key="item.title">
-            <FileTextOutlined class="list-icon" />
-            <button type="button" @click="openListItem(item.title)">{{ item.title }}</button>
-            <time>{{ item.date }}</time>
-          </li>
-        </ul>
+        <a-spin :spinning="knowledgeLoading">
+          <ul v-if="knowledgeBasePreviewList.length" class="information-list knowledge-base-list">
+            <li v-for="item in knowledgeBasePreviewList" :key="item.baseId">
+              <FileTextOutlined class="list-icon" />
+              <button type="button" :disabled="!item.assistantId" @click="openKnowledgeBase(item)">
+                {{ item.baseName }}
+              </button>
+              <span class="knowledge-base-meta">{{ item.documentCount }} 个文档</span>
+              <RightOutlined v-if="item.assistantId" class="knowledge-base-arrow" />
+              <a-tooltip v-else title="请先在智能助手列表中关联并启用一个助手">
+                <span class="knowledge-base-unavailable">未关联助手</span>
+              </a-tooltip>
+            </li>
+          </ul>
+          <a-empty v-else class="knowledge-empty" description="暂无知识库" />
+        </a-spin>
       </section>
     </div>
 
@@ -159,19 +205,20 @@
     BarChartOutlined,
     ClockCircleOutlined,
     CarryOutOutlined,
-    CodeOutlined,
+    CustomerServiceOutlined,
     DatabaseOutlined,
     FileTextOutlined,
-    LinkOutlined,
+    ReadOutlined,
     RightOutlined,
     RobotOutlined,
     SendOutlined,
     WarningFilled,
   } from '@ant-design/icons-vue';
   import { applicationApi } from '/@/api/business/application/application-api';
+  import { knowledgeApi } from '/@/api/business/knowledge/knowledge-api';
   import { smartSentry } from '/@/lib/smart-sentry';
   import { useUserStore } from '/@/store/modules/system/user';
-  import { alertList, assistantShortcutData, knowledgeList, todoList } from './home-mock';
+  import { alertList, todoList } from './home-mock';
 
   const WorkbenchTitle = defineComponent({
     props: {
@@ -188,19 +235,17 @@
     },
   });
 
-  const iconMap = {
-    LinkOutlined,
-    CodeOutlined,
-    DatabaseOutlined,
-  };
-
   const router = useRouter();
   const userStore = useUserStore();
   const displayName = computed(() => userStore.actualName || '管理员');
   const searchKeyword = ref('');
   const assistantQuestion = ref('');
+  const selectedAssistantId = ref();
   const applicationLoading = ref(false);
+  const knowledgeLoading = ref(false);
   const applicationList = ref([]);
+  const knowledgeBases = ref([]);
+  const knowledgeAssistants = ref([]);
   const overview = reactive({
     listedApplications: 0,
     publishedApis: 0,
@@ -208,7 +253,47 @@
     pendingReviews: 0,
   });
 
-  const assistantShortcuts = assistantShortcutData.map((item) => ({ ...item, icon: iconMap[item.icon] }));
+  const assistantShortcuts = [
+    { label: '介绍知识范围', question: '请介绍一下你可以基于知识库回答哪些问题？' },
+    { label: '总结核心内容', question: '请总结关联知识库中的核心内容。' },
+    { label: '列出常见问题', question: '请列出知识库中最常见的问题和答案。' },
+  ];
+  const assistantIcons = [RobotOutlined, ReadOutlined, CustomerServiceOutlined];
+  const assistantTones = ['blue', 'green', 'orange'];
+  const assistantList = computed(() =>
+    knowledgeAssistants.value
+      .filter((row) => row.assistant.enabledFlag)
+      .map((row, index) => ({
+        ...row.assistant,
+        baseIds: row.baseIds || [],
+        baseNames: (row.baseIds || [])
+          .map((id) => knowledgeBases.value.find((baseRow) => baseRow.base.baseId === id)?.base.baseName)
+          .filter(Boolean),
+        icon: assistantIcons[index % assistantIcons.length],
+        tone: assistantTones[index % assistantTones.length],
+      }))
+      .slice(0, 3)
+  );
+  const selectedAssistant = computed(
+    () => assistantList.value.find((item) => item.assistantId === selectedAssistantId.value) || null
+  );
+  const knowledgeBaseList = computed(() =>
+    knowledgeBases.value
+      .filter((row) => row.base.enabledFlag)
+      .map((row) => {
+        const assistantRow = knowledgeAssistants.value.find(
+          (item) => item.assistant.enabledFlag && (item.baseIds || []).includes(row.base.baseId)
+        );
+        return {
+          baseId: row.base.baseId,
+          baseName: row.base.baseName,
+          documentCount: row.documentIds?.length || 0,
+          assistantId: assistantRow?.assistant.assistantId,
+          assistantName: assistantRow?.assistant.assistantName,
+        };
+      })
+  );
+  const knowledgeBasePreviewList = computed(() => knowledgeBaseList.value.slice(0, 7));
   const platformStats = computed(() => [
     {
       label: '已上架应用',
@@ -273,20 +358,38 @@
     assistantQuestion.value = shortcut.question;
   }
 
-  function sendQuestion() {
+  function selectAssistant(item) {
+    if (item.enabledFlag) selectedAssistantId.value = item.assistantId;
+  }
+
+  function handleAssistantKeydown(event) {
+    if (event.key !== 'Enter' || event.shiftKey || event.isComposing || event.keyCode === 229) return;
+    event.preventDefault();
+    sendQuestion();
+  }
+
+  async function sendQuestion() {
     if (!assistantQuestion.value.trim()) {
       message.warning('请先输入要咨询的问题');
       return;
     }
-    message.success('问题已发送，智能助手正在处理中');
+    if (!selectedAssistant.value?.assistantId) {
+      message.warning('请选择可用的智能助手');
+      return;
+    }
+    const question = assistantQuestion.value.trim();
+    await openAssistant(selectedAssistant.value.assistantId, question);
     assistantQuestion.value = '';
   }
 
   async function loadHomeData() {
     applicationLoading.value = true;
-    const [applicationsResult, overviewResult] = await Promise.allSettled([
+    knowledgeLoading.value = true;
+    const [applicationsResult, overviewResult, knowledgeResult, assistantsResult] = await Promise.allSettled([
       applicationApi.queryMyApplications(),
       applicationApi.queryHomeOverview(),
+      knowledgeApi.bases({}),
+      knowledgeApi.assistants(),
     ]);
     if (applicationsResult.status === 'fulfilled') {
       applicationList.value = (applicationsResult.value.data.applications || []).slice(0, 5).map((item, index) => ({
@@ -303,7 +406,20 @@
     } else {
       smartSentry.captureError(overviewResult.reason);
     }
+    if (knowledgeResult.status === 'fulfilled') {
+      knowledgeBases.value = knowledgeResult.value.data || [];
+    } else {
+      smartSentry.captureError(knowledgeResult.reason);
+    }
+    if (assistantsResult.status === 'fulfilled') {
+      knowledgeAssistants.value = assistantsResult.value.data || [];
+    } else {
+      smartSentry.captureError(assistantsResult.reason);
+    }
+    selectedAssistantId.value =
+      assistantList.value.find((item) => item.enabledFlag)?.assistantId || assistantList.value[0]?.assistantId;
     applicationLoading.value = false;
+    knowledgeLoading.value = false;
   }
 
   async function openApp(app) {
@@ -320,9 +436,41 @@
     message.info(title);
   }
 
+  function openKnowledgeBase(item, question) {
+    if (!item.assistantId) {
+      message.warning('该知识库尚未关联可用的智能助手');
+      return Promise.resolve();
+    }
+    return router.push({
+      path: '/knowledge/assistants',
+      query: {
+        assistantId: String(item.assistantId),
+        ...(question ? { question } : {}),
+      },
+    });
+  }
+
+  function openAssistant(assistantId, question) {
+    return router.push({
+      path: '/knowledge/assistants',
+      query: {
+        assistantId: String(assistantId),
+        ...(question ? { question } : {}),
+      },
+    });
+  }
+
   function showMore(moduleName) {
     if (moduleName === '应用') {
       router.push('/application/my');
+      return;
+    }
+    if (moduleName === '知识库') {
+      router.push('/knowledge/bases');
+      return;
+    }
+    if (moduleName === '助手') {
+      router.push('/knowledge/assistants');
       return;
     }
     message.info(`查看更多${moduleName}`);
