@@ -121,20 +121,6 @@
         </a-spin>
       </section>
 
-      <section class="workbench-section list-section">
-        <WorkbenchTitle title="待办事项" icon-color="#1677ff">
-          <template #icon><CarryOutOutlined /></template>
-        </WorkbenchTitle>
-        <button class="more-button" type="button" @click="showMore('待办事项')">更多</button>
-        <ul class="information-list">
-          <li v-for="item in todoList" :key="item.title">
-            <span class="status-dot" :class="`status-${item.level}`"></span>
-            <button type="button" @click="openListItem(item.title)">{{ item.title }}</button>
-            <time>{{ item.date }}</time>
-          </li>
-        </ul>
-      </section>
-
       <section class="workbench-section list-section knowledge-section">
         <WorkbenchTitle title="我的知识库" icon-color="#1677ff">
           <template #icon><FileTextOutlined /></template>
@@ -204,7 +190,6 @@
     AppstoreOutlined,
     BarChartOutlined,
     ClockCircleOutlined,
-    CarryOutOutlined,
     CustomerServiceOutlined,
     DatabaseOutlined,
     FileTextOutlined,
@@ -218,7 +203,7 @@
   import { knowledgeApi } from '/@/api/business/knowledge/knowledge-api';
   import { smartSentry } from '/@/lib/smart-sentry';
   import { useUserStore } from '/@/store/modules/system/user';
-  import { alertList, todoList } from './home-mock';
+  import { alertList } from './home-mock';
 
   const WorkbenchTitle = defineComponent({
     props: {

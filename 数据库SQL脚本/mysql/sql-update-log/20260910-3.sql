@@ -61,7 +61,7 @@ WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 811);
 
 INSERT INTO `t_menu`
 (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `frame_flag`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `update_user_id`, `create_time`, `update_time`)
-SELECT 812, '应用市场', 2, 800, 30, '/application/market', 'business/application/application-market.vue', 1, NULL, 'application:market', 'ShopOutlined', 0, 0, 1, 0, 0, 1, 1, NOW(), NOW()
+SELECT 812, '应用市场', 2, 800, 30, '/application/market', 'business/application/application-market.vue', 1, 'application:market,application:portal', 'application:market', 'ShopOutlined', 0, 0, 1, 0, 0, 1, 1, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 812);
 
 INSERT INTO `t_menu`

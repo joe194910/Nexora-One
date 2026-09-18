@@ -12,6 +12,8 @@ import com.nexoraone.admin.module.business.knowledge.domain.*;
 import com.nexoraone.admin.util.AdminRequestUtil;
 import com.nexoraone.base.common.domain.ResponseDTO;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +25,7 @@ import java.util.*;
 
 /** 用户文档接入层；MinIO 保存源文件，原解析服务负责真实向量化。 */
 @Service
+@Slf4j
 public class KnowledgeDocumentService {
     @Resource private DocumentDao documents;
     @Resource private ContextDao contexts;
@@ -229,6 +232,32 @@ public class KnowledgeDocumentService {
             document.setStatus(status);
             document.setUpdateTime(LocalDateTime.now());
             documents.updateById(document);
+        }
+        cleanupWorkFile(task);
+    }
+
+    /**
+     * MinIO is the source of truth for user documents. Local files are only parsing work copies.
+     */
+    @Scheduled(fixedDelayString = "${knowledge.document.work-file-cleanup-delay-ms:30000}")
+    public void cleanupFinishedWorkFiles() {
+        List<KnowledgeDocument> storedDocuments = documents.selectList(
+                new LambdaQueryWrapper<KnowledgeDocument>().isNotNull(KnowledgeDocument::getTaskId));
+        for (KnowledgeDocument document : storedDocuments) {
+            try {
+                refresh(document);
+            } catch (RuntimeException exception) {
+                log.warn("Failed to synchronize knowledge document task {}", document.getTaskId(), exception);
+            }
+        }
+    }
+
+    private void cleanupWorkFile(AiParseTaskEntity task) {
+        if (!List.of("SUCCESS", "FAILED", "CANCELLED").contains(task.getStatus())) return;
+        try {
+            Files.deleteIfExists(workflow.taskFile(task.getTaskId()));
+        } catch (IOException | RuntimeException exception) {
+            log.warn("Failed to delete parsing work file for task {}", task.getTaskId(), exception);
         }
     }
 
