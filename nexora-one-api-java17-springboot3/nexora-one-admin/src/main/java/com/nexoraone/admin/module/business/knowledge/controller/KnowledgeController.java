@@ -104,6 +104,13 @@ public class KnowledgeController {
         return ResponseDTO.ok(catalog.bases(keyword));
     }
 
+    /** 查询本人创建的可用知识库，供首页工作台展示。 */
+    @GetMapping("/bases/available") @Operation(summary = "可用知识库")
+    @SaCheckPermission("knowledge:base:query")
+    public ResponseDTO<List<Map<String, Object>>> availableBases() {
+        return ResponseDTO.ok(catalog.availableBases());
+    }
+
     /** 创建或编辑知识库，不复制已就绪文档或向量。 */
     @PostMapping("/bases/save") @Operation(summary = "保存知识库")
     @SaCheckPermission("knowledge:base:write")
@@ -119,6 +126,30 @@ public class KnowledgeController {
         return ResponseDTO.ok();
     }
 
+    /** 查询所有已上架且可使用的智能助手。 */
+    @GetMapping("/assistant-store") @Operation(summary = "智能助手商店")
+    @SaCheckPermission("knowledge:assistant-store:query")
+    public ResponseDTO<List<Map<String, Object>>> assistantStore(
+            @RequestParam(required = false) String keyword) {
+        return ResponseDTO.ok(catalog.assistantStore(keyword));
+    }
+
+    /** 收藏已上架智能助手。 */
+    @PostMapping("/assistant-store/{id}/favorite") @Operation(summary = "收藏智能助手")
+    @SaCheckPermission("knowledge:assistant-store:query")
+    public ResponseDTO<String> favoriteAssistant(@PathVariable Long id) {
+        catalog.favoriteAssistant(id);
+        return ResponseDTO.ok();
+    }
+
+    /** 取消收藏智能助手。 */
+    @PostMapping("/assistant-store/{id}/unfavorite") @Operation(summary = "取消收藏智能助手")
+    @SaCheckPermission("knowledge:assistant-store:query")
+    public ResponseDTO<String> unfavoriteAssistant(@PathVariable Long id) {
+        catalog.unfavoriteAssistant(id);
+        return ResponseDTO.ok();
+    }
+
     /** 查询我的助手及其多知识库关联。 */
     @GetMapping("/assistants") @Operation(summary = "我的智能助手")
     @SaCheckPermission("knowledge:assistant:query")
@@ -126,11 +157,34 @@ public class KnowledgeController {
         return ResponseDTO.ok(catalog.assistants());
     }
 
+    /** 查询本人创建及收藏的助手。 */
+    @GetMapping("/assistants/available") @Operation(summary = "可用智能助手")
+    @SaCheckPermission("knowledge:assistant:query")
+    public ResponseDTO<List<Map<String, Object>>> availableAssistants() {
+        return ResponseDTO.ok(catalog.availableAssistants());
+    }
+
+    /** 查询本人或商店中可直接使用的助手。 */
+    @GetMapping("/assistants/{id}") @Operation(summary = "可用助手详情")
+    @SaCheckPermission("knowledge:assistant:query")
+    public ResponseDTO<Map<String, Object>> assistant(@PathVariable Long id) {
+        return ResponseDTO.ok(catalog.assistant(id));
+    }
+
     /** 配置对话模型、提示词、知识库及检索参数。 */
     @PostMapping("/assistants/save") @Operation(summary = "保存智能助手")
     @SaCheckPermission("knowledge:assistant:write")
     public ResponseDTO<KnowledgeAssistant> saveAssistant(@RequestBody @Valid KnowledgeForms.AssistantSave form) {
         return ResponseDTO.ok(catalog.saveAssistant(form));
+    }
+
+    /** 将本人智能助手上架或下架。 */
+    @PostMapping("/assistants/{id}/publish") @Operation(summary = "上架或下架智能助手")
+    @SaCheckPermission("knowledge:assistant:write")
+    public ResponseDTO<KnowledgeAssistant> publishAssistant(
+            @PathVariable Long id,
+            @RequestParam boolean published) {
+        return ResponseDTO.ok(catalog.publishAssistant(id, published));
     }
 
     /** 删除助手及其会话，不删除知识库。 */

@@ -64,11 +64,22 @@ CREATE TABLE IF NOT EXISTS `nexora_one_kb_assistant` (
   `score_threshold` DECIMAL(5,4) NOT NULL DEFAULT 0.3000 COMMENT '相似度阈值',
   `show_citations` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '展示引用',
   `enabled_flag` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '启用',
+  `published_flag` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否上架',
+  `published_time` DATETIME DEFAULT NULL COMMENT '上架时间',
   `create_time` DATETIME NOT NULL COMMENT '创建时间',
   `update_time` DATETIME NOT NULL COMMENT '更新时间',
   PRIMARY KEY (`assistant_id`),
   KEY `idx_kb_assistant_owner` (`owner_id`, `update_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='智能助手';
+
+CREATE TABLE IF NOT EXISTS `nexora_one_kb_assistant_favorite` (
+  `assistant_id` BIGINT NOT NULL COMMENT '智能助手',
+  `owner_id` BIGINT NOT NULL COMMENT '收藏用户',
+  `create_time` DATETIME NOT NULL COMMENT '收藏时间',
+  PRIMARY KEY (`assistant_id`, `owner_id`),
+  KEY `idx_kb_assistant_favorite_owner` (`owner_id`, `create_time`),
+  CONSTRAINT `fk_kb_assistant_favorite_assistant` FOREIGN KEY (`assistant_id`) REFERENCES `nexora_one_kb_assistant` (`assistant_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='智能助手收藏';
 
 CREATE TABLE IF NOT EXISTS `nexora_one_kb_assistant_base` (
   `assistant_id` BIGINT NOT NULL COMMENT '助手',
@@ -108,9 +119,10 @@ INSERT INTO `t_menu`
 (`menu_id`,`menu_name`,`menu_type`,`parent_id`,`sort`,`path`,`component`,`perms_type`,`api_perms`,`web_perms`,`icon`,`frame_flag`,`cache_flag`,`visible_flag`,`disabled_flag`,`deleted_flag`,`create_user_id`,`update_user_id`,`create_time`,`update_time`)
 VALUES
 (900,'知识库',1,0,45,'/knowledge',NULL,1,NULL,NULL,'BookOutlined',0,0,1,0,0,1,1,NOW(),NOW()),
-(901,'我的文档',2,900,10,'/knowledge/documents','/business/knowledge/my-documents.vue',1,NULL,'knowledge:document:query','FileTextOutlined',0,0,1,0,0,1,1,NOW(),NOW()),
-(902,'知识库管理',2,900,20,'/knowledge/bases','/business/knowledge/bases.vue',1,NULL,'knowledge:base:query','ReadOutlined',0,0,1,0,0,1,1,NOW(),NOW()),
-(903,'智能助手',2,900,30,'/knowledge/assistants','/business/knowledge/assistants.vue',1,NULL,'knowledge:assistant:query','RobotOutlined',0,0,1,0,0,1,1,NOW(),NOW()),
+(901,'我的文档',2,900,10,'/knowledge/documents','/business/knowledge/my-documents.vue',1,'knowledge:document:query','knowledge:document:query','FileTextOutlined',0,0,1,0,0,1,1,NOW(),NOW()),
+(902,'知识库管理',2,900,20,'/knowledge/bases','/business/knowledge/bases.vue',1,'knowledge:base:query','knowledge:base:query','ReadOutlined',0,0,1,0,0,1,1,NOW(),NOW()),
+(908,'智能助手商店',2,900,25,'/knowledge/assistant-store','/business/knowledge/assistant-store.vue',1,'knowledge:assistant-store:query','knowledge:assistant-store:query','ShopOutlined',0,0,1,0,0,1,1,NOW(),NOW()),
+(903,'智能助手',2,900,30,'/knowledge/assistants','/business/knowledge/assistants.vue',1,'knowledge:assistant:query','knowledge:assistant:query','RobotOutlined',0,0,1,0,0,1,1,NOW(),NOW()),
 (904,'管理我的文档',3,901,10,NULL,NULL,2,'knowledge:document:write','knowledge:document:write',NULL,0,0,0,0,0,1,1,NOW(),NOW()),
 (905,'管理知识库',3,902,10,NULL,NULL,2,'knowledge:base:write','knowledge:base:write',NULL,0,0,0,0,0,1,1,NOW(),NOW()),
 (906,'管理智能助手',3,903,10,NULL,NULL,2,'knowledge:assistant:write','knowledge:assistant:write',NULL,0,0,0,0,0,1,1,NOW(),NOW()),
@@ -120,5 +132,5 @@ ON DUPLICATE KEY UPDATE `menu_id`=incoming.`menu_id`;
 -- 现有角色均可使用自己的文档与知识库；数据隔离由服务端 owner_id 保证。
 INSERT INTO `t_role_menu` (`role_id`,`menu_id`,`create_time`,`update_time`)
 SELECT r.`role_id`,m.`menu_id`,NOW(),NOW() FROM `t_role` r
-JOIN `t_menu` m ON m.`menu_id` BETWEEN 900 AND 907
+JOIN `t_menu` m ON (m.`menu_id` BETWEEN 900 AND 908)
 WHERE NOT EXISTS (SELECT 1 FROM `t_role_menu` x WHERE x.`role_id`=r.`role_id` AND x.`menu_id`=m.`menu_id`);

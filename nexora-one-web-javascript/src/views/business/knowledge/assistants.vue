@@ -5,13 +5,15 @@
     <section v-if="!active" class="knowledge-panel"><a-table :data-source="rows" :loading="loading" :row-key="r=>r.assistant.assistantId" :scroll="{x:820}" :pagination="{pageSize:10}">
       <a-table-column title="助手" :width="190"><template #default="{record}"><strong>{{record.assistant.assistantName}}</strong></template></a-table-column>
       <a-table-column title="对话模型" :width="160"><template #default="{record}">{{models.find(m=>m.modelId===record.assistant.modelId)?.modelName||record.assistant.modelId}}</template></a-table-column>
-      <a-table-column title="关联知识库" :width="260"><template #default="{record}">{{record.baseIds.map(id=>bases.find(b=>b.base.baseId===id)?.base.baseName||id).join('、')||'未关联'}}</template></a-table-column>
+      <a-table-column title="关联知识库" :width="260"><template #default="{record}">{{record.baseNames?.join('、')||record.baseIds.map(id=>bases.find(b=>b.base.baseId===id)?.base.baseName||id).join('、')||'未关联'}}</template></a-table-column>
       <a-table-column title="TopK / 阈值" :width="110"><template #default="{record}">{{record.assistant.topK}} / {{record.assistant.scoreThreshold}}</template></a-table-column>
+      <a-table-column title="来源" :width="90"><template #default="{record}"><a-tag :color="record.owned?'blue':'gold'">{{record.owned?'我创建的':'已收藏'}}</a-tag></template></a-table-column>
       <a-table-column title="状态" :width="85"><template #default="{record}"><a-tag :color="record.assistant.enabledFlag?'green':'default'">{{record.assistant.enabledFlag?'已启用':'已停用'}}</a-tag></template></a-table-column>
-      <a-table-column title="操作" :width="190" fixed="right"><template #default="{record}"><a-button type="link" :disabled="!record.assistant.enabledFlag" @click="openChat(record)">问答</a-button><a-button type="link" @click="edit(record)">编辑</a-button>
-        <a-popconfirm title="删除助手及全部会话？知识库和文档不会被删除。" @confirm="remove(record)"><a-button type="link" danger>删除</a-button></a-popconfirm></template></a-table-column>
+      <a-table-column title="商店" :width="85"><template #default="{record}"><a-tag v-if="record.owned" :color="record.assistant.publishedFlag?'blue':'default'">{{record.assistant.publishedFlag?'已上架':'未上架'}}</a-tag><span v-else class="knowledge-muted">已收藏</span></template></a-table-column>
+      <a-table-column title="操作" :width="245" fixed="right"><template #default="{record}"><a-button type="link" :disabled="!record.assistant.enabledFlag" @click="openChat(record)">问答</a-button><a-button v-if="record.owned" type="link" @click="togglePublish(record)">{{record.assistant.publishedFlag?'下架':'上架'}}</a-button><a-button v-if="record.owned" type="link" @click="edit(record)">编辑</a-button>
+        <a-popconfirm v-if="record.owned" title="删除助手及全部会话？知识库和文档不会被删除。" @confirm="remove(record)"><a-button type="link" danger>删除</a-button></a-popconfirm></template></a-table-column>
     </a-table></section>
-    <template v-else><div class="knowledge-header"><a-space><a-button @click="active=null"><ArrowLeftOutlined /></a-button><strong>{{active.assistant.assistantName}}</strong><span class="knowledge-muted">{{active.baseIds.map(id=>bases.find(b=>b.base.baseId===id)?.base.baseName).filter(Boolean).join('、')}}</span></a-space><a-button @click="newConversation"><PlusOutlined />新会话</a-button></div>
+    <template v-else><div class="knowledge-header"><a-space><a-button @click="active=null"><ArrowLeftOutlined /></a-button><strong>{{active.assistant.assistantName}}</strong><span class="knowledge-muted">{{active.baseNames?.join('、')||active.baseIds.map(id=>bases.find(b=>b.base.baseId===id)?.base.baseName).filter(Boolean).join('、')}}</span></a-space><a-button @click="newConversation"><PlusOutlined />新会话</a-button></div>
       <div class="knowledge-chat"><aside class="knowledge-chat__side"><a-list :data-source="conversations" size="small"><template #renderItem="{item}"><a-list-item class="knowledge-chat__conversation" :class="{'knowledge-chat__conversation--active':conversationId===item.conversationId}" @click="selectConversation(item)">
         <a-space><MessageOutlined /><span>{{item.title}}</span></a-space>
         <a-popconfirm title="删除此会话？" @confirm.stop="deleteConversation(item)"><a-button type="text" size="small" @click.stop><DeleteOutlined /></a-button></a-popconfirm></a-list-item></template></a-list>
@@ -53,12 +55,14 @@ const route=useRoute(),router=useRouter();
 const rows=ref([]),bases=ref([]),models=ref([]),loading=ref(false),drawer=ref(false),saving=ref(false),active=ref(null),conversations=ref([]),conversationId=ref(null),messages=ref([]),question=ref(''),sending=ref(false),messageArea=ref(null);
 const initialized=ref(false);
 const form=reactive({assistantId:null,assistantName:'',modelId:undefined,systemPrompt:'',baseIds:[],topK:5,scoreThreshold:0.3,showCitations:true,enabledFlag:true});
-/** 获取本人助手、知识库和可选对话模型。 */
-async function load(){loading.value=true;try{const [assistants,baseRows,options]=await Promise.all([api.assistants(),api.bases({}),api.options()]);rows.value=assistants.data||[];bases.value=baseRows.data||[];models.value=options.data.chatModels||[];}finally{loading.value=false;}}
+/** 获取本人创建和收藏的助手，同时保留本人知识库供编辑。 */
+async function load(){loading.value=true;try{const [assistants,baseRows,options]=await Promise.all([api.availableAssistants(),api.bases({}),api.options()]);rows.value=assistants.data||[];bases.value=baseRows.data||[];models.value=options.data.chatModels||[];}finally{loading.value=false;}}
 /** 编辑模型与多个知识库的关联配置。 */
 function edit(row){Object.assign(form,{assistantId:row?.assistant.assistantId||null,assistantName:row?.assistant.assistantName||'',modelId:row?.assistant.modelId||undefined,systemPrompt:row?.assistant.systemPrompt||'',baseIds:[...(row?.baseIds||[])],topK:row?.assistant.topK||5,scoreThreshold:Number(row?.assistant.scoreThreshold??0.3),showCitations:row?.assistant.showCitations??true,enabledFlag:row?.assistant.enabledFlag??true});drawer.value=true;}
 /** 保存助手配置，服务端复核所有知识库归属。 */
 async function save(){if(!form.assistantName.trim()||!form.modelId)return message.warning('请填写助手名称并选择对话模型');saving.value=true;try{await api.saveAssistant({...form});drawer.value=false;message.success('助手已保存');await load();}finally{saving.value=false;}}
+/** 上架后其他登录用户可在智能助手商店直接使用或收藏。 */
+async function togglePublish(row){const published=!row.assistant.publishedFlag;await api.publishAssistant(row.assistant.assistantId,published);message.success(published?'智能助手已上架':'智能助手已下架');await load();}
 /** 删除助手及其会话。 */
 async function remove(row){await api.deleteAssistant(row.assistant.assistantId);message.success('助手已删除');load();}
 /** 进入助手工作台并加载本人会话。 */
@@ -84,7 +88,8 @@ function citations(entry){try{return JSON.parse(entry.citationsJson||'[]');}catc
 async function scrollBottom(){await nextTick();if(messageArea.value)messageArea.value.scrollTop=messageArea.value.scrollHeight;}
 /** 处理首页知识库入口，直接打开关联助手，并可自动发送首页填写的问题。 */
 async function handleKnowledgeEntry(){if(!initialized.value)return;const assistantId=Number(route.query.assistantId);if(!assistantId)return;
-  const row=rows.value.find(item=>item.assistant.assistantId===assistantId&&item.assistant.enabledFlag);
+  let row=rows.value.find(item=>item.assistant.assistantId===assistantId&&item.assistant.enabledFlag);
+  if(!row){try{const result=await api.assistant(assistantId);row=result.data;if(row?.assistant?.enabledFlag)rows.value=[row,...rows.value];}catch{return;}}
   if(!row){message.warning('未找到可用的知识库问答助手');return;}
   const initialQuestion=Array.isArray(route.query.question)?route.query.question[0]:route.query.question;
   await openChat(row);await router.replace({path:route.path});

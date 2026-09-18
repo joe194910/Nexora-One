@@ -55,15 +55,18 @@ const statusLabels={READY:'已就绪',PROCESSING:'处理中',FAILED:'失败'};
 const stages=['UPLOAD','PARSE','CHUNK','INDEX'],stageLabels={UPLOAD:'文件上传',PARSE:'内容解析',CHUNK:'文本切片',INDEX:'向量化入库'};
 const rows=ref([]),plans=ref([]),loading=ref(false),keyword=ref(''),status=ref(undefined),uploadOpen=ref(false),detailOpen=ref(false),detail=ref(null),detailTab=ref('task'),chunks=ref([]),chunkOffset=ref(null),chunksLoading=ref(false),files=ref([]),planId=ref(undefined),uploading=ref(false),uploaded=ref(0);
 const metrics=computed(()=>[{name:'文档总数',count:rows.value.length},{name:'已就绪',count:rows.value.filter(r=>r.status==='READY').length},{name:'处理中',count:rows.value.filter(r=>r.status==='PROCESSING').length},{name:'失败',count:rows.value.filter(r=>r.status==='FAILED').length}]);
+const MAX_UPLOAD_SIZE=50*1024*1024;
 let timer;
 /** 加载本人文档及允许选择的解析方案。 */
 async function load(){loading.value=true;try{rows.value=(await api.documents({keyword:keyword.value,status:status.value})).data||[];plans.value=(await api.options()).data.plans||[];}finally{loading.value=false;}}
 /** 恢复完整列表。 */
 function reset(){keyword.value='';status.value=undefined;load();}
+/** 将符合 50 MB 限制的文件加入上传队列。 */
+function appendFiles(selectedFiles){for(const file of Array.from(selectedFiles||[])){if(file.size>MAX_UPLOAD_SIZE){message.error(`${file.name} 超过 50 MB，无法上传`);continue;}files.value.push(file);}}
 /** 选择多个待上传文件。 */
-function addFiles(event){files.value.push(...Array.from(event.target.files||[]));event.target.value='';}
+function addFiles(event){appendFiles(event.target.files);event.target.value='';}
 /** 拖放文件进入上传队列。 */
-function addDropped(event){files.value.push(...Array.from(event.dataTransfer.files||[]));}
+function addDropped(event){appendFiles(event.dataTransfer.files);}
 /** 逐个上传；重复内容由后端返回已存在文档而不重新解析。 */
 async function submitFiles(){uploading.value=true;uploaded.value=0;const queue=[...files.value];for(const file of queue){try{await api.upload(file,planId.value);uploaded.value++;}catch(error){message.error(`${file.name} 上传失败`);}}
   uploading.value=false;files.value=[];uploadOpen.value=false;await load();if(uploaded.value)message.success(`已接收 ${uploaded.value} 个文档`);}

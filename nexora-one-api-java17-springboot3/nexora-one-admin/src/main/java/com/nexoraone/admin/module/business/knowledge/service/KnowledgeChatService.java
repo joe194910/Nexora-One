@@ -14,7 +14,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.time.LocalDateTime;
 import java.util.*;
 
-/** 面向用户的多知识库 RAG 对话，仅加载所属用户且已完成向量化的文档。 */
+/** 面向用户的多知识库 RAG 对话，支持本人助手和已上架公共助手。 */
 @Service
 public class KnowledgeChatService {
     @Resource private KnowledgeCatalogService catalog;
@@ -27,7 +27,7 @@ public class KnowledgeChatService {
 
     /** 列出当前助手的会话；跨用户、跨助手的会话不可读取。 */
     public List<KnowledgeConversation> conversations(Long assistantId) {
-        catalog.ownedAssistant(assistantId);
+        catalog.accessibleAssistant(assistantId);
         return conversations.selectList(new LambdaQueryWrapper<KnowledgeConversation>()
                 .eq(KnowledgeConversation::getOwnerId, KnowledgeDocumentService.userId())
                 .eq(KnowledgeConversation::getAssistantId, assistantId)
@@ -50,17 +50,15 @@ public class KnowledgeChatService {
 
     /** 查询真实 Qdrant 命中，调用平台对话模型并保存完整问答。 */
     public Map<String, Object> chat(Long assistantId, KnowledgeForms.Chat form) {
-        KnowledgeAssistant assistant = catalog.ownedAssistant(assistantId);
+        KnowledgeAssistant assistant = catalog.accessibleAssistant(assistantId);
         if (!Boolean.TRUE.equals(assistant.getEnabledFlag()))
             throw new IllegalArgumentException("该助手已停用");
         KnowledgeConversation conversation = form.getConversationId() == null
                 ? null : ownedConversation(assistantId, form.getConversationId());
         LinkedHashMap<Long, KnowledgeDocument> allowed = new LinkedHashMap<>();
-        for (Long baseId : catalog.assistantBaseIds(assistantId)) {
-            KnowledgeBase base = catalog.ownedBase(baseId);
-            if (!Boolean.TRUE.equals(base.getEnabledFlag())) continue;
-            for (Long documentId : catalog.documentIds(baseId)) {
-                KnowledgeDocument document = documents.owned(documentId);
+        for (KnowledgeBase base : catalog.accessibleBasesForAssistant(assistant)) {
+            for (Long documentId : catalog.documentIds(base.getBaseId())) {
+                KnowledgeDocument document = documents.accessible(documentId, base.getOwnerId());
                 documents.refresh(document);
                 if ("READY".equals(document.getStatus())) allowed.put(documentId, document);
             }
@@ -140,7 +138,7 @@ public class KnowledgeChatService {
 
     /** 始终同时核验会话所属用户和所属助手。 */
     private KnowledgeConversation ownedConversation(Long assistantId, Long conversationId) {
-        catalog.ownedAssistant(assistantId);
+        catalog.accessibleAssistant(assistantId);
         KnowledgeConversation conversation = conversations.selectById(conversationId);
         if (conversation == null || !KnowledgeDocumentService.userId().equals(conversation.getOwnerId())
                 || !assistantId.equals(conversation.getAssistantId()))

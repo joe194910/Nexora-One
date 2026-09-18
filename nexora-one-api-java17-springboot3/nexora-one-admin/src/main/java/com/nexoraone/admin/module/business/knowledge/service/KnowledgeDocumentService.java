@@ -206,6 +206,14 @@ public class KnowledgeDocumentService {
         return document;
     }
 
+    /** 供已授权知识库检索内部调用，只接受知识库创建人的文档。 */
+    public KnowledgeDocument accessible(Long id, Long expectedOwnerId) {
+        KnowledgeDocument document = documents.selectById(id);
+        if (document == null || !expectedOwnerId.equals(document.getOwnerId()))
+            throw new IllegalArgumentException("知识库文档不存在或归属异常");
+        return document;
+    }
+
     /** 将底层任务的最终结果映射到用户业务文档。 */
     public void refresh(KnowledgeDocument document) {
         AiParseTaskEntity task = document.getTaskId() == null ? null : tasks.selectById(document.getTaskId());

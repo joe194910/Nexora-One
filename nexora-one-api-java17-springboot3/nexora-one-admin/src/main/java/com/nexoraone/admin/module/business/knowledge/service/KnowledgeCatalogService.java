@@ -6,31 +6,62 @@ import com.nexoraone.admin.module.business.ai.dao.AiModelDao;
 import com.nexoraone.admin.module.business.ai.domain.entity.AiModelEntity;
 import com.nexoraone.admin.module.business.knowledge.dao.KnowledgeMappers.*;
 import com.nexoraone.admin.module.business.knowledge.domain.*;
+import com.nexoraone.admin.module.system.employee.dao.EmployeeDao;
+import com.nexoraone.admin.module.system.employee.domain.entity.EmployeeEntity;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-/** 业务知识库和助手配置；底层解析方案及向量实例由上传环节决定。 */
+/** Knowledge bases, published assistants and assistant favorites. */
 @Service
 public class KnowledgeCatalogService {
     @Resource private BaseDao bases;
     @Resource private BaseDocumentDao baseDocuments;
     @Resource private AssistantDao assistants;
+    @Resource private AssistantFavoriteDao assistantFavorites;
     @Resource private AssistantBaseDao assistantBases;
     @Resource private AiModelDao models;
+    @Resource private EmployeeDao employees;
     @Resource private KnowledgeDocumentService documents;
 
-    /** 当前用户知识库清单和真实关联文档。 */
     public List<Map<String, Object>> bases(String keyword) {
         return bases.selectList(new LambdaQueryWrapper<KnowledgeBase>()
-                .eq(KnowledgeBase::getOwnerId, KnowledgeDocumentService.userId())
-                .like(StrUtil.isNotBlank(keyword), KnowledgeBase::getBaseName, keyword)
-                .orderByDesc(KnowledgeBase::getUpdateTime)).stream().map(this::baseView).toList();
+                        .eq(KnowledgeBase::getOwnerId, KnowledgeDocumentService.userId())
+                        .like(StrUtil.isNotBlank(keyword), KnowledgeBase::getBaseName, keyword)
+                        .orderByDesc(KnowledgeBase::getUpdateTime)).stream()
+                .map(this::baseView).toList();
     }
 
-    /** 创建或编辑知识库，并原子替换关联的已就绪文档。 */
+    /** Homepage knowledge-base section only shows the current user's bases. */
+    public List<Map<String, Object>> availableBases() {
+        return bases.selectList(new LambdaQueryWrapper<KnowledgeBase>()
+                        .eq(KnowledgeBase::getOwnerId, KnowledgeDocumentService.userId())
+                        .orderByDesc(KnowledgeBase::getUpdateTime)).stream()
+                .map(this::baseView).toList();
+    }
+
+    /** Published assistants visible in the assistant store. */
+    public List<Map<String, Object>> assistantStore(String keyword) {
+        Long owner = KnowledgeDocumentService.userId();
+        Set<Long> favoriteIds = new HashSet<>(favoriteAssistantIds(owner));
+        return assistants.selectList(new LambdaQueryWrapper<KnowledgeAssistant>()
+                        .eq(KnowledgeAssistant::getPublishedFlag, true)
+                        .eq(KnowledgeAssistant::getEnabledFlag, true)
+                        .like(StrUtil.isNotBlank(keyword), KnowledgeAssistant::getAssistantName, keyword)
+                        .orderByDesc(KnowledgeAssistant::getPublishedTime)).stream()
+                .filter(assistant -> !enabledBasesForAssistant(assistant.getAssistantId()).isEmpty())
+                .map(assistant -> assistantStoreView(
+                        assistant,
+                        owner.equals(assistant.getOwnerId()),
+                        favoriteIds.contains(assistant.getAssistantId())))
+                .toList();
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public KnowledgeBase saveBase(KnowledgeForms.BaseSave form) {
         Long owner = KnowledgeDocumentService.userId();
@@ -39,7 +70,9 @@ public class KnowledgeCatalogService {
         for (Long id : ids) {
             KnowledgeDocument document = documents.owned(id);
             documents.refresh(document);
-            if (!"READY".equals(document.getStatus())) throw new IllegalArgumentException("只能添加已就绪文档");
+            if (!"READY".equals(document.getStatus())) {
+                throw new IllegalArgumentException("只能添加已就绪文档");
+            }
         }
         base.setOwnerId(owner);
         base.setBaseName(form.getBaseName().trim());
@@ -49,7 +82,9 @@ public class KnowledgeCatalogService {
         if (base.getBaseId() == null) {
             base.setCreateTime(base.getUpdateTime());
             bases.insert(base);
-        } else bases.updateById(base);
+        } else {
+            bases.updateById(base);
+        }
         baseDocuments.delete(new LambdaQueryWrapper<KnowledgeBaseDocument>()
                 .eq(KnowledgeBaseDocument::getBaseId, base.getBaseId()));
         for (Long id : ids) {
@@ -58,35 +93,71 @@ public class KnowledgeCatalogService {
             link.setDocumentId(id);
             baseDocuments.insert(link);
         }
+        unpublishAssistantsWithoutBases(linkedAssistantIds(base.getBaseId()));
         return base;
     }
 
-    /** 删除无助手引用的业务知识库，不删除源文档或共享向量。 */
+    @Transactional(rollbackFor = Exception.class)
     public void deleteBase(Long id) {
         ownedBase(id);
         if (assistantBases.selectCount(new LambdaQueryWrapper<KnowledgeAssistantBase>()
-                .eq(KnowledgeAssistantBase::getBaseId, id)) > 0)
+                .eq(KnowledgeAssistantBase::getBaseId, id)) > 0) {
             throw new IllegalArgumentException("知识库正被助手使用，请先解除关联");
+        }
         bases.deleteById(id);
     }
 
-    /** 助手清单及其关联知识库，不返回管理员模型密钥。 */
     public List<Map<String, Object>> assistants() {
         return assistants.selectList(new LambdaQueryWrapper<KnowledgeAssistant>()
-                .eq(KnowledgeAssistant::getOwnerId, KnowledgeDocumentService.userId())
-                .orderByDesc(KnowledgeAssistant::getUpdateTime)).stream().map(this::assistantView).toList();
+                        .eq(KnowledgeAssistant::getOwnerId, KnowledgeDocumentService.userId())
+                        .orderByDesc(KnowledgeAssistant::getUpdateTime)).stream()
+                .map(this::assistantView).toList();
     }
 
-    /** 验证对话模型及所有业务知识库归属，原子保存助手配置。 */
+    /** Own assistants plus favorited assistants that are still published. */
+    public List<Map<String, Object>> availableAssistants() {
+        Long owner = KnowledgeDocumentService.userId();
+        LinkedHashMap<Long, KnowledgeAssistant> result = assistants.selectList(
+                        new LambdaQueryWrapper<KnowledgeAssistant>()
+                                .eq(KnowledgeAssistant::getOwnerId, owner)
+                                .orderByDesc(KnowledgeAssistant::getUpdateTime)).stream()
+                .collect(Collectors.toMap(
+                        KnowledgeAssistant::getAssistantId,
+                        Function.identity(),
+                        (left, right) -> left,
+                        LinkedHashMap::new));
+
+        List<Long> favoriteIds = favoriteAssistantIds(owner);
+        if (!favoriteIds.isEmpty()) {
+            assistants.selectList(new LambdaQueryWrapper<KnowledgeAssistant>()
+                            .in(KnowledgeAssistant::getAssistantId, favoriteIds)
+                            .eq(KnowledgeAssistant::getPublishedFlag, true)
+                            .eq(KnowledgeAssistant::getEnabledFlag, true)
+                            .orderByDesc(KnowledgeAssistant::getPublishedTime))
+                    .stream()
+                    .filter(assistant -> !enabledBasesForAssistant(assistant.getAssistantId()).isEmpty())
+                    .forEach(assistant -> result.putIfAbsent(assistant.getAssistantId(), assistant));
+        }
+        return result.values().stream().map(this::assistantView).toList();
+    }
+
+    public Map<String, Object> assistant(Long id) {
+        return assistantView(accessibleAssistant(id));
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public KnowledgeAssistant saveAssistant(KnowledgeForms.AssistantSave form) {
         AiModelEntity model = models.selectById(form.getModelId());
-        if (model == null || !"CHAT".equals(model.getModelType()) || !Boolean.TRUE.equals(model.getEnabledFlag()))
+        if (model == null || !"CHAT".equals(model.getModelType()) || !Boolean.TRUE.equals(model.getEnabledFlag())) {
             throw new IllegalArgumentException("请选择已启用的对话模型");
+        }
         List<Long> ids = distinct(form.getBaseIds());
-        for (Long id : ids) ownedBase(id);
+        for (Long id : ids) {
+            ownedBase(id);
+        }
         KnowledgeAssistant assistant = form.getAssistantId() == null
-                ? new KnowledgeAssistant() : ownedAssistant(form.getAssistantId());
+                ? new KnowledgeAssistant()
+                : ownedAssistant(form.getAssistantId());
         assistant.setOwnerId(KnowledgeDocumentService.userId());
         assistant.setAssistantName(form.getAssistantName().trim());
         assistant.setSystemPrompt(form.getSystemPrompt());
@@ -95,11 +166,21 @@ public class KnowledgeCatalogService {
         assistant.setScoreThreshold(form.getScoreThreshold());
         assistant.setShowCitations(!Boolean.FALSE.equals(form.getShowCitations()));
         assistant.setEnabledFlag(!Boolean.FALSE.equals(form.getEnabledFlag()));
+        if (assistant.getPublishedFlag() == null) {
+            assistant.setPublishedFlag(false);
+        }
+        if (!Boolean.TRUE.equals(assistant.getEnabledFlag())) {
+            assistant.setPublishedFlag(false);
+            assistant.setPublishedTime(null);
+        }
         assistant.setUpdateTime(LocalDateTime.now());
         if (assistant.getAssistantId() == null) {
             assistant.setCreateTime(assistant.getUpdateTime());
             assistants.insert(assistant);
-        } else assistants.updateById(assistant);
+        } else {
+            assistants.updateById(assistant);
+        }
+
         assistantBases.delete(new LambdaQueryWrapper<KnowledgeAssistantBase>()
                 .eq(KnowledgeAssistantBase::getAssistantId, assistant.getAssistantId()));
         for (Long id : ids) {
@@ -108,59 +189,243 @@ public class KnowledgeCatalogService {
             link.setBaseId(id);
             assistantBases.insert(link);
         }
+        if (Boolean.TRUE.equals(assistant.getPublishedFlag())
+                && enabledBasesForAssistant(assistant.getAssistantId()).isEmpty()) {
+            assistant.setPublishedFlag(false);
+            assistant.setPublishedTime(null);
+            assistants.updateById(assistant);
+        }
         return assistant;
     }
 
-    /** 删除助手时关联知识库与会话按数据库外键级联，原文档不变。 */
+    @Transactional(rollbackFor = Exception.class)
+    public KnowledgeAssistant publishAssistant(Long id, boolean published) {
+        KnowledgeAssistant assistant = ownedAssistant(id);
+        if (published) {
+            if (!Boolean.TRUE.equals(assistant.getEnabledFlag())) {
+                throw new IllegalArgumentException("请先启用智能助手再上架");
+            }
+            if (enabledBasesForAssistant(id).isEmpty()) {
+                throw new IllegalArgumentException("请先关联至少一个已启用的知识库");
+            }
+            assistant.setPublishedFlag(true);
+            assistant.setPublishedTime(LocalDateTime.now());
+        } else {
+            assistant.setPublishedFlag(false);
+            assistant.setPublishedTime(null);
+        }
+        assistant.setUpdateTime(LocalDateTime.now());
+        assistants.updateById(assistant);
+        return assistant;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void favoriteAssistant(Long id) {
+        KnowledgeAssistant assistant = publicAssistant(id);
+        Long owner = KnowledgeDocumentService.userId();
+        if (owner.equals(assistant.getOwnerId())) {
+            throw new IllegalArgumentException("自己创建的助手无需收藏");
+        }
+        if (assistantFavorites.selectCount(new LambdaQueryWrapper<KnowledgeAssistantFavorite>()
+                .eq(KnowledgeAssistantFavorite::getAssistantId, id)
+                .eq(KnowledgeAssistantFavorite::getOwnerId, owner)) > 0) {
+            return;
+        }
+        KnowledgeAssistantFavorite favorite = new KnowledgeAssistantFavorite();
+        favorite.setAssistantId(id);
+        favorite.setOwnerId(owner);
+        favorite.setCreateTime(LocalDateTime.now());
+        assistantFavorites.insert(favorite);
+    }
+
+    public void unfavoriteAssistant(Long id) {
+        assistantFavorites.delete(new LambdaQueryWrapper<KnowledgeAssistantFavorite>()
+                .eq(KnowledgeAssistantFavorite::getAssistantId, id)
+                .eq(KnowledgeAssistantFavorite::getOwnerId, KnowledgeDocumentService.userId()));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
     public void deleteAssistant(Long id) {
         ownedAssistant(id);
         assistants.deleteById(id);
     }
 
-    /** 当前登录用户的知识库。 */
     public KnowledgeBase ownedBase(Long id) {
         KnowledgeBase base = bases.selectById(id);
-        if (base == null || !KnowledgeDocumentService.userId().equals(base.getOwnerId()))
+        if (base == null || !KnowledgeDocumentService.userId().equals(base.getOwnerId())) {
             throw new IllegalArgumentException("知识库不存在或无权访问");
+        }
         return base;
     }
 
-    /** 当前登录用户的助手。 */
     public KnowledgeAssistant ownedAssistant(Long id) {
         KnowledgeAssistant assistant = assistants.selectById(id);
-        if (assistant == null || !KnowledgeDocumentService.userId().equals(assistant.getOwnerId()))
+        if (assistant == null || !KnowledgeDocumentService.userId().equals(assistant.getOwnerId())) {
             throw new IllegalArgumentException("助手不存在或无权访问");
+        }
         return assistant;
     }
 
-    /** 某知识库关联的文档 ID；后台仍需逐一过滤状态。 */
+    /** Owners may always open their assistant; other users require a published assistant. */
+    public KnowledgeAssistant accessibleAssistant(Long id) {
+        KnowledgeAssistant assistant = assistants.selectById(id);
+        if (assistant == null) {
+            throw new IllegalArgumentException("助手不存在或无权访问");
+        }
+        if (KnowledgeDocumentService.userId().equals(assistant.getOwnerId())) {
+            return assistant;
+        }
+        return publicAssistant(id);
+    }
+
+    /** Bases used internally by an accessible assistant. */
+    public List<KnowledgeBase> accessibleBasesForAssistant(KnowledgeAssistant assistant) {
+        if (!KnowledgeDocumentService.userId().equals(assistant.getOwnerId())) {
+            publicAssistant(assistant.getAssistantId());
+        }
+        return enabledBasesForAssistant(assistant.getAssistantId());
+    }
+
     public List<Long> documentIds(Long baseId) {
         return baseDocuments.selectList(new LambdaQueryWrapper<KnowledgeBaseDocument>()
-                .eq(KnowledgeBaseDocument::getBaseId, baseId)).stream()
+                        .eq(KnowledgeBaseDocument::getBaseId, baseId)).stream()
                 .map(KnowledgeBaseDocument::getDocumentId).toList();
     }
 
-    /** 某助手可检索的业务知识库 ID。 */
     public List<Long> assistantBaseIds(Long assistantId) {
         return assistantBases.selectList(new LambdaQueryWrapper<KnowledgeAssistantBase>()
-                .eq(KnowledgeAssistantBase::getAssistantId, assistantId)).stream()
+                        .eq(KnowledgeAssistantBase::getAssistantId, assistantId)).stream()
                 .map(KnowledgeAssistantBase::getBaseId).toList();
     }
 
-    /** 将业务知识库和已就绪文档关系组装成列表项。 */
     private Map<String, Object> baseView(KnowledgeBase base) {
-        return Map.of("base", base, "documentIds", documentIds(base.getBaseId()));
+        Map<String, Object> view = new LinkedHashMap<>();
+        view.put("base", base);
+        view.put("documentIds", documentIds(base.getBaseId()));
+        view.put("assistants", enabledAssistants(base.getBaseId()).stream()
+                .map(this::assistantSummary).toList());
+        view.put("owned", true);
+        view.put("ownerName", ownerName(base.getOwnerId()));
+        return view;
     }
 
-    /** 将助手及关联知识库组装成列表项。 */
+    private Map<String, Object> assistantStoreView(
+            KnowledgeAssistant assistant,
+            boolean owned,
+            boolean favorited) {
+        Map<String, Object> view = assistantView(assistant);
+        view.put("owned", owned);
+        view.put("favorited", favorited);
+        view.put("favoriteCount", assistantFavorites.selectCount(
+                new LambdaQueryWrapper<KnowledgeAssistantFavorite>()
+                        .eq(KnowledgeAssistantFavorite::getAssistantId, assistant.getAssistantId())));
+        return view;
+    }
+
     private Map<String, Object> assistantView(KnowledgeAssistant assistant) {
-        return Map.of("assistant", assistant, "baseIds", assistantBaseIds(assistant.getAssistantId()));
+        Long owner = KnowledgeDocumentService.userId();
+        List<KnowledgeBase> visibleBases = owner.equals(assistant.getOwnerId())
+                ? linkedBases(assistant.getAssistantId())
+                : enabledBasesForAssistant(assistant.getAssistantId());
+        Set<Long> favoriteIds = new HashSet<>(favoriteAssistantIds(owner));
+        Map<String, Object> view = new LinkedHashMap<>();
+        view.put("assistant", assistant);
+        view.put("baseIds", visibleBases.stream().map(KnowledgeBase::getBaseId).toList());
+        view.put("baseNames", visibleBases.stream().map(KnowledgeBase::getBaseName).toList());
+        view.put("owned", owner.equals(assistant.getOwnerId()));
+        view.put("favorited", favoriteIds.contains(assistant.getAssistantId()));
+        view.put("ownerName", ownerName(assistant.getOwnerId()));
+        AiModelEntity model = models.selectById(assistant.getModelId());
+        view.put("modelName", model == null ? "未知模型" : model.getModelName());
+        return view;
     }
 
-    /** 去掉提交列表中的重复主键并拒绝非法空值。 */
+    private Map<String, Object> assistantSummary(KnowledgeAssistant assistant) {
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("assistantId", assistant.getAssistantId());
+        summary.put("assistantName", assistant.getAssistantName());
+        return summary;
+    }
+
+    private List<KnowledgeAssistant> enabledAssistants(Long baseId) {
+        List<Long> ids = linkedAssistantIds(baseId);
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return assistants.selectList(new LambdaQueryWrapper<KnowledgeAssistant>()
+                .in(KnowledgeAssistant::getAssistantId, ids)
+                .eq(KnowledgeAssistant::getEnabledFlag, true)
+                .orderByDesc(KnowledgeAssistant::getUpdateTime));
+    }
+
+    private List<Long> linkedAssistantIds(Long baseId) {
+        return assistantBases.selectList(new LambdaQueryWrapper<KnowledgeAssistantBase>()
+                        .eq(KnowledgeAssistantBase::getBaseId, baseId)).stream()
+                .map(KnowledgeAssistantBase::getAssistantId).distinct().toList();
+    }
+
+    private List<KnowledgeBase> linkedBases(Long assistantId) {
+        List<Long> ids = assistantBaseIds(assistantId);
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return bases.selectList(new LambdaQueryWrapper<KnowledgeBase>()
+                .in(KnowledgeBase::getBaseId, ids));
+    }
+
+    private List<KnowledgeBase> enabledBasesForAssistant(Long assistantId) {
+        List<Long> ids = assistantBaseIds(assistantId);
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return bases.selectList(new LambdaQueryWrapper<KnowledgeBase>()
+                .in(KnowledgeBase::getBaseId, ids)
+                .eq(KnowledgeBase::getEnabledFlag, true));
+    }
+
+    private KnowledgeAssistant publicAssistant(Long id) {
+        KnowledgeAssistant assistant = assistants.selectById(id);
+        if (assistant == null
+                || !Boolean.TRUE.equals(assistant.getEnabledFlag())
+                || !Boolean.TRUE.equals(assistant.getPublishedFlag())
+                || enabledBasesForAssistant(id).isEmpty()) {
+            throw new IllegalArgumentException("智能助手已下架或不可用");
+        }
+        return assistant;
+    }
+
+    private List<Long> favoriteAssistantIds(Long ownerId) {
+        return assistantFavorites.selectList(new LambdaQueryWrapper<KnowledgeAssistantFavorite>()
+                        .eq(KnowledgeAssistantFavorite::getOwnerId, ownerId)
+                        .orderByDesc(KnowledgeAssistantFavorite::getCreateTime)).stream()
+                .map(KnowledgeAssistantFavorite::getAssistantId).toList();
+    }
+
+    private void unpublishAssistantsWithoutBases(Collection<Long> assistantIds) {
+        for (Long assistantId : assistantIds) {
+            KnowledgeAssistant assistant = assistants.selectById(assistantId);
+            if (assistant != null
+                    && Boolean.TRUE.equals(assistant.getPublishedFlag())
+                    && enabledBasesForAssistant(assistantId).isEmpty()) {
+                assistant.setPublishedFlag(false);
+                assistant.setPublishedTime(null);
+                assistant.setUpdateTime(LocalDateTime.now());
+                assistants.updateById(assistant);
+            }
+        }
+    }
+
+    private String ownerName(Long ownerId) {
+        EmployeeEntity employee = employees.selectById(ownerId);
+        return employee == null
+                ? "未知用户"
+                : StrUtil.blankToDefault(employee.getActualName(), employee.getLoginName());
+    }
+
     private List<Long> distinct(List<Long> ids) {
-        if (ids == null || ids.stream().anyMatch(id -> id == null || id <= 0))
+        if (ids == null || ids.stream().anyMatch(id -> id == null || id <= 0)) {
             throw new IllegalArgumentException("关联主键无效");
+        }
         return new ArrayList<>(new LinkedHashSet<>(ids));
     }
 }

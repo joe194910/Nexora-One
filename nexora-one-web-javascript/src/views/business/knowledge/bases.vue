@@ -11,7 +11,7 @@
       <a-table-column title="已关联文档" :width="240"><template #default="{record}"><span v-for="id in record.documentIds.slice(0,3)" :key="id" class="knowledge-muted">{{documents.find(d=>d.documentId===id)?.fileName || id}} · </span></template></a-table-column>
       <a-table-column title="状态" :width="85"><template #default="{record}"><a-tag :color="record.base.enabledFlag?'green':'default'">{{record.base.enabledFlag?'已启用':'已停用'}}</a-tag></template></a-table-column>
       <a-table-column title="更新时间" :width="160"><template #default="{record}">{{record.base.updateTime}}</template></a-table-column>
-      <a-table-column title="操作" :width="125" fixed="right"><template #default="{record}"><a-button type="link" @click="edit(record)">编辑</a-button>
+      <a-table-column title="操作" :width="150" fixed="right"><template #default="{record}"><a-button type="link" @click="edit(record)">编辑</a-button>
         <a-popconfirm title="删除该知识库？被助手引用时无法删除，文档不会被删除。" @confirm="remove(record)"><a-button type="link" danger>删除</a-button></a-popconfirm></template></a-table-column>
     </a-table></section>
     <a-drawer v-model:open="drawer" :title="form.baseId?'编辑知识库':'新建知识库'" width="min(530px, 100vw)">
@@ -35,7 +35,7 @@ import './knowledge.less';
 const rows=ref([]),documents=ref([]),keyword=ref(''),documentKeyword=ref(''),loading=ref(false),saving=ref(false),drawer=ref(false);
 const form=reactive({baseId:null,baseName:'',description:'',documentIds:[],enabledFlag:true});
 const readyDocuments=computed(()=>documents.value.filter(d=>d.status==='READY'&&d.fileName.toLowerCase().includes(documentKeyword.value.toLowerCase())));
-const metrics=computed(()=>[{name:'知识库',count:rows.value.length},{name:'已启用',count:rows.value.filter(r=>r.base.enabledFlag).length},{name:'关联文档',count:rows.value.reduce((n,r)=>n+r.documentIds.length,0)},{name:'可选已就绪文档',count:documents.value.filter(d=>d.status==='READY').length}]);
+const metrics=computed(()=>[{name:'知识库',count:rows.value.length},{name:'已启用',count:rows.value.filter(r=>r.base.enabledFlag).length},{name:'关联文档',count:rows.value.reduce((n,r)=>n+r.documentIds.length,0)}]);
 /** 读取本人知识库和实际文档状态。 */
 async function load(){loading.value=true;try{const [bases,docs]=await Promise.all([api.bases({keyword:keyword.value}),api.documents({})]);rows.value=bases.data||[];documents.value=docs.data||[];}finally{loading.value=false;}}
 /** 加载已有知识库的关联文档；不复制源文件。 */

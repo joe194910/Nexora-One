@@ -29,6 +29,10 @@ public class KnowledgeAssistant {
     private Boolean showCitations;
     /** 是否启用。 */
     private Boolean enabledFlag;
+    /** 是否已上架到智能助手商店。 */
+    private Boolean publishedFlag;
+    /** 最近一次上架时间。 */
+    private LocalDateTime publishedTime;
     /** 创建时间。 */
     private LocalDateTime createTime;
     /** 更新时间。 */

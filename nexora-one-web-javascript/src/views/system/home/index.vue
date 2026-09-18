@@ -266,9 +266,11 @@
       .map((row, index) => ({
         ...row.assistant,
         baseIds: row.baseIds || [],
-        baseNames: (row.baseIds || [])
-          .map((id) => knowledgeBases.value.find((baseRow) => baseRow.base.baseId === id)?.base.baseName)
-          .filter(Boolean),
+        baseNames:
+          row.baseNames ||
+          (row.baseIds || [])
+            .map((id) => knowledgeBases.value.find((baseRow) => baseRow.base.baseId === id)?.base.baseName)
+            .filter(Boolean),
         icon: assistantIcons[index % assistantIcons.length],
         tone: assistantTones[index % assistantTones.length],
       }))
@@ -281,15 +283,18 @@
     knowledgeBases.value
       .filter((row) => row.base.enabledFlag)
       .map((row) => {
-        const assistantRow = knowledgeAssistants.value.find(
-          (item) => item.assistant.enabledFlag && (item.baseIds || []).includes(row.base.baseId)
-        );
+        const assistant = row.assistants?.[0];
+        const assistantRow = assistant
+          ? null
+          : knowledgeAssistants.value.find(
+              (item) => item.assistant.enabledFlag && (item.baseIds || []).includes(row.base.baseId)
+            );
         return {
           baseId: row.base.baseId,
           baseName: row.base.baseName,
           documentCount: row.documentIds?.length || 0,
-          assistantId: assistantRow?.assistant.assistantId,
-          assistantName: assistantRow?.assistant.assistantName,
+          assistantId: assistant?.assistantId || assistantRow?.assistant.assistantId,
+          assistantName: assistant?.assistantName || assistantRow?.assistant.assistantName,
         };
       })
   );
@@ -388,8 +393,8 @@
     const [applicationsResult, overviewResult, knowledgeResult, assistantsResult] = await Promise.allSettled([
       applicationApi.queryMyApplications(),
       applicationApi.queryHomeOverview(),
-      knowledgeApi.bases({}),
-      knowledgeApi.assistants(),
+      knowledgeApi.availableBases(),
+      knowledgeApi.availableAssistants(),
     ]);
     if (applicationsResult.status === 'fulfilled') {
       applicationList.value = (applicationsResult.value.data.applications || []).slice(0, 5).map((item, index) => ({

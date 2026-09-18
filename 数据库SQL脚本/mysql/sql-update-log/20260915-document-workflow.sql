@@ -110,7 +110,7 @@ UPDATE `t_menu` SET `menu_name` = '文档解析', `menu_type` = 1, `path` = '/ai
   `component` = NULL, `web_perms` = NULL, `icon` = 'FileSearchOutlined', `sort` = 40
 WHERE `menu_id` = 843;
 UPDATE `t_menu` SET `menu_name` = '解析方案', `menu_type` = 2, `perms_type` = 1,
-  `api_perms` = NULL, `parent_id` = 843, `sort` = 10,
+  `api_perms` = 'ai:parse-plan:query', `parent_id` = 843, `sort` = 10,
   `path` = '/ai-platform/document/plans', `component` = '/business/ai/parse-plans.vue',
   `web_perms` = 'ai:parse-plan:query', `icon` = 'FileTextOutlined', `visible_flag` = 1
 WHERE `menu_id` = 858;

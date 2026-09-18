@@ -176,7 +176,8 @@ export const useUserStore = defineStore({
       this.menuParentIdListMap = buildMenuParentIdListMap(this.menuTree);
 
       //功能点
-      this.pointsList = data.menuList.filter((menu) => menu.menuType === MENU_TYPE_ENUM.POINTS.value && menu.visibleFlag && !menu.disabledFlag);
+      this.pointsList = data.menuList.filter((menu) => menu.menuType === MENU_TYPE_ENUM.POINTS.value && !menu.disabledFlag);
+      localSave(localKey.USER_POINTS, JSON.stringify(this.pointsList));
 
       // 获取用户未读消息
       this.queryUnreadMessageCount();

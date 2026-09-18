@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -71,6 +72,16 @@ public class GlobalExceptionHandler {
             return ResponseDTO.error(UserErrorCode.PARAM_ERROR, errorMsg);
         }
         return ResponseDTO.error(UserErrorCode.PARAM_ERROR);
+    }
+
+    /**
+     * 上传文件超过系统配置上限
+     */
+    @ResponseBody
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseDTO<?> maxUploadSizeExceptionHandler(MaxUploadSizeExceededException e) {
+        log.warn("上传文件超过 50 MB,URL:{}", getCurrentRequestUrl());
+        return ResponseDTO.error(UserErrorCode.PARAM_ERROR, "单个文件不能超过 50 MB");
     }
 
     /**

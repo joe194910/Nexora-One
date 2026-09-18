@@ -62,7 +62,7 @@ public class AdminCacheConst extends CacheKeyConst {
         /**
          * 请求用户信息权限
          */
-        public static final String USER_PERMISSION = "login_user_permission";
+        public static final String USER_PERMISSION = "login_user_permission_v5";
     }
 
 }

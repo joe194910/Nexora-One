@@ -61,6 +61,7 @@
     SmartLoading.show();
     try {
       await roleMenuApi.updateRoleMenu(params);
+      await getRoleSelectedMenu();
       message.success('保存成功');
     } catch (error) {
       smartSentry.captureError(error);

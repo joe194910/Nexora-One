@@ -25,10 +25,18 @@ export const knowledgeApi = {
     window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   },
   bases: (params) => getRequest('/knowledge/bases', params),
+  availableBases: () => getRequest('/knowledge/bases/available'),
   saveBase: (data) => postRequest('/knowledge/bases/save', data),
   deleteBase: (id) => postRequest(`/knowledge/bases/${id}/delete`),
+  assistantStore: (params) => getRequest('/knowledge/assistant-store', params),
+  favoriteAssistant: (id) => postRequest(`/knowledge/assistant-store/${id}/favorite`),
+  unfavoriteAssistant: (id) => postRequest(`/knowledge/assistant-store/${id}/unfavorite`),
   assistants: () => getRequest('/knowledge/assistants'),
+  availableAssistants: () => getRequest('/knowledge/assistants/available'),
+  assistant: (id) => getRequest(`/knowledge/assistants/${id}`),
   saveAssistant: (data) => postRequest('/knowledge/assistants/save', data),
+  publishAssistant: (id, published) =>
+    request({ method: 'post', url: `/knowledge/assistants/${id}/publish`, params: { published } }),
   deleteAssistant: (id) => postRequest(`/knowledge/assistants/${id}/delete`),
   chat: (id, data) => postRequest(`/knowledge/assistants/${id}/chat`, data),
   conversations: (id) => getRequest(`/knowledge/assistants/${id}/conversations`),

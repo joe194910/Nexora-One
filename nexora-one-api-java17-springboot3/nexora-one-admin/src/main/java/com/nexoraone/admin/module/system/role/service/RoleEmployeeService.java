@@ -6,6 +6,7 @@ import jakarta.annotation.Resource;
 import com.nexoraone.admin.module.system.department.dao.DepartmentDao;
 import com.nexoraone.admin.module.system.department.domain.entity.DepartmentEntity;
 import com.nexoraone.admin.module.system.employee.domain.vo.EmployeeVO;
+import com.nexoraone.admin.module.system.login.manager.UserPermissionCacheManager;
 import com.nexoraone.admin.module.system.role.dao.RoleDao;
 import com.nexoraone.admin.module.system.role.dao.RoleEmployeeDao;
 import com.nexoraone.admin.module.system.role.domain.entity.RoleEmployeeEntity;
@@ -49,6 +50,8 @@ public class RoleEmployeeService {
     private DepartmentDao departmentDao;
     @Resource
     private RoleEmployeeManager roleEmployeeManager;
+    @Resource
+    private UserPermissionCacheManager userPermissionCacheManager;
 
 
     /**
@@ -57,6 +60,11 @@ public class RoleEmployeeService {
      */
     public void batchInsert(List<RoleEmployeeEntity> roleEmployeeList) {
         roleEmployeeManager.saveBatch(roleEmployeeList);
+        if (CollectionUtils.isNotEmpty(roleEmployeeList)) {
+            userPermissionCacheManager.clear(roleEmployeeList.stream()
+                    .map(RoleEmployeeEntity::getEmployeeId)
+                    .collect(Collectors.toSet()));
+        }
     }
 
     /**
@@ -94,6 +102,7 @@ public class RoleEmployeeService {
             return ResponseDTO.userErrorParam();
         }
         roleEmployeeDao.deleteByEmployeeIdRoleId(employeeId, roleId);
+        userPermissionCacheManager.clear(Lists.newArrayList(employeeId));
         return ResponseDTO.ok();
     }
 
@@ -103,6 +112,7 @@ public class RoleEmployeeService {
      */
     public ResponseDTO<String> batchRemoveRoleEmployee(RoleEmployeeUpdateForm roleEmployeeUpdateForm) {
         roleEmployeeDao.batchDeleteEmployeeRole(roleEmployeeUpdateForm.getRoleId(), roleEmployeeUpdateForm.getEmployeeIdList());
+        userPermissionCacheManager.clear(roleEmployeeUpdateForm.getEmployeeIdList());
         return ResponseDTO.ok();
     }
 
@@ -126,6 +136,7 @@ public class RoleEmployeeService {
                     .map(employeeId -> new RoleEmployeeEntity(roleId, employeeId))
                     .collect(Collectors.toList());
             roleEmployeeManager.saveBatch(roleEmployeeList);
+            userPermissionCacheManager.clear(addEmployeeIdList);
         }
         return ResponseDTO.ok();
     }
