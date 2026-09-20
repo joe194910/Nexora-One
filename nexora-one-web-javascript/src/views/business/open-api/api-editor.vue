@@ -11,11 +11,22 @@
       <a-button @click="backToList"><ArrowLeftOutlined />返回API列表</a-button>
     </header>
 
-    <section class="open-api-editor__steps">
+    <section v-if="showAiToolTab" class="open-api-detail-tabs">
+      <a-tabs v-model:active-key="detailTab" @change="changeDetailTab">
+        <a-tab-pane key="api">
+          <template #tab><ApiOutlined />API配置</template>
+        </a-tab-pane>
+        <a-tab-pane key="ai-tool">
+          <template #tab><RobotOutlined />AI工具</template>
+        </a-tab-pane>
+      </a-tabs>
+    </section>
+
+    <section v-if="detailTab === 'api'" class="open-api-editor__steps">
       <a-steps v-model:current="currentStep" :items="stepItems" size="small" @change="changeStep" />
     </section>
 
-    <a-spin :spinning="loading">
+    <a-spin v-if="detailTab === 'api'" :spinning="loading">
       <section v-if="currentStep === 0" class="open-api-panel">
         <h2 class="open-api-panel__title">基本信息</h2>
         <a-alert
@@ -270,7 +281,13 @@
       </section>
     </a-spin>
 
-    <div class="open-api-editor__footer">
+    <ApiAiToolPanel
+      v-else-if="showAiToolTab && openApiId"
+      :open-api-id="openApiId"
+      :api="aiToolApi"
+    />
+
+    <div v-if="detailTab === 'api'" class="open-api-editor__footer">
       <a-button :disabled="currentStep === 0" @click="previousStep"><ArrowLeftOutlined />上一步</a-button>
       <div class="open-api-editor__footer-right">
         <a-button @click="backToList">返回列表</a-button>
@@ -294,12 +311,14 @@
     CheckCircleOutlined,
     DeleteOutlined,
     PlusOutlined,
+    RobotOutlined,
     RocketOutlined,
     SafetyCertificateOutlined,
   } from '@ant-design/icons-vue';
   import { Empty, message } from 'ant-design-vue';
   import { openApiApi } from '/@/api/business/open-api/open-api-api';
   import { smartSentry } from '/@/lib/smart-sentry';
+  import ApiAiToolPanel from './components/api-ai-tool-panel.vue';
   import './open-api.less';
 
   const route = useRoute();
@@ -312,6 +331,10 @@
   const versionId = ref();
   const historyVersionId = computed(() => (route.query.versionId ? Number(route.query.versionId) : undefined));
   const readOnly = computed(() => route.query.mode === 'detail' || Boolean(historyVersionId.value));
+  const showAiToolTab = computed(() =>
+    readOnly.value && Boolean(openApiId.value) && !historyVersionId.value && !route.query.reviewId
+  );
+  const detailTab = ref(showAiToolTab.value && route.query.tab === 'ai-tool' ? 'ai-tool' : 'api');
   const codeAvailable = ref();
   const categories = ref([]);
   const requestParameters = ref([]);
@@ -397,6 +420,14 @@
     if (readOnly.value) return `${basicForm.requestMethod} ${basicForm.gatewayPath}`;
     return '定义接口基本信息、请求参数、响应结构以及示例错误码。';
   });
+  const aiToolApi = computed(() => ({
+    openApiId: openApiId.value,
+    apiName: basicForm.apiName,
+    apiCode: basicForm.apiCode,
+    apiVersion: basicForm.versionNo,
+    requestMethod: basicForm.requestMethod,
+    description: basicForm.description,
+  }));
   const categoryOptions = computed(() => categories.value.map((value) => ({ value })));
   const activeParameters = computed(() => (currentStep.value === 1 ? requestParameters.value : responseParameters.value));
   const parameterTableColspan = computed(() => 8 + (currentStep.value === 2 ? 1 : 0) + (readOnly.value ? 0 : 1));
@@ -620,6 +651,14 @@
 
   function backToList() {
     router.push({ path: '/open-api/manage' });
+  }
+
+  /** 切换只读 API 详情页签，并把 AI 工具页签状态同步到路由。 */
+  function changeDetailTab(key) {
+    router.replace({
+      path: route.path,
+      query: { ...route.query, tab: key === 'ai-tool' ? 'ai-tool' : undefined },
+    });
   }
 
   function mapParameters(rows) {

@@ -20,6 +20,8 @@ public class KnowledgeMessage {
     private String content;
     /** 引用的 JSON 数组。 */
     private String citationsJson;
+    /** 工具选择、参数、确认与结果的 JSON 调试信息。 */
+    private String toolCallsJson;
     /** 创建时间。 */
     private LocalDateTime createTime;
 }

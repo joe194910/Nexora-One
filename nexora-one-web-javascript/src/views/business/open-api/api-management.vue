@@ -47,6 +47,14 @@
             <a-select-option v-for="item in statusOptions" :key="item.value" :value="item.value">{{ item.label }}</a-select-option>
           </a-select>
         </div>
+        <div>
+          <label class="open-api-query__label">AI工具状态</label>
+          <a-select v-model:value="queryForm.aiToolStatus" allow-clear placeholder="请选择AI工具状态" style="width: 100%">
+            <a-select-option v-for="item in aiToolStatusOptions" :key="item.value" :value="item.value">
+              {{ item.label }}
+            </a-select-option>
+          </a-select>
+        </div>
         <a-space>
           <a-button type="primary" @click="queryData"><SearchOutlined />查询</a-button>
           <a-button @click="resetQuery"><ReloadOutlined />重置</a-button>
@@ -84,6 +92,16 @@
           <template v-else-if="column.dataIndex === 'status'">
             <a-badge :status="statusMeta(record.status).badge" :text="statusMeta(record.status).text" />
           </template>
+          <template v-else-if="column.dataIndex === 'aiToolStatus'">
+            <a-space size="small">
+              <a-tag :color="aiToolStatusMeta(record.aiToolStatus).color">
+                {{ aiToolStatusMeta(record.aiToolStatus).text }}
+              </a-tag>
+              <a-tooltip v-if="record.aiToolSyncAvailable" title="API 已发布新版本，可在 AI 工具页手动同步">
+                <SyncOutlined class="open-api-sync-indicator" />
+              </a-tooltip>
+            </a-space>
+          </template>
           <template v-else-if="column.dataIndex === 'todayCallCount'">
             {{ formatNumber(record.todayCallCount) }}
           </template>
@@ -114,6 +132,22 @@
                 v-privilege="'open-api:publish'"
               >
                 {{ hasSeparateVersion(record) ? '提交新版' : record.status === 5 ? '重新上架' : '上架' }}
+              </a-button>
+              <a-button
+                v-if="record.status === 4 && record.aiToolStatus === 'UNPUBLISHED'"
+                type="link"
+                @click="showPublishAiTool(record)"
+                v-privilege="'open-api:ai-tool:publish'"
+              >
+                发布为AI工具
+              </a-button>
+              <a-button
+                v-else-if="record.aiToolId"
+                type="link"
+                @click="goAiTool(record)"
+                v-privilege="'open-api:detail'"
+              >
+                查看AI工具
               </a-button>
               <a-button v-if="isPendingReview(record)" type="link" disabled>审核中</a-button>
               <a-popconfirm
@@ -191,6 +225,12 @@
         </template>
       </a-table>
     </a-modal>
+
+    <PublishAiToolDrawer
+      v-model:open="publishDrawer.open"
+      :api="publishDrawer.api"
+      @published="handleAiToolPublished"
+    />
   </div>
 </template>
 
@@ -205,10 +245,12 @@
     ReloadOutlined,
     SearchOutlined,
     StopOutlined,
+    SyncOutlined,
   } from '@ant-design/icons-vue';
   import { message } from 'ant-design-vue';
   import { openApiApi } from '/@/api/business/open-api/open-api-api';
   import { smartSentry } from '/@/lib/smart-sentry';
+  import PublishAiToolDrawer from './components/publish-ai-tool-drawer.vue';
   import './open-api.less';
 
   const router = useRouter();
@@ -229,6 +271,10 @@
     openApiId: undefined,
     list: [],
   });
+  const publishDrawer = reactive({
+    open: false,
+    api: {},
+  });
   const queryForm = reactive({
     pageNum: 1,
     pageSize: 10,
@@ -236,6 +282,7 @@
     categoryName: undefined,
     requestMethod: undefined,
     status: undefined,
+    aiToolStatus: undefined,
   });
 
   const methodOptions = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
@@ -246,6 +293,13 @@
     { value: 4, label: '已上架' },
     { value: 5, label: '已停用' },
     { value: 6, label: '已下线' },
+  ];
+  const aiToolStatusOptions = [
+    { value: 'UNPUBLISHED', label: '未发布' },
+    { value: 'DRAFT', label: '草稿' },
+    { value: 'PENDING', label: '待审核' },
+    { value: 'APPROVED', label: '已发布' },
+    { value: 'REJECTED', label: '已驳回' },
   ];
   const summaryItems = computed(() => [
     { key: 'total', label: 'API总数', icon: ApiOutlined, iconClass: '' },
@@ -261,9 +315,10 @@
     { title: '版本', dataIndex: 'apiVersion', width: 90 },
     { title: '权限级别', dataIndex: 'permissionLevel', width: 110 },
     { title: '发布状态', dataIndex: 'status', width: 120 },
+    { title: 'AI工具', dataIndex: 'aiToolStatus', width: 130 },
     { title: '今日调用量', dataIndex: 'todayCallCount', width: 120 },
     { title: '更新时间', dataIndex: 'updateTime', width: 180 },
-    { title: '操作', dataIndex: 'action', fixed: 'right', width: 360 },
+    { title: '操作', dataIndex: 'action', fixed: 'right', width: 460 },
   ];
   const versionColumns = [
     { title: '版本', dataIndex: 'versionNo', width: 220 },
@@ -274,10 +329,12 @@
     { title: '操作', dataIndex: 'action', fixed: 'right', width: 100 },
   ];
 
+  /** 返回 HTTP 请求方式对应的标签颜色。 */
   function methodColor(method) {
     return { GET: 'green', POST: 'blue', PUT: 'orange', DELETE: 'red', PATCH: 'purple' }[method] || 'default';
   }
 
+  /** 返回 API 权限级别对应的中文展示信息。 */
   function permissionMeta(value) {
     return {
       1: { color: 'green', text: '公开' },
@@ -286,6 +343,7 @@
     }[value] || { color: 'default', text: '未设置' };
   }
 
+  /** 返回 API 主状态对应的中文展示信息。 */
   function statusMeta(value) {
     return {
       1: { badge: 'default', text: '草稿' },
@@ -297,6 +355,7 @@
     }[value] || { badge: 'default', text: '未知' };
   }
 
+  /** 返回 API 版本状态对应的中文展示信息。 */
   function versionStatusMeta(value) {
     return {
       1: { badge: 'default', text: '草稿' },
@@ -307,10 +366,23 @@
     }[value] || { badge: 'default', text: '未知' };
   }
 
+  /** 返回 AI 工具发布状态对应的中文展示信息。 */
+  function aiToolStatusMeta(value) {
+    return {
+      UNPUBLISHED: { color: 'default', text: '未发布' },
+      DRAFT: { color: 'default', text: '草稿' },
+      PENDING: { color: 'orange', text: '待审核' },
+      APPROVED: { color: 'green', text: '已发布' },
+      REJECTED: { color: 'red', text: '已驳回' },
+    }[value] || { color: 'default', text: '未发布' };
+  }
+
+  /** 按中文数字格式展示调用次数。 */
   function formatNumber(value) {
     return Number(value || 0).toLocaleString('zh-CN');
   }
 
+  /** 按筛选条件分页加载 API，并附带 AI 工具状态。 */
   async function queryData() {
     loading.value = true;
     try {
@@ -324,6 +396,7 @@
     }
   }
 
+  /** 加载 API 汇总数据和分类筛选项。 */
   async function loadMeta() {
     try {
       const [summaryResponse, categoryResponse] = await Promise.all([openApiApi.summary(), openApiApi.categories()]);
@@ -334,6 +407,7 @@
     }
   }
 
+  /** 清空全部筛选条件并重新加载 API 列表。 */
   function resetQuery() {
     Object.assign(queryForm, {
       pageNum: 1,
@@ -342,34 +416,42 @@
       categoryName: undefined,
       requestMethod: undefined,
       status: undefined,
+      aiToolStatus: undefined,
     });
     queryData();
   }
 
+  /** 进入原有六步 API 创建流程。 */
   function goCreate() {
     router.push({ path: '/open-api/editor' });
   }
 
+  /** 编辑当前仍允许修改的 API 版本。 */
   function goEdit(record) {
     router.push({ path: '/open-api/editor', query: { openApiId: record.openApiId, step: Math.min(record.workflowStep || 1, 4) } });
   }
 
+  /** 判断当前 API 是否已经创建了未发布的新版本。 */
   function hasSeparateVersion(record) {
     return Boolean(record.publishedVersionId) && record.currentVersionId !== record.publishedVersionId;
   }
 
+  /** 判断当前版本是否处于发布审核中。 */
   function isPendingReview(record) {
     return record.currentVersionStatus === 2 || record.status === 3;
   }
 
+  /** 判断当前版本是否允许继续编辑。 */
   function canEditCurrentVersion(record) {
     return record.currentVersionStatus === 1 && !isPendingReview(record);
   }
 
+  /** 判断已上架或已停用 API 是否允许创建新版本。 */
   function canCreateVersion(record) {
     return [4, 5].includes(record.status) && !hasSeparateVersion(record) && !isPendingReview(record);
   }
 
+  /** 判断当前 API 是否允许提交发布审核。 */
   function canSubmitPublish(record) {
     if (isPendingReview(record)) {
       return false;
@@ -383,6 +465,7 @@
     return record.status === 5;
   }
 
+  /** 根据当前版本号生成下一个补丁版本号。 */
   function nextVersion(versionNo) {
     const match = String(versionNo || '').match(/^(v?)(\d+)\.(\d+)\.(\d+)$/);
     if (!match) {
@@ -391,6 +474,7 @@
     return `${match[1] || 'v'}${match[2]}.${match[3]}.${Number(match[4]) + 1}`;
   }
 
+  /** 打开创建新版本窗口并给出默认版本号。 */
   function showCreateVersion(record) {
     Object.assign(versionModal, {
       open: true,
@@ -400,6 +484,7 @@
     });
   }
 
+  /** 创建 API 新版本并进入原有配置流程。 */
   async function submitCreateVersion() {
     const versionNo = versionModal.versionNo.trim();
     if (!/^v?\d+\.\d+\.\d+$/.test(versionNo)) {
@@ -425,6 +510,7 @@
     }
   }
 
+  /** 查询并展示 API 的全部历史版本。 */
   async function showVersionHistory(record) {
     Object.assign(historyModal, {
       open: true,
@@ -442,6 +528,7 @@
     }
   }
 
+  /** 以只读方式查看指定历史版本。 */
   function viewHistoryVersion(record) {
     router.push({
       path: '/open-api/detail',
@@ -453,14 +540,36 @@
     });
   }
 
+  /** 进入 API 详情页。 */
   function goDetail(record) {
     router.push({ path: '/open-api/detail', query: { openApiId: record.openApiId, mode: 'detail' } });
   }
 
+  /** 打开“发布为 AI 工具”抽屉。 */
+  function showPublishAiTool(record) {
+    publishDrawer.api = record;
+    publishDrawer.open = true;
+  }
+
+  /** 进入 API 详情中的 AI 工具页签。 */
+  function goAiTool(record) {
+    router.push({
+      path: '/open-api/detail',
+      query: { openApiId: record.openApiId, mode: 'detail', tab: 'ai-tool' },
+    });
+  }
+
+  /** 工具发布完成后刷新列表中的 AI 工具状态。 */
+  async function handleAiToolPublished() {
+    await queryData();
+  }
+
+  /** 进入原有 API 发布审核页面。 */
   function goPublish(record) {
     router.push({ path: '/open-api/publish', query: { openApiId: record.openApiId } });
   }
 
+  /** 启用或停用 API 本身，不直接修改 AI 工具状态。 */
   async function changeStatus(record, status) {
     try {
       await openApiApi.updateStatus({ openApiId: record.openApiId, status });

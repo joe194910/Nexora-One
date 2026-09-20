@@ -114,9 +114,6 @@ public class AiRuntimeService {
         }
     }
 
-    /**
-     * 调用 OpenAI 兼容的对话接口。
-     */
     /** 为用户助手执行多轮对话，沿用平台模型服务的鉴权、用量和审计口径。 */
     public Map<String, Object> assistantChat(Long modelId, JSONArray history, String systemPrompt,
                                               String question, Long assistantId) {
@@ -151,6 +148,43 @@ public class AiRuntimeService {
         }
     }
 
+    /**
+     * 执行一次支持 OpenAI tools 协议的助手对话步骤。
+     */
+    public Map<String, Object> assistantToolChat(Long modelId, JSONArray messages,
+                                                  JSONArray tools, Long assistantId,
+                                                  String sourcePrompt) {
+        AiModelEntity model = modelDao.selectById(modelId);
+        if (model == null || !"CHAT".equalsIgnoreCase(model.getModelType())
+                || !Boolean.TRUE.equals(model.getEnabledFlag())) {
+            throw new IllegalArgumentException("请选择已启用的对话模型");
+        }
+        AiModelServiceEntity service = modelServiceDao.selectById(model.getServiceId());
+        if (service == null || !Boolean.TRUE.equals(service.getEnabledFlag())) {
+            throw new IllegalStateException("对话模型所属服务不可用");
+        }
+        AiPlatformForm.ModelDebug source = new AiPlatformForm.ModelDebug();
+        source.setPrompt(sourcePrompt);
+        source.setSourceName("智能助手工具调用");
+        AiCallLogEntity callLog = createCallLog(
+                "kb_tool_" + UUID.fastUUID().toString(true), model, service, source);
+        callLog.setSourceType("ASSISTANT_TOOL");
+        callLog.setAssistantId(assistantId);
+        long start = System.currentTimeMillis();
+        try {
+            Map<String, Object> result = sendChat(model, service, messages, tools);
+            fillSuccessLog(callLog, model, result, start);
+            result.put("traceId", callLog.getTraceId());
+            return result;
+        } catch (Exception exception) {
+            fillFailureLog(callLog, exception, start);
+            throw exception;
+        } finally {
+            callLogDao.insert(callLog);
+        }
+    }
+
+    /** 将单轮调试参数转换为统一消息结构并调用对话模型。 */
     private Map<String, Object> invokeChat(AiModelEntity model, AiModelServiceEntity service,
                                            String prompt, String systemPrompt) {
         JSONArray messages = new JSONArray();
@@ -163,10 +197,20 @@ public class AiRuntimeService {
 
     /** 发送已构造的消息数组，避免助手与调试走两套响应解析。 */
     private Map<String, Object> sendChat(AiModelEntity model, AiModelServiceEntity service, JSONArray messages) {
+        return sendChat(model, service, messages, null);
+    }
+
+    /** 发送对话消息，可选附带 OpenAI 兼容工具定义。 */
+    private Map<String, Object> sendChat(AiModelEntity model, AiModelServiceEntity service,
+                                         JSONArray messages, JSONArray tools) {
         JSONObject requestBody = JSONUtil.createObj()
                 .set("model", model.getModelCode())
                 .set("messages", messages)
                 .set("stream", false);
+        if (tools != null && !tools.isEmpty()) {
+            requestBody.set("tools", tools);
+            requestBody.set("tool_choice", "auto");
+        }
         if (model.getTemperature() != null) {
             requestBody.set("temperature", model.getTemperature());
         }
@@ -183,9 +227,12 @@ public class AiRuntimeService {
                     || choices.getJSONObject(0).getJSONObject("message") == null) {
                 throw new IllegalStateException("模型响应缺少 choices.message");
             }
-            String content = choices.getJSONObject(0).getJSONObject("message").getStr("content", "");
+            JSONObject message = choices.getJSONObject(0).getJSONObject("message");
+            String content = message.getStr("content", "");
             Map<String, Object> result = usageResult(body.getJSONObject("usage"));
             result.put("content", content);
+            result.put("message", message);
+            result.put("toolCalls", message.getJSONArray("tool_calls"));
             result.put("model", body.getStr("model", model.getModelCode()));
             return result;
         } finally {

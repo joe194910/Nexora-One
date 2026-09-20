@@ -1,49 +1,33 @@
-# Design QA: Home Workbench
+# MCP 工具接入设计验证记录
 
-Date: 2026-09-17
+验证日期：2026-09-20
 
-## Visual Truth
+## 页面验证
 
-- Source visual truth: user-provided NexoraOne home dashboard screenshot in the conversation.
-- Source dimensions: approximately 1900 x 914 px.
-- Target state: authenticated desktop home page with applications, assistants, todos, knowledge bases, platform overview, and alerts visible together.
-- Requested change: add intelligent assistants and knowledge bases to the home page while matching the compact workbench layout.
+- 桌面端：使用 1440 x 1000 视口访问 `#/open-api/mcp-tools`，动态路由、页面标题、统计区、筛选区、工具表格和分页均正常渲染。
+- 桌面端页面宽度为 1220px，页面总宽度与 1440px 视口一致，无非预期横向溢出。
+- 移动端：使用 390 x 844 视口并收起现有全局侧栏后，页面宽度为 290px，页面总宽度与 390px 视口一致。
+- 移动端标题区操作按钮可换行，统计卡、筛选项和表单按单列展示；工具表格保留自身横向滚动，不挤压整页。
+- 发布 AI 工具抽屉、第三方 HTTP 工具抽屉使用 `min(固定宽度, 100vw)`，避免小屏超出视口。
 
-## Implementation Evidence
+## 业务验证
 
-- Local page: `http://127.0.0.1:8082/` returned HTTP 200.
-- Latest browser-rendered screenshot: unavailable because the browser runtime reported no available browser instances.
-- Production build: passed with `npm run build:prod`.
-- Static validation: `git diff --check` passed for the changed frontend files.
-- Code evidence: the home page loads real assistant and knowledge-base APIs, supports assistant switching, shortcut prompts, Enter-to-send, direct assistant chat routing, and direct knowledge-base chat routing.
+- 管理端登录后可以读取工具统计、工具列表和可管理应用。
+- 临时登记第三方 HTTP 工具后，来源为 `EXTERNAL_HTTP`，初始审核状态为 `PENDING`，启用状态为 `DISABLED`。
+- 新登记工具可被列表搜索并读取详情。
+- 未完成成功测试时提交审核通过，后端按业务规则拒绝。
+- 已上架平台 API 可预览线上版本自动生成的输入、输出 Schema。
+- 平台 API 临时发布为工具后，来源为 `PLATFORM_API`，自动继承 `v1.0` 版本和 Schema，并写入初始同步记录。
+- 新发布平台工具保持 `DRAFT`、`DISABLED`，不会自动影响任何智能助手。
+- 两类联调完成后均已清理临时工具及可能产生的调用、助手关联和同步记录。
 
-## Full-View Comparison
+## 权限验证
 
-- The implemented layout follows the source hierarchy: greeting/search/date, applications, three-column work area, and two-column platform summary.
-- The assistant module occupies the left work area and includes a compact selector, greeting, prompt shortcuts, and composer.
-- The knowledge-base module occupies the right work area and shows document counts and association status.
-- A browser-rendered full-view screenshot could not be captured, so spacing, font rendering, and viewport fit remain visually unverified.
+- 新增菜单和按钮只配置 `web_perms`，`api_perms` 保持为空。
+- MCP 管理接口未增加 `@SaCheckPermission` 等接口权限注解。
+- 管理接口继续受统一登录校验和数据归属校验保护。
+- 开放接口继续复用应用 Bearer Access Token，不依赖后台页面权限。
 
-## Focused Region Comparison
+## 验证方式
 
-- Assistant region: implemented as a two-column selector and chat launcher, with horizontal fallbacks on narrow screens.
-- Knowledge-base region: implemented as a dense list consistent with the todo and alert modules.
-- Navigation behavior: assistant questions route to `/knowledge/assistants` with `assistantId` and `question`; knowledge bases route through their enabled associated assistant.
-- Browser interaction evidence is unavailable for this iteration.
-
-## Findings
-
-- No code-level blocking issue remains in the requested home-page implementation.
-- Verification blocker: no in-app browser instance was available for screenshot comparison or live interaction checks.
-- Residual risk: final pixel-level alignment may need a small follow-up after viewing the authenticated page in a browser.
-
-## Comparison History
-
-- Initial state: home page did not expose a complete assistant selector and knowledge-base entry matching the reference.
-- Implementation: added the assistant work area, real knowledge-base list, direct question routing, responsive layout, and compact visual treatment.
-- Post-implementation build: passed.
-- Post-implementation visual evidence: blocked by unavailable browser runtime.
-
-## Final Result
-
-final result: blocked
+- 浏览器连接器当前受本机模型目录配置影响无法启动，本次使用 Microsoft Edge Headless CDP 完成真实页面渲染验证。

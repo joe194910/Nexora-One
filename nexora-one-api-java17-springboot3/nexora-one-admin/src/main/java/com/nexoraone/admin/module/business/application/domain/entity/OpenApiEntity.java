@@ -60,6 +60,18 @@ public class OpenApiEntity {
     /** 当前编辑版本号，仅用于管理列表展示。 */
     @TableField(exist = false)
     private String currentVersionNo;
+    /** AI 工具状态，仅用于管理列表展示。 */
+    @TableField(exist = false)
+    private String aiToolStatus;
+    /** 已关联 AI 工具主键，仅用于管理列表展示。 */
+    @TableField(exist = false)
+    private Long aiToolId;
+    /** 已关联 AI 工具编码，仅用于管理列表展示。 */
+    @TableField(exist = false)
+    private String aiToolCode;
+    /** 是否存在可手动同步的新发布版本。 */
+    @TableField(exist = false)
+    private Boolean aiToolSyncAvailable;
     /** 发布状态：1草稿，2配置中，3待发布，4已上架，5已停用，6已下线。 */
     private Integer status;
     /** 当前编辑步骤。 */

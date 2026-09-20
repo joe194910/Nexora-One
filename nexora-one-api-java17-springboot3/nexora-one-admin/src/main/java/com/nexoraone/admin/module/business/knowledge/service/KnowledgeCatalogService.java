@@ -6,6 +6,8 @@ import com.nexoraone.admin.module.business.ai.dao.AiModelDao;
 import com.nexoraone.admin.module.business.ai.domain.entity.AiModelEntity;
 import com.nexoraone.admin.module.business.knowledge.dao.KnowledgeMappers.*;
 import com.nexoraone.admin.module.business.knowledge.domain.*;
+import com.nexoraone.admin.module.business.mcp.domain.AiToolForms;
+import com.nexoraone.admin.module.business.mcp.service.AiToolService;
 import com.nexoraone.admin.module.system.employee.dao.EmployeeDao;
 import com.nexoraone.admin.module.system.employee.domain.entity.EmployeeEntity;
 import jakarta.annotation.Resource;
@@ -17,7 +19,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/** Knowledge bases, published assistants and assistant favorites. */
+/** 知识库、已发布助手、助手收藏及助手工具配置服务。 */
 @Service
 public class KnowledgeCatalogService {
     @Resource private BaseDao bases;
@@ -28,6 +30,7 @@ public class KnowledgeCatalogService {
     @Resource private AiModelDao models;
     @Resource private EmployeeDao employees;
     @Resource private KnowledgeDocumentService documents;
+    @Resource private AiToolService aiTools;
 
     public List<Map<String, Object>> bases(String keyword) {
         return bases.selectList(new LambdaQueryWrapper<KnowledgeBase>()
@@ -165,6 +168,9 @@ public class KnowledgeCatalogService {
         assistant.setTopK(form.getTopK());
         assistant.setScoreThreshold(form.getScoreThreshold());
         assistant.setShowCitations(!Boolean.FALSE.equals(form.getShowCitations()));
+        assistant.setMaxToolCalls(Objects.requireNonNullElse(form.getMaxToolCalls(), 3));
+        assistant.setToolDebugFlag(Boolean.TRUE.equals(form.getToolDebugFlag()));
+        assistant.setAllowActionToolFlag(Boolean.TRUE.equals(form.getAllowActionToolFlag()));
         assistant.setEnabledFlag(!Boolean.FALSE.equals(form.getEnabledFlag()));
         if (assistant.getPublishedFlag() == null) {
             assistant.setPublishedFlag(false);
@@ -194,6 +200,16 @@ public class KnowledgeCatalogService {
             assistant.setPublishedFlag(false);
             assistant.setPublishedTime(null);
             assistants.updateById(assistant);
+        }
+        // 兼容未升级的旧客户端：只有显式提交 toolIds 时才重建工具关系，避免编辑助手时误清空。
+        if (form.getToolIds() != null) {
+            AiToolForms.AssistantBind toolBinding = new AiToolForms.AssistantBind();
+            toolBinding.setAssistantId(assistant.getAssistantId());
+            toolBinding.setToolIds(form.getToolIds());
+            toolBinding.setMaxToolCalls(assistant.getMaxToolCalls());
+            toolBinding.setToolDebugFlag(assistant.getToolDebugFlag());
+            toolBinding.setAllowActionToolFlag(assistant.getAllowActionToolFlag());
+            aiTools.bindAssistant(toolBinding);
         }
         return assistant;
     }
@@ -337,6 +353,11 @@ public class KnowledgeCatalogService {
         view.put("ownerName", ownerName(assistant.getOwnerId()));
         AiModelEntity model = models.selectById(assistant.getModelId());
         view.put("modelName", model == null ? "未知模型" : model.getModelName());
+        List<Map<String, Object>> linkedTools = aiTools.linkedToolViews(assistant.getAssistantId());
+        view.put("tools", linkedTools);
+        view.put("toolIds", owner.equals(assistant.getOwnerId())
+                ? linkedTools.stream().map(item -> (Long) item.get("toolId")).toList()
+                : List.of());
         return view;
     }
 

@@ -27,6 +27,12 @@ public class KnowledgeAssistant {
     private BigDecimal scoreThreshold;
     /** 是否展示真实引用来源。 */
     private Boolean showCitations;
+    /** 单轮最多允许模型调用的工具数量。 */
+    private Integer maxToolCalls;
+    /** 是否向用户展示工具调用调试信息。 */
+    private Boolean toolDebugFlag;
+    /** 是否允许助手使用操作类工具。 */
+    private Boolean allowActionToolFlag;
     /** 是否启用。 */
     private Boolean enabledFlag;
     /** 是否已上架到智能助手商店。 */

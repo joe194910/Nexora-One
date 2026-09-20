@@ -99,6 +99,10 @@
   background: #ef4444;
 }
 
+.open-api-summary__icon.is-purple {
+  background: #7c3aed;
+}
+
 .open-api-summary__label {
   color: #6f7a8d;
   font-size: 14px;
@@ -113,7 +117,7 @@
 
 .open-api-query {
   display: grid;
-  grid-template-columns: 1.15fr repeat(3, minmax(160px, 1fr)) auto;
+  grid-template-columns: 1.15fr repeat(4, minmax(150px, 1fr)) auto;
   gap: 18px;
   align-items: end;
 }
@@ -393,6 +397,39 @@
   font-size: 12px;
 }
 
+.open-api-sync-indicator {
+  display: block;
+  margin-top: 4px;
+  color: #d97706;
+  font-size: 12px;
+}
+
+.open-api-detail-tabs {
+  margin-bottom: 12px;
+  padding: 0 20px;
+  background: #fff;
+  border: 1px solid #e7ecf3;
+  border-radius: 6px;
+}
+
+.open-api-tool-overview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 34px;
+}
+
+.open-api-tool-overview > div {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  min-height: 34px;
+  align-items: center;
+  color: #344054;
+}
+
+.open-api-tool-overview > div > span:first-child {
+  color: #7a8599;
+}
+
 .open-api-document-layout,
 .open-api-guide-layout {
   display: grid;
@@ -547,8 +584,13 @@
   .open-api-document-layout,
   .open-api-guide-layout,
   .open-api-debug-layout,
-  .open-api-publish-layout {
+  .open-api-publish-layout,
+  .open-api-tool-overview {
     grid-template-columns: 1fr;
+  }
+
+  .open-api-tool-overview > div {
+    grid-template-columns: 96px minmax(0, 1fr);
   }
 
   .open-api-document-nav {

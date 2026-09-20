@@ -39,10 +39,18 @@ public final class KnowledgeForms {
         @NotNull @DecimalMin("0") @DecimalMax("1") private BigDecimal scoreThreshold;
         /** 展示真实引用。 */
         private Boolean showCitations;
+        /** 单轮最多调用工具数量。 */
+        @Min(1) @Max(5) private Integer maxToolCalls;
+        /** 显示工具调试信息。 */
+        private Boolean toolDebugFlag;
+        /** 允许操作类工具。 */
+        private Boolean allowActionToolFlag;
         /** 启用。 */
         private Boolean enabledFlag;
         /** 关联的知识库。 */
         @NotNull private List<Long> baseIds;
+        /** 关联的 AI 工具。 */
+        private List<Long> toolIds;
     }
 
     /** 用户助手问答。 */

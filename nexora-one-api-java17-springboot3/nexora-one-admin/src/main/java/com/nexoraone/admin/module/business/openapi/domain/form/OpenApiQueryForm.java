@@ -21,4 +21,7 @@ public class OpenApiQueryForm extends PageParam {
     private String requestMethod;
     /** API状态。 */
     private Integer status;
+    /** AI工具状态：UNPUBLISHED、DRAFT、PENDING、APPROVED、REJECTED。 */
+    @Length(max = 20, message = "AI工具状态最多20个字符")
+    private String aiToolStatus;
 }

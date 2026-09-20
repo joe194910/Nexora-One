@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nexoraone.admin.module.business.application.dao.OpenApiDao;
 import com.nexoraone.admin.module.business.application.domain.entity.OpenApiEntity;
 import com.nexoraone.admin.module.business.application.service.ApplicationDataScopeService;
+import com.nexoraone.admin.module.business.mcp.dao.AiToolMappers;
+import com.nexoraone.admin.module.business.mcp.domain.AiTool;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiEnvironmentDao;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiErrorCodeDao;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiExampleDao;
@@ -41,6 +43,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * API开放平台管理服务。
@@ -64,6 +68,8 @@ public class OpenApiManageService {
     private OpenApiErrorCodeDao errorCodeDao;
     @Resource
     private ApplicationDataScopeService applicationDataScopeService;
+    @Resource
+    private AiToolMappers.ToolDao aiToolDao;
 
     /**
      * 分页查询API管理列表。
@@ -82,6 +88,7 @@ public class OpenApiManageService {
         if (StringUtils.isNotBlank(form.getRequestMethod())) {
             wrapper.eq(OpenApiEntity::getRequestMethod, StringUtils.upperCase(form.getRequestMethod()));
         }
+        applyAiToolStatusFilter(wrapper, form.getAiToolStatus());
         applyCreatorScope(wrapper);
         Page<OpenApiEntity> page = openApiDao.selectPage(
                 new Page<>(form.getPageNum(), form.getPageSize(), !Boolean.FALSE.equals(form.getSearchCount())), wrapper);
@@ -90,6 +97,7 @@ public class OpenApiManageService {
             api.setCurrentVersionStatus(currentVersion == null ? null : currentVersion.getStatus());
             api.setCurrentVersionNo(currentVersion == null ? null : currentVersion.getVersionNo());
         }
+        enrichAiToolRelations(page.getRecords());
         PageResult<OpenApiEntity> result = new PageResult<>();
         result.setPageNum(page.getCurrent());
         result.setPageSize(page.getSize());
@@ -98,6 +106,67 @@ public class OpenApiManageService {
         result.setList(page.getRecords());
         result.setEmptyFlag(page.getRecords().isEmpty());
         return ResponseDTO.ok(result);
+    }
+
+    /**
+     * API列表按关联工具状态过滤。未发布表示尚未建立平台API工具记录。
+     */
+    private void applyAiToolStatusFilter(LambdaQueryWrapper<OpenApiEntity> wrapper, String status) {
+        if (StringUtils.isBlank(status)) {
+            return;
+        }
+        List<AiTool> platformTools = aiToolDao.selectList(new LambdaQueryWrapper<AiTool>()
+                .eq(AiTool::getSourceType, "PLATFORM_API"));
+        Set<Long> allLinkedIds = platformTools.stream()
+                .map(AiTool::getOpenApiId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if ("UNPUBLISHED".equals(status)) {
+            if (!allLinkedIds.isEmpty()) {
+                wrapper.notIn(OpenApiEntity::getOpenApiId, allLinkedIds);
+            }
+            return;
+        }
+        Set<Long> matchedIds = platformTools.stream()
+                .filter(tool -> status.equals(tool.getAuditStatus()))
+                .map(AiTool::getOpenApiId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (matchedIds.isEmpty()) {
+            wrapper.apply("1 = 0");
+        } else {
+            wrapper.in(OpenApiEntity::getOpenApiId, matchedIds);
+        }
+    }
+
+    /**
+     * 补充列表所需的轻量 AI 工具关系，不改变现有 API 分页结构。
+     */
+    private void enrichAiToolRelations(List<OpenApiEntity> apiList) {
+        if (apiList.isEmpty()) {
+            return;
+        }
+        Map<Long, AiTool> tools = aiToolDao.selectList(new LambdaQueryWrapper<AiTool>()
+                        .eq(AiTool::getSourceType, "PLATFORM_API")
+                        .in(AiTool::getOpenApiId, apiList.stream()
+                                .map(OpenApiEntity::getOpenApiId).toList()))
+                .stream()
+                .collect(Collectors.toMap(AiTool::getOpenApiId, Function.identity(),
+                        (left, right) -> left));
+        for (OpenApiEntity api : apiList) {
+            AiTool tool = tools.get(api.getOpenApiId());
+            if (tool == null) {
+                api.setAiToolStatus("UNPUBLISHED");
+                api.setAiToolSyncAvailable(false);
+                continue;
+            }
+            api.setAiToolId(tool.getToolId());
+            api.setAiToolCode(tool.getToolCode());
+            api.setAiToolStatus(tool.getAuditStatus());
+            OpenApiVersionEntity publishedVersion = resolvePublishedVersion(api);
+            api.setAiToolSyncAvailable(publishedVersion != null
+                    && !Objects.equals(publishedVersion.getVersionId(), tool.getSourceApiVersionId()));
+        }
     }
 
     /**
