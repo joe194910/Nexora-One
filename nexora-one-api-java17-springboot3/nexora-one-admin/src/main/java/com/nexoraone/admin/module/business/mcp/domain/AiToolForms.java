@@ -36,6 +36,74 @@ public final class AiToolForms {
         private Long applicationId;
     }
 
+    /** 标准 MCP Server 管理列表分页查询条件。 */
+    @Data
+    public static class McpServerQuery extends PageParam {
+        /** Server 名称或编码关键词。 */
+        @Size(max = 100)
+        private String searchWord;
+        /** 在线状态。 */
+        @Pattern(regexp = "UNKNOWN|ONLINE|OFFLINE|ABNORMAL")
+        private String onlineStatus;
+        /** 启用状态。 */
+        private Boolean enabledFlag;
+        /** 所属应用主键。 */
+        private Long applicationId;
+    }
+
+    /** 标准 MCP Server 新增或更新表单。 */
+    @Data
+    public static class McpServerSave {
+        /** Server 主键；新增时为空。 */
+        private Long serverId;
+        /** Server 所属应用主键。 */
+        @NotNull
+        private Long applicationId;
+        /** 平台内唯一且稳定的 Server 编码。 */
+        @NotBlank
+        @Pattern(regexp = "^[A-Za-z][A-Za-z0-9_-]{2,99}$")
+        private String serverCode;
+        /** Server 展示名称。 */
+        @NotBlank
+        @Size(max = 100)
+        private String serverName;
+        /** Server 能力与使用范围说明。 */
+        @Size(max = 2000)
+        private String description;
+        /** 标准 MCP Streamable HTTP 服务地址。 */
+        @NotBlank
+        @Size(max = 1000)
+        private String endpointUrl;
+        /** 鉴权方式。 */
+        @NotBlank
+        @Pattern(regexp = "NONE|BEARER|API_KEY_HEADER")
+        private String authType;
+        /** API Key 模式使用的请求头名称。 */
+        @Size(max = 100)
+        @Pattern(regexp = "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$")
+        private String authHeaderName;
+        /** Bearer Token 或 API Key；更新时留空表示保留原值。 */
+        @Size(max = 4000)
+        private String authSecret;
+        /** 初始化、发现和调用超时时间，单位为秒。 */
+        @Min(1)
+        @Max(60)
+        private Integer timeoutSeconds;
+        /** 是否允许平台探活和调用。 */
+        private Boolean enabledFlag;
+    }
+
+    /** 标准 MCP Server 启停表单。 */
+    @Data
+    public static class McpServerStatus {
+        /** Server 主键。 */
+        @NotNull
+        private Long serverId;
+        /** 目标启用状态。 */
+        @NotNull
+        private Boolean enabledFlag;
+    }
+
     /** 将已发布平台 API 转换为 AI 工具的表单。 */
     @Data
     public static class PlatformPublish {
@@ -145,6 +213,10 @@ public final class AiToolForms {
         @NotBlank
         @Pattern(regexp = "APPROVED|REJECTED")
         private String auditStatus;
+        /** 审核确定的最终工具类型。 */
+        @NotBlank
+        @Pattern(regexp = "QUERY|ACTION")
+        private String toolType;
         /** 审核确定的最终风险等级。 */
         @NotBlank
         @Pattern(regexp = "LOW|MEDIUM|HIGH")

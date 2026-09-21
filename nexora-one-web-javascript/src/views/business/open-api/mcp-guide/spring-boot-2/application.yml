@@ -1,0 +1,16 @@
+nexora:
+  mcp:
+    endpoint: /mcp
+    server-name: partner-business-mcp
+    server-version: 1.0.0
+    # 可选值：NONE、BEARER、API_KEY。
+    auth-type: BEARER
+    auth-header-name: X-MCP-API-Key
+    # 生产环境必须通过环境变量注入，不要设置可用的默认密钥。
+    auth-secret: ${MCP_AUTH_SECRET:}
+    max-result-length: 1048576
+
+# 原有登录鉴权框架需要放行：
+# - /mcp
+# - /mcp/**
+# 实际访问仍会由 McpController 执行独立 MCP 鉴权。

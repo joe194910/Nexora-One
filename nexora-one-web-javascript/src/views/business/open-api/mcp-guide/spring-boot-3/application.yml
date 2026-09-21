@@ -1,0 +1,16 @@
+nexora:
+  mcp:
+    # 对外暴露的标准 MCP Streamable HTTP 地址。
+    endpoint: /mcp
+    server-name: partner-business-mcp
+    server-version: 1.0.0
+    # 可选值：NONE、BEARER、API_KEY。
+    auth-type: BEARER
+    # API_KEY 模式使用的请求头名称。
+    auth-header-name: X-MCP-API-Key
+    # 生产环境必须通过环境变量注入，不要设置可用的默认密钥。
+    auth-secret: ${MCP_AUTH_SECRET:}
+    max-request-size: 2097152
+
+# 原有登录鉴权框架需要放行 /mcp 和 /mcp/**，
+# 实际访问仍会经过 McpAuthenticationFilter 的独立鉴权。

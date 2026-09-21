@@ -1,6 +1,7 @@
 package com.nexoraone.admin.module.business.mcp.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,6 +16,7 @@ import com.nexoraone.admin.module.business.application.service.ApplicationDataSc
 import com.nexoraone.admin.module.business.mcp.dao.AiToolMappers;
 import com.nexoraone.admin.module.business.mcp.domain.AiTool;
 import com.nexoraone.admin.module.business.mcp.domain.AiToolCallLog;
+import com.nexoraone.admin.module.business.mcp.domain.McpServer;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiEnvironmentDao;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiParameterDao;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiVersionDao;
@@ -25,7 +27,6 @@ import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.InetAddress;
@@ -77,11 +78,18 @@ public class AiToolInvocationService {
     @Resource
     private AiToolSchemaService schemaService;
     @Resource
+    private McpServerService mcpServerService;
+    @Resource
+    private McpRemoteClientService mcpRemoteClientService;
+    @Resource
     private ObjectMapper objectMapper;
 
     /** 管理端在线测试，操作类工具在明确点击测试后视为已确认。 */
     public InvocationResult test(Long toolId, Map<String, Object> arguments) {
         AiTool tool = toolService.requireManageable(toolId);
+        if (Boolean.TRUE.equals(tool.getSchemaSyncRequired())) {
+            throw new IllegalArgumentException("远端 Schema 已变化，请先同步工具定义再测试");
+        }
         ExecutionContext context = new ExecutionContext(
                 null, applicationDataScopeService.requireEmployee().getEmployeeId(),
                 null, null, null);
@@ -96,17 +104,39 @@ public class AiToolInvocationService {
         }
     }
 
+    /**
+     * 智能助手运行时调用工具，并在真正执行前重新校验工具的审核、启用和来源状态。
+     *
+     * @param tool 模型选择工具时读取的工具快照
+     * @param arguments 模型生成且符合输入 Schema 的参数
+     * @param context 服务端构造的可信用户、助手和会话上下文
+     * @return 实际调用结果或等待确认结果
+     */
+    public InvocationResult invokeForAssistant(
+            AiTool tool, Map<String, Object> arguments, ExecutionContext context) {
+        if (context.assistantId() == null) {
+            throw new IllegalArgumentException("助手工具调用缺少助手上下文");
+        }
+        AiTool callable = toolService.requireEnabledForAssistant(
+                tool.getToolId(), context.assistantId());
+        return invoke(callable, arguments, context, false, null);
+    }
+
     /** 助手运行时调用工具；操作类或显式配置的工具先返回确认请求。 */
-    @Transactional(rollbackFor = Exception.class)
-    public InvocationResult invoke(AiTool tool, Map<String, Object> arguments,
-                                   ExecutionContext context, boolean confirmed,
-                                   String suppliedRequestId) {
+    private InvocationResult invoke(AiTool tool, Map<String, Object> arguments,
+                                    ExecutionContext context, boolean confirmed,
+                                    String suppliedRequestId) {
         schemaService.validateArguments(tool.getInputSchema(), arguments);
         enforceRateLimit(tool.getToolId(), context.userId());
         String requestId = StringUtils.defaultIfBlank(suppliedRequestId, newId());
         AiToolCallLog existing = callLogDao.selectOne(new LambdaQueryWrapper<AiToolCallLog>()
                 .eq(AiToolCallLog::getRequestId, requestId).last("limit 1"));
         if (existing != null) {
+            if (!Objects.equals(existing.getToolId(), tool.getToolId())
+                    || !Objects.equals(existing.getUserId(), context.userId())
+                    || !Objects.equals(existing.getAssistantId(), context.assistantId())) {
+                throw new IllegalArgumentException("请求编号已被其他工具调用占用");
+            }
             return resultFromLog(existing);
         }
 
@@ -138,7 +168,6 @@ public class AiToolInvocationService {
     }
 
     /** 用户确认或拒绝一笔待执行操作。 */
-    @Transactional(rollbackFor = Exception.class)
     public InvocationResult confirm(String requestId, boolean approved) {
         AiToolCallLog log = callLogDao.selectOne(new LambdaQueryWrapper<AiToolCallLog>()
                 .eq(AiToolCallLog::getRequestId, requestId).last("limit 1"));
@@ -150,16 +179,63 @@ public class AiToolInvocationService {
                 && !applicationDataScopeService.isPlatformAdministrator()) {
             throw new IllegalArgumentException("无权处理该工具调用");
         }
-        log.setConfirmationTime(LocalDateTime.now());
+        if (log.getCreateTime() != null
+                && log.getCreateTime().isBefore(LocalDateTime.now().minusMinutes(30))) {
+            callLogDao.update(null, new LambdaUpdateWrapper<AiToolCallLog>()
+                    .eq(AiToolCallLog::getCallId, log.getCallId())
+                    .eq(AiToolCallLog::getStatus, "WAITING_CONFIRMATION")
+                    .set(AiToolCallLog::getStatus, "CONFIRMATION_EXPIRED")
+                    .set(AiToolCallLog::getErrorMessage, "工具调用确认已超过 30 分钟")
+                    .set(AiToolCallLog::getUpdateTime, LocalDateTime.now()));
+            throw new IllegalArgumentException("工具调用确认已过期，请重新发起");
+        }
+        LocalDateTime confirmationTime = LocalDateTime.now();
         if (!approved) {
+            int updated = callLogDao.update(null, new LambdaUpdateWrapper<AiToolCallLog>()
+                    .eq(AiToolCallLog::getCallId, log.getCallId())
+                    .eq(AiToolCallLog::getStatus, "WAITING_CONFIRMATION")
+                    .set(AiToolCallLog::getStatus, "USER_REJECTED")
+                    .set(AiToolCallLog::getConfirmationTime, confirmationTime)
+                    .set(AiToolCallLog::getUpdateTime, confirmationTime));
+            if (updated == 0) {
+                throw new IllegalArgumentException("该工具调用已经处理");
+            }
             log.setStatus("USER_REJECTED");
-            log.setUpdateTime(LocalDateTime.now());
-            callLogDao.updateById(log);
+            log.setConfirmationTime(confirmationTime);
+            log.setUpdateTime(confirmationTime);
             return resultFromLog(log);
         }
-        AiTool tool = toolService.requireEnabled(log.getToolId());
-        Map<String, Object> arguments = readMap(log.getArgumentsJson());
-        ExecutionContext context = readContext(log.getPendingContextJson());
+        int updated = callLogDao.update(null, new LambdaUpdateWrapper<AiToolCallLog>()
+                .eq(AiToolCallLog::getCallId, log.getCallId())
+                .eq(AiToolCallLog::getStatus, "WAITING_CONFIRMATION")
+                .set(AiToolCallLog::getStatus, "CONFIRMED")
+                .set(AiToolCallLog::getConfirmationTime, confirmationTime)
+                .set(AiToolCallLog::getUpdateTime, confirmationTime));
+        if (updated == 0) {
+            throw new IllegalArgumentException("该工具调用已经处理");
+        }
+        log.setStatus("CONFIRMED");
+        log.setConfirmationTime(confirmationTime);
+        log.setUpdateTime(confirmationTime);
+        long preparationStart = System.currentTimeMillis();
+        AiTool tool;
+        Map<String, Object> arguments;
+        ExecutionContext context;
+        try {
+            arguments = readMap(log.getArgumentsJson());
+            context = readContext(log.getPendingContextJson());
+            if (!Objects.equals(log.getAssistantId(), context.assistantId())
+                    || !Objects.equals(log.getUserId(), context.userId())) {
+                throw new IllegalStateException("工具调用上下文与待确认记录不一致");
+            }
+            tool = toolService.requireEnabledForAssistant(
+                    log.getToolId(), context.assistantId());
+        } catch (RuntimeException exception) {
+            fail(log, "FAILED", "PRECONDITION_FAILED",
+                    StringUtils.defaultIfBlank(exception.getMessage(), "确认后执行条件已变化"),
+                    preparationStart);
+            throw exception;
+        }
         return execute(log, tool, arguments, context);
     }
 
@@ -178,7 +254,7 @@ public class AiToolInvocationService {
         return resultFromLog(log);
     }
 
-    /** 执行工具 HTTP 请求，校验响应并完整记录成功或失败结果。 */
+    /** 执行平台 API、标准 MCP 或第三方 HTTP 工具，并完整记录成功或失败结果。 */
     private InvocationResult execute(AiToolCallLog log, AiTool tool,
                                      Map<String, Object> arguments,
                                      ExecutionContext context) {
@@ -187,10 +263,20 @@ public class AiToolInvocationService {
         log.setUpdateTime(LocalDateTime.now());
         callLogDao.updateById(log);
         try {
-            HttpOutcome outcome = AiToolService.PLATFORM_API.equals(tool.getSourceType())
-                    ? invokePlatform(tool, arguments, context, log)
-                    : invokeExternal(tool, arguments, context, log);
-            Object result = parseBody(outcome.body());
+            Object result;
+            Integer httpStatus;
+            if (AiToolService.PLATFORM_API.equals(tool.getSourceType())) {
+                HttpOutcome outcome = invokePlatform(tool, arguments, context, log);
+                result = parseBody(outcome.body());
+                httpStatus = outcome.statusCode();
+            } else if (AiToolService.STANDARD_MCP.equals(tool.getSourceType())) {
+                result = invokeStandardMcp(tool, arguments);
+                httpStatus = null;
+            } else {
+                HttpOutcome outcome = invokeExternal(tool, arguments, context, log);
+                result = parseBody(outcome.body());
+                httpStatus = outcome.statusCode();
+            }
             Object schemaResult = result;
             try {
                 schemaService.validateResult(tool.getOutputSchema(), schemaResult);
@@ -204,7 +290,7 @@ public class AiToolInvocationService {
             }
             log.setStatus("SUCCESS");
             log.setResultJson(writeJson(schemaResult));
-            log.setHttpStatus(outcome.statusCode());
+            log.setHttpStatus(httpStatus);
             log.setDurationMs(Math.max(System.currentTimeMillis() - start, 1));
             log.setErrorCode(null);
             log.setErrorMessage(null);
@@ -213,7 +299,7 @@ public class AiToolInvocationService {
             callLogDao.updateById(log);
             incrementToolCall(tool);
             return new InvocationResult(log.getRequestId(), log.getTraceId(), log.getStatus(),
-                    schemaResult, "工具调用成功", outcome.statusCode(),
+                    schemaResult, "工具调用成功", httpStatus,
                     log.getDurationMs(), false);
         } catch (IllegalArgumentException exception) {
             fail(log, "SCHEMA_ERROR", "SCHEMA_ERROR", exception.getMessage(), start);
@@ -222,7 +308,9 @@ public class AiToolInvocationService {
             fail(log, "TIMEOUT", "TIMEOUT", "工具调用超时", start);
             throw new IllegalStateException("工具调用超时");
         } catch (Exception exception) {
-            fail(log, "FAILED", "HTTP_CALL_FAILED",
+            fail(log, "FAILED",
+                    AiToolService.STANDARD_MCP.equals(tool.getSourceType())
+                            ? "MCP_CALL_FAILED" : "HTTP_CALL_FAILED",
                     StringUtils.defaultIfBlank(exception.getMessage(), "工具调用失败"), start);
             throw new IllegalStateException("工具调用失败：" + exception.getMessage());
         }
@@ -298,6 +386,18 @@ public class AiToolInvocationService {
         headers.put("X-Nexora-Signature",
                 credentialManager.signForPlatform(credential, canonical));
         return send(method, url, tool.getContentType(), tool.getTimeoutSeconds(), headers, body);
+    }
+
+    /** 通过标准 MCP 客户端调用远端 Server 暴露的原始工具。 */
+    private Object invokeStandardMcp(AiTool tool, Map<String, Object> arguments) {
+        if (tool.getMcpServerId() == null || StringUtils.isBlank(tool.getRemoteToolName())) {
+            throw new IllegalStateException("标准 MCP 工具缺少 Server 或远端工具名称");
+        }
+        McpServer server = mcpServerService.requireCallable(tool.getMcpServerId());
+        if (!Objects.equals(server.getApplicationId(), tool.getApplicationId())) {
+            throw new IllegalStateException("标准 MCP 工具与 Server 所属应用不一致");
+        }
+        return mcpRemoteClientService.callTool(server, tool.getRemoteToolName(), arguments);
     }
 
     /** 将服务端可信执行上下文转换为第三方回调载荷。 */
@@ -569,6 +669,7 @@ public class AiToolInvocationService {
         return switch (StringUtils.defaultString(status)) {
             case "WAITING_CONFIRMATION" -> "等待用户确认";
             case "USER_REJECTED" -> "用户已拒绝执行";
+            case "CONFIRMATION_EXPIRED" -> "工具调用确认已过期";
             case "SUCCESS" -> "工具调用成功";
             case "TIMEOUT" -> "工具调用超时";
             default -> "工具调用处理中";

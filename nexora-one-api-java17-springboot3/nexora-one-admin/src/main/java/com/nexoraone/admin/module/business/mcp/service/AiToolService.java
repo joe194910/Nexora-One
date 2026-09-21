@@ -14,6 +14,7 @@ import com.nexoraone.admin.module.business.mcp.domain.AiTool;
 import com.nexoraone.admin.module.business.mcp.domain.AiToolAssistant;
 import com.nexoraone.admin.module.business.mcp.domain.AiToolForms;
 import com.nexoraone.admin.module.business.mcp.domain.AiToolSchemaSync;
+import com.nexoraone.admin.module.business.mcp.domain.McpServer;
 import com.nexoraone.admin.module.business.openapi.dao.OpenApiVersionDao;
 import com.nexoraone.admin.module.business.openapi.domain.entity.OpenApiVersionEntity;
 import com.nexoraone.admin.module.business.openapi.service.OpenApiManageService;
@@ -40,6 +41,7 @@ public class AiToolService {
 
     public static final String PLATFORM_API = "PLATFORM_API";
     public static final String EXTERNAL_HTTP = "EXTERNAL_HTTP";
+    public static final String STANDARD_MCP = "STANDARD_MCP";
     public static final String APPROVED = "APPROVED";
     public static final String ENABLED = "ENABLED";
 
@@ -49,6 +51,8 @@ public class AiToolService {
     private AiToolMappers.SchemaSyncDao schemaSyncDao;
     @Resource
     private AiToolMappers.AssistantToolDao assistantToolDao;
+    @Resource
+    private AiToolMappers.McpServerDao mcpServerDao;
     @Resource
     private OpenApiDao openApiDao;
     @Resource
@@ -100,6 +104,7 @@ public class AiToolService {
         Map<String, Long> result = new LinkedHashMap<>();
         result.put("total", (long) visible.size());
         result.put("platformApi", count(visible, PLATFORM_API));
+        result.put("standardMcp", count(visible, STANDARD_MCP));
         result.put("externalHttp", count(visible, EXTERNAL_HTTP));
         result.put("pending", visible.stream()
                 .filter(item -> "PENDING".equals(item.getAuditStatus())).count());
@@ -224,6 +229,7 @@ public class AiToolService {
         tool.setAuditStatus(Boolean.TRUE.equals(form.getSubmitReview()) ? "PENDING" : "DRAFT");
         tool.setEnabledStatus("DISABLED");
         tool.setOnlineStatus("ONLINE");
+        tool.setSchemaSyncRequired(false);
         tool.setTotalCallCount(0L);
         tool.setCreateUserId(employee.getEmployeeId());
         tool.setUpdateUserId(employee.getEmployeeId());
@@ -256,6 +262,13 @@ public class AiToolService {
         tool.setTimeoutSeconds(Objects.requireNonNullElse(version.getTimeoutSeconds(), 30));
         tool.setInputSchema(schemas.inputSchema());
         tool.setOutputSchema(schemas.outputSchema());
+        tool.setSchemaSyncRequired(false);
+        tool.setAuditStatus("PENDING");
+        tool.setAuditRemark(null);
+        tool.setEnabledStatus("DISABLED");
+        tool.setLastTestStatus(null);
+        tool.setLastTestMessage("API 版本已同步，请重新测试并审核后启用");
+        tool.setLastTestTime(null);
         tool.setUpdateUserId(applicationDataScopeService.requireEmployee().getEmployeeId());
         tool.setUpdateTime(LocalDateTime.now());
         toolDao.updateById(tool);
@@ -309,6 +322,7 @@ public class AiToolService {
         tool.setOnlineStatus("UNKNOWN");
         tool.setLastTestStatus(null);
         tool.setLastTestMessage(null);
+        tool.setLastTestTime(null);
         tool.setUpdateTime(LocalDateTime.now());
         toolDao.updateById(tool);
         return toView(tool);
@@ -379,20 +393,29 @@ public class AiToolService {
         return tools.size();
     }
 
-    /** 审核工具；通过前必须完成一次成功测试。 */
+    /** 审核工具；通过前必须完成一次成功测试，通过后仍需管理员显式启用。 */
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> review(AiToolForms.Review form) {
         AiTool tool = requireManageable(form.getToolId());
         if ("APPROVED".equals(form.getAuditStatus())
+                && Boolean.TRUE.equals(tool.getSchemaSyncRequired())) {
+            throw new IllegalArgumentException("远端 Schema 已变化，请先同步工具定义");
+        }
+        if ("APPROVED".equals(form.getAuditStatus())
                 && !"SUCCESS".equals(tool.getLastTestStatus())) {
             throw new IllegalArgumentException("审核通过前请先完成一次成功的工具测试");
         }
+        if ("APPROVED".equals(form.getAuditStatus()) && !sourceAvailable(tool)) {
+            throw new IllegalArgumentException("工具来源当前不可用，不能审核通过");
+        }
         tool.setAuditStatus(form.getAuditStatus());
         tool.setAuditRemark(form.getRemark());
-        tool.setRiskLevel(form.getRiskLevel());
+        tool.setToolType(form.getToolType());
+        tool.setRiskLevel("ACTION".equals(form.getToolType())
+                && "LOW".equals(form.getRiskLevel()) ? "MEDIUM" : form.getRiskLevel());
         tool.setConfirmationPolicy(resolveConfirmation(
-                tool.getToolType(), form.getConfirmationPolicy()));
-        tool.setEnabledStatus("APPROVED".equals(form.getAuditStatus()) ? ENABLED : "DISABLED");
+                form.getToolType(), form.getConfirmationPolicy()));
+        tool.setEnabledStatus("DISABLED");
         if ("APPROVED".equals(form.getAuditStatus()) && PLATFORM_API.equals(tool.getSourceType())) {
             tool.setOnlineStatus("ONLINE");
         }
@@ -408,6 +431,13 @@ public class AiToolService {
         AiTool tool = requireManageable(form.getToolId());
         if (ENABLED.equals(form.getEnabledStatus()) && !APPROVED.equals(tool.getAuditStatus())) {
             throw new IllegalArgumentException("只有审核通过的工具可以启用");
+        }
+        if (ENABLED.equals(form.getEnabledStatus())
+                && !"SUCCESS".equals(tool.getLastTestStatus())) {
+            throw new IllegalArgumentException("启用工具前请先完成一次成功测试");
+        }
+        if (ENABLED.equals(form.getEnabledStatus()) && !sourceAvailable(tool)) {
+            throw new IllegalArgumentException("工具来源当前不可用，不能启用");
         }
         tool.setEnabledStatus(form.getEnabledStatus());
         tool.setUpdateUserId(applicationDataScopeService.requireEmployee().getEmployeeId());
@@ -461,7 +491,8 @@ public class AiToolService {
         for (AiTool tool : tools) {
             if (!APPROVED.equals(tool.getAuditStatus())
                     || !ENABLED.equals(tool.getEnabledStatus())
-                    || !Set.of("ONLINE", "UNKNOWN").contains(tool.getOnlineStatus())) {
+                    || !Set.of("ONLINE", "UNKNOWN").contains(tool.getOnlineStatus())
+                    || !sourceAvailable(tool)) {
                 throw new IllegalArgumentException("只能关联已审核、已启用且在线的工具");
             }
             if ("ACTION".equals(tool.getToolType())
@@ -516,8 +547,21 @@ public class AiToolService {
         AiTool tool = toolDao.selectById(toolId);
         if (tool == null || !APPROVED.equals(tool.getAuditStatus())
                 || !ENABLED.equals(tool.getEnabledStatus())
-                || !Set.of("ONLINE", "UNKNOWN").contains(tool.getOnlineStatus())) {
+                || !Set.of("ONLINE", "UNKNOWN").contains(tool.getOnlineStatus())
+                || !sourceAvailable(tool)) {
             throw new IllegalArgumentException("工具未审核、未启用或不在线");
+        }
+        return tool;
+    }
+
+    /** 读取助手仍然获准使用的可调用工具，防止解绑或停用后的并发调用。 */
+    public AiTool requireEnabledForAssistant(Long toolId, Long assistantId) {
+        AiTool tool = requireEnabled(toolId);
+        if (assistantId == null || assistantToolDao.selectCount(
+                new LambdaQueryWrapper<AiToolAssistant>()
+                        .eq(AiToolAssistant::getAssistantId, assistantId)
+                        .eq(AiToolAssistant::getToolId, toolId)) == 0) {
+            throw new IllegalArgumentException("工具已不再关联当前智能助手");
         }
         return tool;
     }
@@ -547,6 +591,7 @@ public class AiToolService {
         tool.setAuditStatus("PENDING");
         tool.setEnabledStatus("DISABLED");
         tool.setOnlineStatus("UNKNOWN");
+        tool.setSchemaSyncRequired(false);
         tool.setTotalCallCount(0L);
         tool.setCreateTime(LocalDateTime.now());
         tool.setUpdateTime(LocalDateTime.now());
@@ -649,11 +694,20 @@ public class AiToolService {
                 application.getCreateUserId(), employee.getEmployeeId());
     }
 
-    /** 判断工具对应的平台 API 或第三方应用当前是否仍然可用。 */
+    /** 判断工具对应的平台 API、标准 MCP Server 或第三方应用是否仍然可用。 */
     private boolean sourceAvailable(AiTool tool) {
+        if (Boolean.TRUE.equals(tool.getSchemaSyncRequired())) {
+            return false;
+        }
         if (PLATFORM_API.equals(tool.getSourceType())) {
             OpenApiEntity api = openApiDao.selectById(tool.getOpenApiId());
             return api != null && Objects.equals(api.getStatus(), 4);
+        }
+        if (STANDARD_MCP.equals(tool.getSourceType())) {
+            McpServer server = mcpServerDao.selectById(tool.getMcpServerId());
+            return server != null
+                    && Boolean.TRUE.equals(server.getEnabledFlag())
+                    && "ONLINE".equals(server.getOnlineStatus());
         }
         ApplicationEntity application = applicationDao.selectById(tool.getApplicationId());
         return application != null && (Objects.equals(application.getOnlineStatus(), 2)
@@ -675,6 +729,16 @@ public class AiToolService {
             result.put("latestVersion", latestVersion == null ? null : latestVersion.getVersionNo());
             result.put("syncAvailable", latestVersion != null
                     && !Objects.equals(latestVersion.getVersionId(), tool.getSourceApiVersionId()));
+        } else if (STANDARD_MCP.equals(tool.getSourceType())) {
+            McpServer server = mcpServerDao.selectById(tool.getMcpServerId());
+            result.put("sourceName", server == null ? null : server.getServerName());
+            result.put("sourceCode", server == null ? null : server.getServerCode());
+            result.put("sourceVersion", server == null ? null : server.getServerVersion());
+            result.put("latestVersion", null);
+            result.put("syncAvailable", false);
+            result.put("endpointUrl", server == null ? null : server.getEndpointUrl());
+            result.put("authType", server == null ? null : server.getAuthType());
+            result.put("protocolVersion", server == null ? null : server.getProtocolVersion());
         } else {
             ApplicationEntity application = applicationDao.selectById(tool.getApplicationId());
             result.put("sourceName", application == null ? null : application.getApplicationName());

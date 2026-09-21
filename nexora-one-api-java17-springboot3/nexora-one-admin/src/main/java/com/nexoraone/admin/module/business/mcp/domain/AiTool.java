@@ -7,7 +7,7 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-/** 平台 API 与第三方 HTTP 的统一 AI 工具定义。 */
+/** 平台 API、标准 MCP Server 与第三方 HTTP 适配工具的统一 AI 工具定义。 */
 @Data
 @TableName("nexora_one_ai_tool")
 public class AiTool {
@@ -20,7 +20,7 @@ public class AiTool {
     private String toolName;
     /** 面向模型的工具能力说明。 */
     private String description;
-    /** 工具来源：平台 API 或第三方 HTTP。 */
+    /** 工具来源：平台 API、标准 MCP Server 或第三方 HTTP。 */
     private String sourceType;
     /** 工具类型：查询工具或操作工具。 */
     private String toolType;
@@ -28,8 +28,12 @@ public class AiTool {
     private Long openApiId;
     /** 当前 Schema 关联的平台 API 版本主键。 */
     private Long sourceApiVersionId;
-    /** 第三方 HTTP 工具所属应用主键。 */
+    /** 标准 MCP 或第三方 HTTP 工具所属应用主键。 */
     private Long applicationId;
+    /** 标准 MCP Server 主键，非标准 MCP 工具为空。 */
+    private Long mcpServerId;
+    /** 远端 MCP Server 声明的原始工具名称。 */
+    private String remoteToolName;
     /** 第三方 HTTP 工具回调地址。 */
     private String callbackUrl;
     /** 工具调用使用的 HTTP 方法。 */
@@ -58,6 +62,8 @@ public class AiTool {
     private String lastTestStatus;
     /** 最近一次测试说明。 */
     private String lastTestMessage;
+    /** 远端工具 Schema 是否发生变化并等待管理员显式同步。 */
+    private Boolean schemaSyncRequired;
     /** 最近一次测试时间。 */
     private LocalDateTime lastTestTime;
     /** 第三方工具最近一次心跳时间。 */

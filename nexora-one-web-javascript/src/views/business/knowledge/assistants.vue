@@ -17,7 +17,9 @@
         :pagination="{ pageSize: 10 }"
       >
         <a-table-column title="助手" :width="190">
-          <template #default="{ record }"><strong>{{ record.assistant.assistantName }}</strong></template>
+          <template #default="{ record }"
+            ><strong>{{ record.assistant.assistantName }}</strong></template
+          >
         </a-table-column>
         <a-table-column title="对话模型" :width="160">
           <template #default="{ record }">
@@ -39,9 +41,7 @@
           </template>
         </a-table-column>
         <a-table-column title="TopK / 阈值" :width="110">
-          <template #default="{ record }">
-            {{ record.assistant.topK }} / {{ record.assistant.scoreThreshold }}
-          </template>
+          <template #default="{ record }"> {{ record.assistant.topK }} / {{ record.assistant.scoreThreshold }} </template>
         </a-table-column>
         <a-table-column title="来源" :width="90">
           <template #default="{ record }">
@@ -70,11 +70,7 @@
               {{ record.assistant.publishedFlag ? '下架' : '上架' }}
             </a-button>
             <a-button v-if="record.owned" type="link" @click="edit(record)">编辑</a-button>
-            <a-popconfirm
-              v-if="record.owned"
-              title="删除助手及全部会话？知识库和工具不会被删除。"
-              @confirm="remove(record)"
-            >
+            <a-popconfirm v-if="record.owned" title="删除助手及全部会话？知识库和工具不会被删除。" @confirm="remove(record)">
               <a-button type="link" danger>删除</a-button>
             </a-popconfirm>
           </template>
@@ -101,7 +97,9 @@
                 :class="{ 'knowledge-chat__conversation--active': conversationId === item.conversationId }"
                 @click="selectConversation(item)"
               >
-                <a-space><MessageOutlined /><span>{{ item.title }}</span></a-space>
+                <a-space
+                  ><MessageOutlined /><span>{{ item.title }}</span></a-space
+                >
                 <a-popconfirm title="删除此会话？" @confirm.stop="deleteConversation(item)">
                   <a-button type="text" size="small" aria-label="删除会话" @click.stop><DeleteOutlined /></a-button>
                 </a-popconfirm>
@@ -141,11 +139,7 @@
                   >
                     <template #action>
                       <a-space>
-                        <a-button
-                          size="small"
-                          :loading="confirmingRequestId === call.requestId"
-                          @click="confirmToolCall(entry, call, false)"
-                        >
+                        <a-button size="small" :loading="confirmingRequestId === call.requestId" @click="confirmToolCall(entry, call, false)">
                           拒绝
                         </a-button>
                         <a-button
@@ -211,11 +205,7 @@
       </div>
     </template>
 
-    <a-drawer
-      v-model:open="drawer"
-      :title="form.assistantId ? '编辑智能助手' : '新建智能助手'"
-      width="min(640px, 100vw)"
-    >
+    <a-drawer v-model:open="drawer" :title="form.assistantId ? '编辑智能助手' : '新建智能助手'" width="min(640px, 100vw)">
       <a-form layout="vertical">
         <a-form-item label="助手名称" required>
           <a-input v-model:value="form.assistantName" :maxlength="100" />
@@ -232,19 +222,12 @@
         </a-form-item>
         <a-form-item label="关联知识库">
           <a-select v-model:value="form.baseIds" mode="multiple" style="width: 100%" placeholder="可选择多个知识库">
-            <a-select-option
-              v-for="row in bases.filter((item) => item.base.enabledFlag)"
-              :key="row.base.baseId"
-              :value="row.base.baseId"
-            >
+            <a-select-option v-for="row in bases.filter((item) => item.base.enabledFlag)" :key="row.base.baseId" :value="row.base.baseId">
               {{ row.base.baseName }} · {{ row.documentIds.length }} 个文档
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item
-          label="关联AI工具"
-          extra="仅展示已审核、已启用且来源在线的工具；工具版本升级后需在 MCP 工具管理中手动同步。"
-        >
+        <a-form-item label="关联AI工具" extra="仅展示已审核、已启用且来源在线的工具；工具版本升级后需在 MCP 工具管理中手动同步。">
           <a-select
             v-model:value="form.toolIds"
             mode="multiple"
@@ -261,8 +244,8 @@
                 <span>{{ tool.toolCode }}</span>
               </div>
               <a-space>
-                <a-tag :color="tool.sourceType === 'PLATFORM_API' ? 'blue' : 'purple'">
-                  {{ tool.sourceType === 'PLATFORM_API' ? '平台API' : '第三方HTTP' }}
+                <a-tag :color="toolSourceMeta(tool.sourceType).color">
+                  {{ toolSourceMeta(tool.sourceType).text }}
                 </a-tag>
                 <a-tag :color="tool.toolType === 'ACTION' ? 'orange' : 'green'">
                   {{ tool.toolType === 'ACTION' ? '操作' : '查询' }}
@@ -280,13 +263,7 @@
           </a-col>
           <a-col :span="12">
             <a-form-item label="相似度阈值">
-              <a-input-number
-                v-model:value="form.scoreThreshold"
-                :min="0"
-                :max="1"
-                :step="0.05"
-                style="width: 100%"
-              />
+              <a-input-number v-model:value="form.scoreThreshold" :min="0" :max="1" :step="0.05" style="width: 100%" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
@@ -296,13 +273,8 @@
           </a-col>
         </a-row>
         <a-form-item label="允许操作类工具">
-          <a-switch
-            v-model:checked="form.allowActionToolFlag"
-            :disabled="selectedActionTools.length > 0"
-          />
-          <span v-if="selectedActionTools.length" class="knowledge-form-help">
-            已选择操作类工具，必须开启；实际执行前仍会要求用户确认。
-          </span>
+          <a-switch v-model:checked="form.allowActionToolFlag" :disabled="selectedActionTools.length > 0" />
+          <span v-if="selectedActionTools.length" class="knowledge-form-help"> 已选择操作类工具，必须开启；实际执行前仍会要求用户确认。 </span>
         </a-form-item>
         <a-form-item label="显示工具调试信息">
           <a-switch v-model:checked="form.toolDebugFlag" />
@@ -360,10 +332,12 @@
   const initialized = ref(false);
   const form = reactive(defaultForm());
 
-  const toolOptions = computed(() => availableTools.value.map((tool) => ({
-    value: tool.toolId,
-    label: `${tool.toolName}（${tool.toolCode}）`,
-  })));
+  const toolOptions = computed(() =>
+    availableTools.value.map((tool) => ({
+      value: tool.toolId,
+      label: `${tool.toolName}（${tool.toolCode}）`,
+    }))
+  );
   const selectedTools = computed(() => availableTools.value.filter((tool) => form.toolIds.includes(tool.toolId)));
   const selectedActionTools = computed(() => selectedTools.value.filter((tool) => tool.toolType === 'ACTION'));
 
@@ -511,14 +485,16 @@
         .filter((call) => call.status === 'WAITING_CONFIRMATION' && call.requestId)
         .forEach((call) => requests.push({ entry, call }));
     });
-    await Promise.all(requests.map(async ({ entry, call }) => {
-      try {
-        const response = await mcpToolApi.callResult(call.requestId);
-        updateToolCall(entry, call.requestId, response.data);
-      } catch (error) {
-        smartSentry.captureError(error);
-      }
-    }));
+    await Promise.all(
+      requests.map(async ({ entry, call }) => {
+        try {
+          const response = await mcpToolApi.callResult(call.requestId);
+          updateToolCall(entry, call.requestId, response.data);
+        } catch (error) {
+          smartSentry.captureError(error);
+        }
+      })
+    );
   }
 
   /** 删除本人会话，并在必要时退出当前会话。 */
@@ -544,10 +520,12 @@
     sending.value = true;
     scrollBottom();
     try {
-      const result = (await api.chat(active.value.assistant.assistantId, {
-        conversationId: conversationId.value,
-        question: text,
-      })).data;
+      const result = (
+        await api.chat(active.value.assistant.assistantId, {
+          conversationId: conversationId.value,
+          question: text,
+        })
+      ).data;
       conversationId.value = result.conversationId;
       messages.value.push({
         role: 'assistant',
@@ -584,9 +562,9 @@
 
   /** 合并最新调用状态，同时保留模型生成的工具名称和参数。 */
   function updateToolCall(entry, requestId, result) {
-    const calls = toolCalls(entry).map((call) => call.requestId === requestId
-      ? { ...call, ...result, confirmationRequired: result?.confirmationRequired ?? false }
-      : call);
+    const calls = toolCalls(entry).map((call) =>
+      call.requestId === requestId ? { ...call, ...result, confirmationRequired: result?.confirmationRequired ?? false } : call
+    );
     entry.toolCallsJson = JSON.stringify(calls);
   }
 
@@ -619,25 +597,40 @@
 
   /** 返回工具调用状态在页面上的中文文案和颜色。 */
   function toolStatusMeta(status) {
-    return {
-      WAITING_CONFIRMATION: { color: 'orange', text: '待确认' },
-      CREATED: { color: 'processing', text: '已创建' },
-      EXECUTING: { color: 'processing', text: '执行中' },
-      SUCCESS: { color: 'green', text: '成功' },
-      USER_REJECTED: { color: 'default', text: '已拒绝' },
-      TIMEOUT: { color: 'red', text: '超时' },
-      SCHEMA_ERROR: { color: 'red', text: 'Schema错误' },
-      FAILED: { color: 'red', text: '失败' },
-    }[status] || { color: 'default', text: status || '未知' };
+    return (
+      {
+        WAITING_CONFIRMATION: { color: 'orange', text: '待确认' },
+        CREATED: { color: 'processing', text: '已创建' },
+        EXECUTING: { color: 'processing', text: '执行中' },
+        SUCCESS: { color: 'green', text: '成功' },
+        USER_REJECTED: { color: 'default', text: '已拒绝' },
+        TIMEOUT: { color: 'red', text: '超时' },
+        SCHEMA_ERROR: { color: 'red', text: 'Schema错误' },
+        FAILED: { color: 'red', text: '失败' },
+      }[status] || { color: 'default', text: status || '未知' }
+    );
   }
 
   /** 返回风险等级展示信息。 */
   function riskMeta(value) {
-    return {
-      LOW: { color: 'green', text: '低' },
-      MEDIUM: { color: 'orange', text: '中' },
-      HIGH: { color: 'red', text: '高' },
-    }[value] || { color: 'default', text: '未知' };
+    return (
+      {
+        LOW: { color: 'green', text: '低' },
+        MEDIUM: { color: 'orange', text: '中' },
+        HIGH: { color: 'red', text: '高' },
+      }[value] || { color: 'default', text: '未知' }
+    );
+  }
+
+  /** 返回智能助手工具选择器中使用的来源文案和颜色。 */
+  function toolSourceMeta(value) {
+    return (
+      {
+        PLATFORM_API: { color: 'blue', text: '平台API' },
+        STANDARD_MCP: { color: 'cyan', text: '标准MCP' },
+        EXTERNAL_HTTP: { color: 'purple', text: 'HTTP适配' },
+      }[value] || { color: 'default', text: '未知来源' }
+    );
   }
 
   /** 格式化调试参数和工具结果。 */
@@ -651,9 +644,11 @@
 
   /** 生成列表和聊天标题中使用的知识库摘要。 */
   function baseText(row) {
-    return row.baseNames?.join('、')
-      || row.baseIds?.map((id) => bases.value.find((item) => item.base.baseId === id)?.base.baseName || id).join('、')
-      || '未关联';
+    return (
+      row.baseNames?.join('、') ||
+      row.baseIds?.map((id) => bases.value.find((item) => item.base.baseId === id)?.base.baseName || id).join('、') ||
+      '未关联'
+    );
   }
 
   /** 新消息出现后滚动到消息区底部。 */

@@ -5,6 +5,7 @@ import com.nexoraone.admin.module.business.mcp.domain.AiTool;
 import com.nexoraone.admin.module.business.mcp.domain.AiToolAssistant;
 import com.nexoraone.admin.module.business.mcp.domain.AiToolCallLog;
 import com.nexoraone.admin.module.business.mcp.domain.AiToolSchemaSync;
+import com.nexoraone.admin.module.business.mcp.domain.McpServer;
 import org.apache.ibatis.annotations.Mapper;
 
 /** MCP/AI 工具模块数据访问。 */
@@ -26,4 +27,8 @@ public final class AiToolMappers {
     /** 工具调用日志数据访问接口。 */
     @Mapper
     public interface CallLogDao extends BaseMapper<AiToolCallLog> {}
+
+    /** 标准 MCP Server 注册信息数据访问接口。 */
+    @Mapper
+    public interface McpServerDao extends BaseMapper<McpServer> {}
 }

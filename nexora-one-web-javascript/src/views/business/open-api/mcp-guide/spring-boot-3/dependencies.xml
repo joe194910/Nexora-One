@@ -1,0 +1,14 @@
+<!-- 将版本放入项目的 properties -->
+<mcp-java-sdk.version>2.0.1</mcp-java-sdk.version>
+
+<!-- 将以下依赖放入项目的 dependencies -->
+<dependency>
+    <groupId>io.modelcontextprotocol.sdk</groupId>
+    <artifactId>mcp-core</artifactId>
+    <version>${mcp-java-sdk.version}</version>
+</dependency>
+<dependency>
+    <groupId>io.modelcontextprotocol.sdk</groupId>
+    <artifactId>mcp-json-jackson2</artifactId>
+    <version>${mcp-java-sdk.version}</version>
+</dependency>

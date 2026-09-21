@@ -1,7 +1,21 @@
 import { getRequest, postRequest } from '/@/lib/axios';
 
-/** HTTP 方式 MCP/AI 工具管理接口。权限展示由页面菜单和按钮控制。 */
+/** 标准 MCP Server、AI 工具与 HTTP 适配工具管理接口。权限展示由页面菜单和按钮控制。 */
 export const mcpToolApi = {
+  /** 分页查询当前用户可管理的标准 MCP Server。 */
+  queryServers: (param) => postRequest('/mcp/servers/query', param),
+  /** 查询标准 MCP Server 总数、在线数和发现工具数。 */
+  serverSummary: () => getRequest('/mcp/servers/summary'),
+  /** 查询标准 MCP Server 的脱敏配置和已发现工具。 */
+  serverDetail: (serverId) => getRequest(`/mcp/servers/detail/${serverId}`),
+  /** 新增或更新标准 MCP Server。 */
+  saveServer: (param) => postRequest('/mcp/servers/save', param),
+  /** 执行 MCP initialize、tools/list 探活并同步工具。 */
+  probeServer: (serverId) => postRequest(`/mcp/servers/${serverId}/probe-sync`),
+  /** 明确同步单个远端 MCP 工具的最新 Schema。 */
+  syncServerToolSchema: (serverId, toolId) => postRequest(`/mcp/servers/${serverId}/tools/${toolId}/sync-schema`),
+  /** 启用或停用标准 MCP Server。 */
+  updateServerStatus: (param) => postRequest('/mcp/servers/status', param),
   /** 分页查询当前用户可管理的 MCP 工具。 */
   query: (param) => postRequest('/mcp/tools/query', param),
   /** 查询工具总数、来源和待审核数量。 */

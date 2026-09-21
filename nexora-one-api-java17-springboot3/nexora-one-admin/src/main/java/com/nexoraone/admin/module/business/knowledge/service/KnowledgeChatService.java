@@ -177,13 +177,12 @@ public class KnowledgeChatService {
                     continue;
                 }
                 executedCalls++;
-                AiToolInvocationService.InvocationResult invocation = toolInvocation.invoke(
+                AiToolInvocationService.InvocationResult invocation = toolInvocation.invokeForAssistant(
                         tool, arguments,
                         new AiToolInvocationService.ExecutionContext(
                                 null, KnowledgeDocumentService.userId(),
                                 KnowledgeDocumentService.userId(), assistant.getAssistantId(),
-                                conversation == null ? null : conversation.getConversationId()),
-                        false, null);
+                                conversation == null ? null : conversation.getConversationId()));
                 Map<String, Object> visibleCall = visibleToolCall(
                         tool, arguments, invocation,
                         Boolean.TRUE.equals(assistant.getToolDebugFlag()));
