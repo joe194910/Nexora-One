@@ -60,8 +60,8 @@ public class McpServerManageController {
         return ResponseDTO.ok(serverService.save(form));
     }
 
-    /** 执行 initialize、tools/list 探活并同步首次发现的工具。 */
-    @Operation(summary = "探活并同步 MCP 工具")
+    /** 执行 initialize、tools/list，导入新工具并标记已有工具的远端定义变化。 */
+    @Operation(summary = "探活并刷新 MCP 工具目录")
     @PostMapping("/{serverId}/probe-sync")
     public ResponseDTO<Map<String, Object>> probeAndSync(@PathVariable Long serverId) {
         return ResponseDTO.ok(serverService.probeAndSync(serverId));

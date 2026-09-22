@@ -106,6 +106,9 @@
                 {{ record.sourceVersion }}
                 <a-tag v-if="record.syncAvailable" color="orange">可同步 {{ record.latestVersion }}</a-tag>
               </div>
+              <a-tag v-if="record.sourceType === 'STANDARD_MCP' && record.schemaSyncRequired" color="orange">
+                Schema待同步
+              </a-tag>
             </template>
             <template v-else-if="column.dataIndex === 'toolType'">
               {{ record.toolType === 'ACTION' ? '数据操作' : '数据查询' }}
@@ -132,6 +135,13 @@
             <template v-else-if="column.dataIndex === 'action'">
               <div class="open-api-actions">
                 <a-button type="link" @click="openDetail(record)">详情</a-button>
+                <a-popconfirm
+                  v-if="record.sourceType === 'STANDARD_MCP' && record.schemaSyncRequired"
+                  title="同步后将采用远端最新Schema，并重新进入测试、审核和启用流程，确认继续？"
+                  @confirm="syncServerToolSchema(record)"
+                >
+                  <a-button type="link" v-privilege="'mcp:server:probe'">同步定义</a-button>
+                </a-popconfirm>
                 <a-button type="link" @click="openTest(record)" v-privilege="'mcp:tool:test'">测试</a-button>
                 <a-button type="link" @click="openReview(record)" v-privilege="'mcp:tool:review'"> 审核 </a-button>
                 <a-button
@@ -261,7 +271,7 @@
                 <a-button type="link" @click="openServerDetail(record)">详情</a-button>
                 <a-button type="link" @click="openServerDrawer(record)" v-privilege="'mcp:server:save'">编辑</a-button>
                 <a-button type="link" :disabled="!record.enabledFlag" @click="probeServer(record)" v-privilege="'mcp:server:probe'">
-                  探活并同步
+                  探活并刷新目录
                 </a-button>
                 <a-popconfirm
                   :title="record.enabledFlag ? '确认停用该 Server 及其工具？' : '确认启用该 Server？启用后需要重新探活。'"
@@ -477,9 +487,13 @@
                 {{ onlineText(record.onlineStatus) }}
               </template>
               <template v-else-if="column.dataIndex === 'action'">
-                <a-button v-if="record.schemaSyncRequired" type="link" @click="syncServerToolSchema(record)" v-privilege="'mcp:server:probe'">
-                  同步Schema
-                </a-button>
+                <a-popconfirm
+                  v-if="record.schemaSyncRequired"
+                  title="同步后将采用远端最新Schema，并重新进入测试、审核和启用流程，确认继续？"
+                  @confirm="syncServerToolSchema(record)"
+                >
+                  <a-button type="link" v-privilege="'mcp:server:probe'">同步定义</a-button>
+                </a-popconfirm>
                 <span v-else class="open-api-muted">-</span>
               </template>
             </template>
@@ -781,7 +795,7 @@
     { title: '工具状态', dataIndex: 'enabledStatus', width: 130 },
     { title: '关联助手', dataIndex: 'assistantCount', width: 110 },
     { title: '最近调用', dataIndex: 'lastCallTime', width: 190 },
-    { title: '操作', dataIndex: 'action', fixed: 'right', width: 330 },
+    { title: '操作', dataIndex: 'action', fixed: 'right', width: 400 },
   ];
   const serverColumns = [
     { title: 'Server名称 / 编码', dataIndex: 'serverName', width: 260 },
@@ -1187,14 +1201,14 @@
     }
   }
 
-  /** 对已保存的 MCP Server 执行 initialize 和 tools/list。 */
+  /** 对已保存的 MCP Server 执行 initialize 和 tools/list，刷新工具目录及变更状态。 */
   async function probeServer(record) {
     serverLoading.value = true;
     try {
       const response = await mcpToolApi.probeServer(record.serverId);
       const result = response.data || {};
       message.success(
-        `探活成功：新增 ${result.createdToolCount || 0}，未变化 ${result.unchangedToolCount || 0}，待同步 ${result.schemaChangedToolCount || 0}`
+        `探活成功：新增 ${result.createdToolCount || 0}，未变化 ${result.unchangedToolCount || 0}，待手动同步 ${result.schemaChangedToolCount || 0}`
       );
       await refreshMcpData();
     } catch (error) {
@@ -1217,12 +1231,20 @@
     }
   }
 
-  /** 明确同步远端变化后的工具 Schema，并让工具重新进入测试审核流程。 */
+  /** 明确接受远端变化后的工具 Schema，并让工具重新进入测试审核流程。 */
   async function syncServerToolSchema(record) {
     try {
-      await mcpToolApi.syncServerToolSchema(serverDetail.record.serverId, record.toolId);
+      const serverId = record.mcpServerId || serverDetail.record?.serverId;
+      if (!serverId) {
+        message.error('未找到工具所属的MCP Server，请刷新页面后重试');
+        return;
+      }
+      await mcpToolApi.syncServerToolSchema(serverId, record.toolId);
       message.success('Schema已同步，助手绑定关系保留；请重新测试、审核并启用工具');
-      await Promise.all([openServerDetail({ serverId: serverDetail.record.serverId }), queryData(), loadMeta()]);
+      await refreshMcpData();
+      if (serverDetail.open && serverDetail.record?.serverId === serverId) {
+        await openServerDetail({ serverId });
+      }
     } catch (error) {
       smartSentry.captureError(error);
     }
@@ -1271,6 +1293,10 @@
 
   /** 打开工具测试窗口并填充示例参数。 */
   function openTest(record) {
+    if (record.sourceType === 'STANDARD_MCP' && record.schemaSyncRequired) {
+      message.warning('远端Schema已变化，请先点击“同步定义”，确认采用新定义后再测试');
+      return;
+    }
     Object.assign(testModal, {
       open: true,
       loading: false,

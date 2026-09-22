@@ -179,8 +179,8 @@ public class McpServerService {
         } else if (connectionChanged || enabledChanged) {
             server.setOnlineStatus("UNKNOWN");
             server.setLastProbeMessage(connectionChanged
-                    ? "连接配置已变更，请重新探活并同步工具"
-                    : "Server 已启用，请重新探活并同步工具");
+                    ? "连接配置已变更，请重新探活并刷新工具目录"
+                    : "Server 已启用，请重新探活并刷新工具目录");
         }
         server.setUpdateUserId(employee.getEmployeeId());
         server.setUpdateTime(LocalDateTime.now());
@@ -208,7 +208,7 @@ public class McpServerService {
         server.setOnlineStatus(Boolean.TRUE.equals(form.getEnabledFlag())
                 ? "UNKNOWN" : "OFFLINE");
         server.setLastProbeMessage(Boolean.TRUE.equals(form.getEnabledFlag())
-                ? "Server 已启用，请执行探活并同步工具" : "Server 已停用");
+                ? "Server 已启用，请执行探活并刷新工具目录" : "Server 已停用");
         server.setUpdateUserId(applicationDataScopeService.requireEmployee().getEmployeeId());
         server.setUpdateTime(LocalDateTime.now());
         serverDao.updateById(server);
@@ -217,9 +217,10 @@ public class McpServerService {
     }
 
     /**
-     * 连接远端 MCP Server，执行 initialize 和 tools/list，并导入新发现的工具。
+     * 连接远端 MCP Server，执行 initialize 和 tools/list，并刷新工具目录。
      *
-     * <p>已存在工具的 Schema 不会被静默覆盖，避免正在使用的助手能力发生变化。</p>
+     * <p>首次发现的工具会直接导入；已存在工具的 Schema 不会被静默覆盖，
+     * 而是标记为待同步，避免正在使用的助手能力发生变化。</p>
      */
     public Map<String, Object> probeAndSync(Long serverId) {
         McpServer server = requireManageable(serverId);
@@ -608,6 +609,7 @@ public class McpServerService {
         result.put("toolId", tool.getToolId());
         result.put("toolName", tool.getToolName());
         result.put("toolCode", tool.getToolCode());
+        result.put("mcpServerId", tool.getMcpServerId());
         result.put("remoteToolName", tool.getRemoteToolName());
         result.put("auditStatus", tool.getAuditStatus());
         result.put("enabledStatus", tool.getEnabledStatus());

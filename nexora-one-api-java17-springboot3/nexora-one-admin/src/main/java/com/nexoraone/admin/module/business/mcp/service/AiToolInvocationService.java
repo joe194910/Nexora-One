@@ -88,7 +88,8 @@ public class AiToolInvocationService {
     public InvocationResult test(Long toolId, Map<String, Object> arguments) {
         AiTool tool = toolService.requireManageable(toolId);
         if (Boolean.TRUE.equals(tool.getSchemaSyncRequired())) {
-            throw new IllegalArgumentException("远端 Schema 已变化，请先同步工具定义再测试");
+            throw new IllegalArgumentException(
+                    "远端 Schema 已变化，请在工具目录点击“同步定义”后再测试");
         }
         ExecutionContext context = new ExecutionContext(
                 null, applicationDataScopeService.requireEmployee().getEmployeeId(),

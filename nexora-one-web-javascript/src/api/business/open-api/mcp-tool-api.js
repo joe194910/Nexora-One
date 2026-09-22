@@ -10,7 +10,7 @@ export const mcpToolApi = {
   serverDetail: (serverId) => getRequest(`/mcp/servers/detail/${serverId}`),
   /** 新增或更新标准 MCP Server。 */
   saveServer: (param) => postRequest('/mcp/servers/save', param),
-  /** 执行 MCP initialize、tools/list 探活并同步工具。 */
+  /** 执行 MCP initialize、tools/list，导入新工具并刷新远端定义变化状态。 */
   probeServer: (serverId) => postRequest(`/mcp/servers/${serverId}/probe-sync`),
   /** 明确同步单个远端 MCP 工具的最新 Schema。 */
   syncServerToolSchema: (serverId, toolId) => postRequest(`/mcp/servers/${serverId}/tools/${toolId}/sync-schema`),

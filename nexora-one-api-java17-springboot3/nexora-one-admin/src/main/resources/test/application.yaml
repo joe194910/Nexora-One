@@ -22,3 +22,13 @@ server:
 spring:
   profiles:
     active: test
+
+# 知识库源文件使用独立 MinIO。
+knowledge:
+  minio:
+    endpoint: http://192.168.13.35:9000
+    bucket: knowledge-docs
+    access-key: zFepnpaZwxWyhCsVCzbl
+    secret-key: M1gAloVl32yTxWiv5XCOQmfq0V0n4YsuhNdvNpLK
+    region: us-east-1
+    path-style-access: true

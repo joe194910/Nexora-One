@@ -7,7 +7,7 @@ const pathResolve = (dir) => {
 };
 
 export default defineConfig({
-  transpileDependencies:['@dcloudio/uni-ui'],
+  transpileDependencies: ['@dcloudio/uni-ui', 'wot-design-uni'],
   plugins: [
     uni(),
   ],

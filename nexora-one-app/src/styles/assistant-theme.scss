@@ -1,0 +1,60 @@
+.app-shell {
+  --app-bg: #f7f9fc;
+  --app-surface: #ffffff;
+  --app-surface-soft: #f3f6fa;
+  --app-text: #0b1220;
+  --app-text-secondary: #657189;
+  --app-border: #dfe5ee;
+  --app-primary: #04bfe5;
+  --app-primary-soft: #e4f8fd;
+  --app-success: #14b86e;
+  --app-shadow: 0 8px 24px rgba(27, 46, 74, 0.06);
+  min-height: 100vh;
+  color: var(--app-text);
+  background: var(--app-bg);
+}
+
+.app-shell.theme-dark {
+  --app-bg: #08131c;
+  --app-surface: #0e1a24;
+  --app-surface-soft: #13222e;
+  --app-text: #f6f8fb;
+  --app-text-secondary: #9eacc0;
+  --app-border: #263744;
+  --app-primary: #14c9ed;
+  --app-primary-soft: #123746;
+  --app-success: #29d17f;
+  --app-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+}
+
+.page-content {
+  padding: 0 20px 32px;
+}
+
+.section-title {
+  margin: 28px 0 14px;
+  color: var(--app-text);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.empty-state {
+  padding: 48px 20px;
+  color: var(--app-text-secondary);
+  font-size: 14px;
+  text-align: center;
+}
+
+.app-shell :deep(.wd-card),
+.app-shell :deep(.wd-search),
+.app-shell :deep(.wd-cell-group) {
+  color: var(--app-text);
+  background: var(--app-surface);
+}
+
+.app-shell :deep(.wd-card) {
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  box-shadow: var(--app-shadow);
+}

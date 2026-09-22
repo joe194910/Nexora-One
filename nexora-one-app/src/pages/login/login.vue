@@ -1,366 +1,591 @@
 <template>
-  <view class="container">
-    <view class="top-view">
-      <view class="login"> 登录 </view>
-      <view class="logo">
-        <image src="@/static/images/login/login-logo.png" />
-      </view>
-    </view>
-    <view class="bottom-view">
-      <view class="input-view smart-margin-top10">
-        <image src="@/static/images/login/login-username.png"></image>
-        <uni-easyinput
-          class="input"
-          placeholder="请输入用户名"
-          :clearable="true"
-          placeholderStyle="color:#CCCCCC"
-          border="none"
-          v-model="loginForm.loginName"
-        />
-      </view>
+  <wd-config-provider :theme="themeStore.mode" :theme-vars="loginThemeVars">
+    <scroll-view
+      class="login-scroll"
+      scroll-y
+      :show-scrollbar="false"
+      :style="loginPageStyle"
+    >
+      <view class="login-page" :class="{ 'theme-dark': themeStore.isDark }">
+        <view class="brand">
+          <image
+            class="brand-logo"
+            src="/static/images/login/nexora-one-logo.png"
+            mode="aspectFit"
+          />
+          <text class="brand-name">NexoraOne</text>
+        </view>
 
-      <view class="input-view smart-margin-top10" v-if="emailCodeShowFlag">
-        <image src="@/static/images/login/login-password.png"></image>
-        <uni-easyinput
-          class="input"
-          placeholder="请输入邮箱验证码"
-          :clearable="true"
-          placeholderStyle="color:#CCCCCC"
-          border="none"
-          v-model="loginForm.emailCode"
-        />
-        <button @click="sendSmsCode" class="code-btn" :disabled="emailCodeButtonDisabled">
+        <view class="welcome">
+          <text class="welcome-title">欢迎回来</text>
+          <text class="welcome-subtitle">让专业知识，成为每个人的生产力。</text>
+        </view>
+
+        <view class="login-form">
+          <view class="field-shell">
+            <wd-input
+              v-model="loginForm.loginName"
+              no-border
+              clearable
+              size="large"
+              prefix-icon="user"
+              custom-class="login-input"
+              placeholder="请输入账号"
+              placeholder-style="color:#77849a;font-size:16px"
+              confirm-type="next"
+            />
+          </view>
+
+          <view class="field-shell">
+            <wd-input
+              v-model="loginForm.password"
+              no-border
+              clearable
+              show-password
+              size="large"
+              prefix-icon="lock-on"
+              custom-class="login-input"
+              placeholder="请输入密码"
+              placeholder-style="color:#77849a;font-size:16px"
+              confirm-type="next"
+            />
+          </view>
+
+          <view v-if="emailCodeShowFlag" class="field-shell email-code-field">
+            <wd-input
+              v-model="loginForm.emailCode"
+              no-border
+              clearable
+              size="large"
+              prefix-icon="mail"
+              custom-class="login-input"
+              placeholder="请输入邮箱验证码"
+              placeholder-style="color:#77849a;font-size:16px"
+              confirm-type="next"
+            />
+            <wd-button
+              type="text"
+              size="small"
+              :disabled="emailCodeButtonDisabled"
+              custom-class="email-code-button"
+              @click="sendEmailCode"
+            >
               {{ emailCodeTips }}
-        </button>
-      </view>
+            </wd-button>
+          </view>
 
-      <view class="input-view smart-margin-top10">
-        <image src="@/static/images/login/login-password.png"></image>
-        <uni-easyinput
-          class="input"
-          placeholder="请输入密码"
-          :clearable="true"
-          :password="true"
-          placeholderStyle="color:#CCCCCC"
-          border="none"
-          v-model="loginForm.password"
-        />
-      </view>
+          <view class="captcha-row">
+            <view class="field-shell captcha-field">
+              <wd-input
+                v-model="loginForm.captchaCode"
+                no-border
+                clearable
+                size="large"
+                prefix-icon="check-outline"
+                custom-class="login-input"
+                placeholder="请输入验证码"
+                placeholder-style="color:#77849a;font-size:16px"
+                confirm-type="done"
+                @confirm="login"
+              />
+            </view>
+            <view class="captcha-card" @click="getCaptcha">
+              <image
+                v-if="captchaBase64Image"
+                class="captcha-image"
+                :src="captchaBase64Image"
+                mode="widthFix"
+              />
+              <view v-else class="captcha-loading">
+                <wd-loading color="#19d2ef" size="20px" />
+              </view>
+            </view>
+          </view>
 
-      <view class="input-view smart-margin-top10">
-        <image src="@/static/images/login/login-password.png"></image>
-        <uni-easyinput
-          class="input captcha-input"
-          placeholder="请输入验证码"
-          :clearable="true"
-          :password="false"
-          placeholderStyle="color:#CCCCCC"
-          border="none"
-          v-model="loginForm.captchaCode"
-        />
-        <img class="captcha-img" :src="captchaBase64Image" @click="getCaptcha" />
-      </view>
+          <view class="login-links">
+            <text class="primary-link" @click="showFeatureTip('验证码登录')">验证码登录</text>
+            <text class="secondary-link" @click="showFeatureTip('忘记密码')">忘记密码？</text>
+          </view>
 
-      <view class="code-login-view smart-margin-top10">
-        <text class="code-text">验证码登录</text>
-        <text class="forget-text">忘记密码？</text>
-      </view>
+          <wd-button
+            block
+            size="large"
+            :round="false"
+            :loading="loginLoading"
+            custom-class="login-button"
+            @click="login"
+          >
+            登录
+          </wd-button>
 
-      <view @click="login" class="button login-btn smart-margin-top20"> 登录 </view>
-      <view @click="login" class="button register-btn smart-margin-top20"> 创建账号 </view>
-      <OtherWayBox />
-      <LoginCheckBox class="login-check-box" ref="loginCheckBoxRef" />
-    </view>
-  </view>
+          <wd-button
+            block
+            plain
+            size="large"
+            :round="false"
+            custom-class="register-button"
+            @click="showFeatureTip('注册账号')"
+          >
+            注册账号
+          </wd-button>
+        </view>
+
+        <LoginCheckBox ref="loginCheckBoxRef" custom-class="login-agreement" />
+      </view>
+    </scroll-view>
+  </wd-config-provider>
 </template>
+
 <script setup>
-  import { reactive, ref } from 'vue';
-  import { onShow } from '@dcloudio/uni-app';
-  import OtherWayBox from './components/other-way-box.vue';
+  import { onHide, onShow, onUnload } from '@dcloudio/uni-app';
+  import { computed, reactive, ref } from 'vue';
   import LoginCheckBox from './components/login-check-box.vue';
   import { loginApi } from '@/api/system/login-api';
   import { LOGIN_DEVICE_ENUM } from '@/constants/system/login-device-const';
   import { encryptData } from '@/lib/encrypt';
+  import { useThemeStore } from '@/store/modules/system/theme';
   import { useUserStore } from '@/store/modules/system/user';
   import { smartSentry } from '@/lib/smart-sentry';
+
+  const themeStore = useThemeStore();
+  const loginPageStyle = computed(
+    () => `background:${themeStore.isDark ? '#08131c' : '#f8fafc'};`,
+  );
+  const loginThemeVars = computed(() => ({
+    colorTheme: '#18cceb',
+    buttonPrimaryBgColor: '#18cceb',
+    buttonPrimaryColor: '#04131d',
+    buttonPrimaryBorderColor: '#18cceb',
+    inputColor: themeStore.isDark ? '#f5f8fc' : '#101828',
+    inputIconColor: themeStore.isDark ? '#98a6ba' : '#667085',
+    inputClearColor: themeStore.isDark ? '#66758a' : '#98a2b3',
+  }));
 
   const loginForm = reactive({
     loginName: 'admin',
     password: '123456',
     captchaCode: '',
     captchaUuid: '',
+    emailCode: '',
     loginDevice: LOGIN_DEVICE_ENUM.H5.value,
   });
 
   const loginCheckBoxRef = ref();
+  const loginLoading = ref(false);
+  const captchaBase64Image = ref('');
+  const emailCodeShowFlag = ref(false);
+  const emailCodeTips = ref('获取验证码');
+  const emailCodeButtonDisabled = ref(false);
+  let refreshCaptchaInterval = null;
+  let countDownTimer = null;
+
+  /**
+   * 校验登录表单并调用真实登录接口。
+   */
   async function login() {
-    if (!loginCheckBoxRef.value.agreeFlag) {
+    if (!loginCheckBoxRef.value?.agreeFlag) {
       uni.showToast({
         icon: 'none',
-        title: '请阅读并同意《用户协议》、《隐私政策》',
+        title: '请阅读并同意《用户协议》与《隐私政策》',
       });
       return;
     }
-    if (!loginForm.loginName) {
-      uni.showToast({
-        icon: 'none',
-        title: '请输入用户名',
-      });
+    if (!loginForm.loginName.trim()) {
+      uni.showToast({ icon: 'none', title: '请输入账号' });
       return;
     }
     if (!loginForm.password) {
-      uni.showToast({
-        icon: 'none',
-        title: '请输入密码',
-      });
+      uni.showToast({ icon: 'none', title: '请输入密码' });
+      return;
+    }
+    if (!loginForm.captchaCode.trim()) {
+      uni.showToast({ icon: 'none', title: '请输入验证码' });
+      return;
+    }
+    if (emailCodeShowFlag.value && !loginForm.emailCode.trim()) {
+      uni.showToast({ icon: 'none', title: '请输入邮箱验证码' });
       return;
     }
 
     try {
-      uni.showLoading({ title: '登录中' });
-      // 密码加密
-      let encryptPasswordForm = Object.assign({}, loginForm, {
+      loginLoading.value = true;
+      const encryptedForm = {
+        ...loginForm,
         password: encryptData(loginForm.password),
-      });
-      const res = await loginApi.login(encryptPasswordForm);
+      };
+      const response = await loginApi.login(encryptedForm);
       stopRefreshCaptchaInterval();
+      useUserStore().setUserLoginInfo(response.data);
       uni.showToast({ title: '登录成功' });
-      //更新用户信息到 pinia
-      useUserStore().setUserLoginInfo(res.data);
-
-      uni.switchTab({ url: '/pages/home/index' });
-    } catch (e) {
-      if (e.data && e.data.code !== 0) {
-        loginForm.captchaCode = '';
-        getCaptcha();
-      }
-      smartSentry.captureError(e);
-      uni.hideLoading();
+      setTimeout(() => {
+        uni.reLaunch({ url: '/pages/home/index' });
+      }, 300);
+    } catch (error) {
+      loginForm.captchaCode = '';
+      await getCaptcha();
+      smartSentry.captureError(error);
+    } finally {
+      loginLoading.value = false;
     }
   }
 
-  //--------------------- 验证码 ---------------------------------
-
-  const captchaBase64Image = ref('');
-
+  /**
+   * 获取图形验证码并按照服务端有效期安排自动刷新。
+   */
   async function getCaptcha() {
     try {
-      let captchaResult = await loginApi.getCaptcha();
+      const captchaResult = await loginApi.getCaptcha();
       captchaBase64Image.value = captchaResult.data.captchaBase64Image;
-      console.log(captchaResult.data.captchaBase64Image, 2);
       loginForm.captchaUuid = captchaResult.data.captchaUuid;
       beginRefreshCaptchaInterval(captchaResult.data.expireSeconds);
-    } catch (e) {
-      console.log(e);
+    } catch (error) {
+      smartSentry.captureError(error);
+      uni.showToast({ title: '验证码加载失败', icon: 'none' });
     }
   }
 
-  let refreshCaptchaInterval = null;
-
+  /**
+   * 启动图形验证码刷新定时器。
+   *
+   * @param {number} expireSeconds 验证码有效秒数
+   */
   function beginRefreshCaptchaInterval(expireSeconds) {
-    if (refreshCaptchaInterval === null) {
-      refreshCaptchaInterval = setInterval(getCaptcha, (expireSeconds - 5) * 1000);
-    }
+    stopRefreshCaptchaInterval();
+    const refreshSeconds = Math.max(Number(expireSeconds || 60) - 5, 10);
+    refreshCaptchaInterval = setInterval(getCaptcha, refreshSeconds * 1000);
   }
 
+  /**
+   * 停止图形验证码刷新定时器。
+   */
   function stopRefreshCaptchaInterval() {
-    if (refreshCaptchaInterval != null) {
+    if (refreshCaptchaInterval !== null) {
       clearInterval(refreshCaptchaInterval);
       refreshCaptchaInterval = null;
     }
   }
 
-  const emailCodeShowFlag = ref(false);
-  let emailCodeTips = ref('获取邮箱验证码');
-  let emailCodeButtonDisabled = ref(false);
-  // 定时器
-  let countDownTimer = null;
-  // 开始倒计时
+  /**
+   * 获取双因子登录配置。
+   */
+  async function getTwoFactorLoginFlag() {
+    try {
+      const result = await loginApi.getTwoFactorLoginFlag();
+      emailCodeShowFlag.value = Boolean(result.data);
+    } catch (error) {
+      smartSentry.captureError(error);
+    }
+  }
+
+  /**
+   * 发送双因子邮箱验证码。
+   */
+  async function sendEmailCode() {
+    if (!loginForm.loginName.trim()) {
+      uni.showToast({ title: '请先输入账号', icon: 'none' });
+      return;
+    }
+    try {
+      uni.showLoading({ title: '正在发送' });
+      await loginApi.sendLoginEmailCode(loginForm.loginName);
+      uni.showToast({
+        title: '验证码已发送，请登录邮箱查看',
+        icon: 'none',
+      });
+      runCountDown();
+    } catch (error) {
+      smartSentry.captureError(error);
+    } finally {
+      uni.hideLoading();
+    }
+  }
+
+  /**
+   * 启动邮箱验证码六十秒倒计时。
+   */
   function runCountDown() {
+    stopCountDown();
     emailCodeButtonDisabled.value = true;
     let countDown = 60;
-    emailCodeTips.value = `${countDown}秒后重新获取`;
+    emailCodeTips.value = `${countDown}秒`;
     countDownTimer = setInterval(() => {
-      if (countDown > 1) {
-        countDown--;
-        emailCodeTips.value = `${countDown}秒后重新获取`;
-      } else {
-        clearInterval(countDownTimer);
-        emailCodeButtonDisabled.value = false;
-        emailCodeTips.value = '获取验证码';
+      countDown -= 1;
+      if (countDown > 0) {
+        emailCodeTips.value = `${countDown}秒`;
+        return;
       }
+      stopCountDown();
     }, 1000);
   }
 
-  // 获取双因子登录标识
-  async function getTwoFactorLoginFlag() {
-    try {
-      let result = await loginApi.getTwoFactorLoginFlag();
-      emailCodeShowFlag.value = result.data;
-    } catch (e) {
-      smartSentry.captureError(e);
+  /**
+   * 停止邮箱验证码倒计时并恢复按钮状态。
+   */
+  function stopCountDown() {
+    if (countDownTimer !== null) {
+      clearInterval(countDownTimer);
+      countDownTimer = null;
     }
+    emailCodeButtonDisabled.value = false;
+    emailCodeTips.value = '获取验证码';
   }
-  // 发送邮箱验证码
-  async function sendSmsCode() {
-  try {
-    uni.showLoading();
-    let result = await loginApi.sendLoginEmailCode(loginForm.loginName);
-    message.success('验证码发送成功!请登录邮箱查看验证码~');
-    runCountDown();
-  } catch (e) {
-    smartSentry.captureError(e);
-  } finally {
-    uni.hideLoading();
+
+  /**
+   * 提示尚未配置完成的登录能力。
+   *
+   * @param {string} featureName 功能名称
+   */
+  function showFeatureTip(featureName) {
+    uni.showToast({
+      title: `${featureName}暂未开放`,
+      icon: 'none',
+    });
   }
-  }
-  onShow(()=>{
-    getCaptcha()
+
+  onShow(() => {
+    if (useUserStore().getToken) {
+      uni.reLaunch({ url: '/pages/home/index' });
+      return;
+    }
+    getCaptcha();
     getTwoFactorLoginFlag();
   });
+
+  onHide(stopRefreshCaptchaInterval);
+  onUnload(() => {
+    stopRefreshCaptchaInterval();
+    stopCountDown();
+  });
 </script>
+
 <style lang="scss" scoped>
-  .bottom-view {
+  .login-scroll {
+    height: 100vh;
+  }
+
+  .login-page {
+    --login-background: #f8fafc;
+    --login-surface: #ffffff;
+    --login-text: #0b1220;
+    --login-text-secondary: #667085;
+    --login-border: #d6dce6;
+    --login-field-shadow: rgba(16, 24, 40, 0.03);
+
     box-sizing: border-box;
-    margin-top: -280rpx;
-    border-radius: 20rpx 20rpx 0 0;
-    width: 100%;
-    background-color: white;
-    padding: 0 60rpx;
-    .input-view {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      background-color: $page-bg-color;
-      border-radius: 4px;
-      height: 100rpx;
-      .captcha-img {
-        margin-left: 5px;
-        height: 100rpx;
-        width: 40%;
-      }
-      image {
-        margin-left: 30rpx;
-        width: 44rpx;
-        height: 44rpx;
-      }
-      .input {
-        margin: 0 16rpx;
-        background-color: $page-bg-color;
-      }
-      .captcha-input {
-        width: 50%;
-      }
-    }
-    .code-login-view {
-      margin: 50rpx 0 0;
-      height: 40rpx;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      .code-text {
-        height: 40rpx;
-        font-size: $main-size;
-        font-weight: 400;
-        text-align: left;
-        color: $main-font-color;
-      }
-      .forget-text {
-        height: 40rpx;
-        font-size: $main-size;
-        font-weight: 400;
-        text-align: right;
-        color: $second-font-color;
-      }
-    }
-  }
-  .button {
-    flex-shrink: 0;
-    width: 100%;
-    height: 90rpx;
-    border-radius: 4px;
-    box-shadow: 0px 5px 8px 0px rgba(58, 121, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: $main-size;
-
-    &.disabled {
-      opacity: 0.4;
-    }
-    &.login-btn {
-      background: $main-color;
-      color: #ffffff;
-    }
-
-    &.register-btn {
-      background: white;
-      color: $main-color;
-      border: 0.5px solid $main-color;
-      border-color: rgba(26, 154, 255, 0.3);
-    }
-  }
-
-  .logo {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: row;
-    height: 220rpx;
-
-    image {
-      width: 208rpx;
-      height: 220rpx;
-    }
-  }
-
-  ::v-deep .uni-easyinput__content {
-    background-color: transparent !important;
-  }
-  ::v-deep .is-input-border {
-    border: none;
-  }
-  .container {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
     min-height: 100vh;
-    width: 100vw;
-    .back-icon {
-      width: 18px;
-      height: 18px;
-    }
-    .top-view {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-      height: 720rpx;
-      background-image: url('~@/static/images/login/login-top-back.png');
-      .login {
-        font-weight: bold;
-        margin-top: 70rpx;
-      }
-      .logo {
-        width: 260rpx;
-        height: 260rpx;
-      }
-    }
+    padding: calc(88rpx + env(safe-area-inset-top)) 54rpx
+      calc(70rpx + env(safe-area-inset-bottom));
+    color: var(--login-text);
+    background: var(--login-background);
   }
 
-  .login-check-box {
-    flex-shrink: 0;
-    margin-top: 150rpx;
-    margin-bottom: 120rpx;
-    align-self: flex-start;
+  .login-page.theme-dark {
+    --login-background: #08131c;
+    --login-surface: #101c27;
+    --login-text: #f6f8fb;
+    --login-text-secondary: #98a6ba;
+    --login-border: #33414f;
+    --login-field-shadow: rgba(0, 0, 0, 0);
   }
-  .code-btn{
-    width: 240rpx;
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 22rpx;
+  }
+
+  .brand-logo {
+    width: 74rpx;
+    height: 74rpx;
+  }
+
+  .brand-name {
+    font-size: 42rpx;
+    font-weight: 800;
+    letter-spacing: 0;
+  }
+
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    gap: 20rpx;
+    margin-top: 76rpx;
+  }
+
+  .welcome-title {
+    font-size: 62rpx;
+    font-weight: 800;
+    line-height: 1.18;
+  }
+
+  .welcome-subtitle {
+    color: var(--login-text-secondary);
+    font-size: 29rpx;
+    line-height: 1.5;
+  }
+
+  .login-form {
+    margin-top: 62rpx;
+  }
+
+  .field-shell {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    height: 112rpx;
+    margin-bottom: 30rpx;
+    padding: 0 28rpx;
+    background: var(--login-surface);
+    border: 1px solid var(--login-border);
+    border-radius: 8px;
+    box-shadow: 0 8rpx 24rpx var(--login-field-shadow);
+  }
+
+  :deep(.login-input) {
+    width: 100%;
+    padding: 0;
+    color: var(--login-text);
+    background: transparent;
+  }
+
+  :deep(.login-input .wd-input__body),
+  :deep(.login-input .wd-input__value) {
+    width: 100%;
+  }
+
+  :deep(.login-input .wd-input__inner) {
+    height: 82rpx;
+    color: var(--login-text);
+    font-size: 31rpx;
+  }
+
+  :deep(.login-input .wd-input__prefix) {
+    margin-right: 24rpx;
+  }
+
+  :deep(.login-input .wd-input__icon) {
+    color: var(--login-text-secondary);
+    font-size: 46rpx;
+  }
+
+  .email-code-field {
+    gap: 16rpx;
+  }
+
+  :deep(.email-code-button) {
+    flex: none;
+    color: #19d2ef;
     font-size: 24rpx;
-    margin-right: 20rpx;
-    background-color: $main-color;
-    color: #fff;
+  }
+
+  .captcha-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(224rpx, 42%);
+    align-items: center;
+    gap: 20rpx;
+  }
+
+  .captcha-field {
+    min-width: 0;
+    margin-bottom: 0;
+  }
+
+  .captcha-card {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    min-height: 86rpx;
+    padding: 0;
+    background: rgb(230, 244, 255);
+    border: 1px solid var(--login-border);
+    border-radius: 8px;
+    line-height: 0;
+  }
+
+  .captcha-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 7px;
+  }
+
+  .captcha-loading {
+    width: 100%;
+    height: 100%;
+  }
+
+  .captcha-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .login-links {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 50rpx 0 48rpx;
+    font-size: 29rpx;
+  }
+
+  .primary-link {
+    color: #19d2ef;
+  }
+
+  .secondary-link {
+    color: var(--login-text-secondary);
+  }
+
+  :deep(.login-button),
+  :deep(.register-button) {
+    width: 100%;
+    height: 102rpx;
+    border-radius: 8px;
+    font-size: 32rpx;
+    font-weight: 800;
+  }
+
+  :deep(.login-button) {
+    color: #04131d;
+    background: #19d2ef;
+    border-color: #19d2ef;
+    box-shadow: 0 12rpx 30rpx rgba(25, 210, 239, 0.12);
+  }
+
+  :deep(.register-button) {
+    margin-top: 30rpx;
+    color: #19d2ef;
+    background: transparent;
+    border-color: var(--login-border);
+  }
+
+  :deep(.login-agreement) {
+    margin-top: 72rpx;
+  }
+
+  @media (max-width: 350px) {
+    .login-page {
+      padding-right: 38rpx;
+      padding-left: 38rpx;
+    }
+
+    .welcome {
+      margin-top: 54rpx;
+    }
+
+    .welcome-title {
+      font-size: 54rpx;
+    }
+
+    .login-form {
+      margin-top: 46rpx;
+    }
+
+    .captcha-row {
+      grid-template-columns: minmax(0, 1fr) minmax(210rpx, 42%);
+      gap: 14rpx;
+    }
   }
 </style>

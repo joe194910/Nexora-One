@@ -44,7 +44,7 @@ function handleResponse(response, resolve, reject) {
         icon: 'none',
       });
       useUserStore().clearUserLoginInfo();
-      uni.navigateTo({ url: '/pages/login/login' });
+      uni.reLaunch({ url: '/pages/login/login' });
     }
 
     uni.showToast({
