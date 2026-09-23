@@ -394,7 +394,7 @@
   } from '@/api/business/knowledge-api';
   import { useAssistantStore } from '@/store/modules/business/assistant';
   import { useThemeStore } from '@/store/modules/system/theme';
-  import { smartSentry } from '@/lib/smart-sentry';
+  import { nexoraSentry } from '@/lib/nexora-sentry';
 
   const assistantStore = useAssistantStore();
   const themeStore = useThemeStore();
@@ -475,7 +475,7 @@
       }
       scrollBottom();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
       uni.showToast({ title: '助手加载失败，请稍后重试', icon: 'none' });
     } finally {
       loading.value = false;
@@ -522,7 +522,7 @@
     } catch (error) {
       messages.value = messages.value.filter((item) => item !== userEntry);
       question.value = text;
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
       uni.showToast({ title: '发送失败，请稍后重试', icon: 'none' });
     } finally {
       sending.value = false;
@@ -556,7 +556,7 @@
           const result = await getToolCallStatus(call.requestId);
           updateToolCall(entry, call.requestId, result);
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         }
       }),
     );
@@ -580,7 +580,7 @@
         icon: 'none',
       });
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
       uni.showToast({ title: '工具确认失败', icon: 'none' });
     } finally {
       confirmingRequestId.value = '';
@@ -1026,7 +1026,7 @@
           icon: 'none',
         });
       } catch (error) {
-        smartSentry.captureError(error);
+        nexoraSentry.captureError(error);
         uni.showToast({ title: '收藏状态更新失败', icon: 'none' });
       }
     }

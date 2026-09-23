@@ -21,7 +21,7 @@
   import { reactive } from 'vue';
   import { noticeApi } from '@/api/business/oa/notice-api';
   import { onLoad } from '@dcloudio/uni-app';
-  import { smartSentry } from '@/lib/smart-sentry';
+  import { nexoraSentry } from '@/lib/nexora-sentry';
 
   const noticeDetail = reactive({
     title: '',
@@ -46,7 +46,7 @@
       }
       noticeDetail.subTitle = subTitleArray.join(' | ');
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       uni.hideLoading();
     }

@@ -84,7 +84,7 @@
   import { onMounted, reactive, ref } from 'vue';
   import { message } from 'ant-design-vue';
   import { openApiApi } from '/@/api/business/open-api/open-api-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import './open-api.less';
 
   const loading = ref(false);
@@ -113,7 +113,7 @@
       const response = await openApiApi.permissions(status.value);
       list.value = response.data || [];
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loading.value = false;
     }
@@ -138,7 +138,7 @@
       message.success(record.permission.applyStatus === 1 ? 'API 权限申请已撤销' : 'API 授权已撤销');
       loadData();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 

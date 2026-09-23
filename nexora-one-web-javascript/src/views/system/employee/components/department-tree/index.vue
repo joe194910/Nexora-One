@@ -9,7 +9,7 @@
 -->
 <template>
   <a-card class="tree-container">
-    <a-row class="smart-margin-bottom10">
+    <a-row class="nexora-margin-bottom10">
       <a-input v-model:value.trim="keywords" placeholder="请输入部门名称" />
     </a-row>
     <a-tree
@@ -39,7 +39,7 @@
   import _ from 'lodash';
   import { departmentApi } from '/@/api/system/department-api';
   import departmentEmitter from '../../department-mitt';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const DEPARTMENT_PARENT_ID = 0;
 

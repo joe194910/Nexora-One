@@ -224,7 +224,7 @@
     SettingOutlined,
   } from '@ant-design/icons-vue';
   import { applicationApi } from '/@/api/business/application/application-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import './application.less';
 
   const route = useRoute();
@@ -355,7 +355,7 @@
       const response = await applicationApi.detail(applicationId);
       Object.assign(detail, response.data);
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loading.value = false;
     }
@@ -391,7 +391,7 @@
       versionModalVisible.value = false;
       router.push({ path: '/application/onboarding', query: { applicationId, step: 1 } });
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       creatingVersion.value = false;
     }
@@ -403,7 +403,7 @@
       const target = response.data.openMode === 'CURRENT' ? '_self' : '_blank';
       window.open(response.data.launchUrl, target, target === '_blank' ? 'noopener,noreferrer' : undefined);
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 
@@ -420,7 +420,7 @@
       reviewRemark.value = '';
       await loadDetail();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       reviewing.value = false;
     }
@@ -442,7 +442,7 @@
       }
       message.success('App Secret 已重置，请立即保存新密钥');
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       resettingSecret.value = false;
     }
@@ -457,7 +457,7 @@
       await navigator.clipboard.writeText(value);
       message.success('已复制');
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
       message.error('复制失败，请手动选择复制');
     }
   }

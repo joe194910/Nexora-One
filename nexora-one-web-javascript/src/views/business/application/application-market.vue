@@ -35,7 +35,7 @@
       <section v-else class="application-panel"><a-empty description="暂无符合条件的应用" /></section>
     </a-spin>
 
-    <div v-if="total" class="smart-query-table-page">
+    <div v-if="total" class="nexora-query-table-page">
       <a-pagination
         v-model:current="queryForm.pageNum"
         v-model:page-size="queryForm.pageSize"
@@ -52,7 +52,7 @@
   import { useRouter } from 'vue-router';
   import { AppstoreAddOutlined } from '@ant-design/icons-vue';
   import { applicationApi } from '/@/api/business/application/application-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import ApplicationPortalCard from './components/application-portal-card.vue';
   import './application.less';
 
@@ -70,7 +70,7 @@
       records.value = response.data.list || [];
       total.value = response.data.total || 0;
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loading.value = false;
     }
@@ -89,7 +89,7 @@
       });
       application.favoriteFlag = !application.favoriteFlag;
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 
@@ -99,7 +99,7 @@
       const target = response.data.openMode === 'CURRENT' ? '_self' : '_blank';
       window.open(response.data.launchUrl, target, target === '_blank' ? 'noopener,noreferrer' : undefined);
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 

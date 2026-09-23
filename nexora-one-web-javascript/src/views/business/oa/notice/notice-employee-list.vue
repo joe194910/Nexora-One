@@ -8,17 +8,17 @@
   * @Copyright  NexoraOne （ # ），Since 2012
 -->
 <template>
-  <a-form class="smart-query-form">
-    <a-row class="smart-query-form-row">
-      <a-form-item label="关键字" class="smart-query-form-item">
+  <a-form class="nexora-query-form">
+    <a-row class="nexora-query-form-row">
+      <a-form-item label="关键字" class="nexora-query-form-item">
         <a-input style="width: 200px" v-model:value="queryForm.keywords" placeholder="标题、作者、来源、文号" />
       </a-form-item>
 
-      <a-form-item label="发布时间" class="smart-query-form-item">
+      <a-form-item label="发布时间" class="nexora-query-form-item">
         <a-range-picker v-model:value="publishDate" @change="publishDateChange" style="width: 220px" />
       </a-form-item>
 
-      <a-form-item class="smart-query-form-item smart-margin-left10">
+      <a-form-item class="nexora-query-form-item nexora-margin-left10">
         <a-button-group>
           <a-button type="primary" @click="onSearch">
             <template #icon>
@@ -35,7 +35,7 @@
         </a-button-group>
       </a-form-item>
     </a-row>
-    <a-row class="smart-query-form-row" />
+    <a-row class="nexora-query-form-row" />
   </a-form>
 
   <a-card size="small" :bordered="false">
@@ -61,7 +61,7 @@
       </template>
     </a-table>
 
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -83,7 +83,7 @@
   import { useRouter } from 'vue-router';
   import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import { noticeApi } from '/@/api/business/oa/notice-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const tableColumns = reactive([
     {
@@ -124,7 +124,7 @@
       const result = await noticeApi.getAllNoticeTypeList();
       noticeTypeList.value = result.data;
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     }
   }
 
@@ -163,7 +163,7 @@
       tableData.value = result.data.list;
       total.value = result.data.total;
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
       tableLoading.value = false;
     }

@@ -9,9 +9,9 @@
 -->
 
 <template>
-  <a-form class="smart-query-form" v-privilege="'oa:notice:query'">
-    <a-row class="smart-query-form-row">
-      <a-form-item label="分类" class="smart-query-form-item">
+  <a-form class="nexora-query-form" v-privilege="'oa:notice:query'">
+    <a-row class="nexora-query-form-row">
+      <a-form-item label="分类" class="nexora-query-form-item">
         <a-select v-model:value="queryForm.noticeTypeId" style="width: 100px" :showSearch="true" :allowClear="true" placeholder="分类">
           <a-select-option v-for="item in noticeTypeList" :key="item.noticeTypeId" :value="item.noticeTypeId">
             {{ item.noticeTypeName }}
@@ -19,31 +19,31 @@
         </a-select>
       </a-form-item>
 
-      <a-form-item label="关键字" class="smart-query-form-item">
+      <a-form-item label="关键字" class="nexora-query-form-item">
         <a-input style="width: 300px" v-model:value="queryForm.keywords" placeholder="标题、作者、来源" />
       </a-form-item>
 
-      <a-form-item label="文号" class="smart-query-form-item">
+      <a-form-item label="文号" class="nexora-query-form-item">
         <a-input style="width: 150px" v-model:value="queryForm.documentNumber" placeholder="文号" />
       </a-form-item>
 
-      <a-form-item label="创建人" class="smart-query-form-item">
+      <a-form-item label="创建人" class="nexora-query-form-item">
         <a-input style="width: 100px" v-model:value="queryForm.createUserName" placeholder="创建人" />
       </a-form-item>
 
-      <a-form-item label="是否删除" class="smart-query-form-item">
-        <SmartBooleanSelect v-model:value="queryForm.deletedFlag" style="width: 70px" />
+      <a-form-item label="是否删除" class="nexora-query-form-item">
+        <NexoraBooleanSelect v-model:value="queryForm.deletedFlag" style="width: 70px" />
       </a-form-item>
 
-      <a-form-item label="发布时间" class="smart-query-form-item">
+      <a-form-item label="发布时间" class="nexora-query-form-item">
         <a-range-picker v-model:value="publishDate" :presets="defaultTimeRanges" @change="publishDateChange" style="width: 220px" />
       </a-form-item>
 
-      <a-form-item label="创建时间" class="smart-query-form-item">
+      <a-form-item label="创建时间" class="nexora-query-form-item">
         <a-range-picker v-model:value="createDate" :presets="defaultTimeRanges" @change="createDateChange" style="width: 220px" />
       </a-form-item>
 
-      <a-form-item class="smart-query-form-item smart-margin-left10">
+      <a-form-item class="nexora-query-form-item nexora-margin-left10">
         <a-button-group>
           <a-button type="primary" @click="onSearch">
             <template #icon>
@@ -63,8 +63,8 @@
   </a-form>
 
   <a-card size="small" :bordered="false">
-    <a-row class="smart-table-btn-block">
-      <div class="smart-table-operate-block">
+    <a-row class="nexora-table-btn-block">
+      <div class="nexora-table-operate-block">
         <a-button type="primary" @click="addOrUpdate()" v-privilege="'oa:notice:add'">
           <template #icon>
             <PlusOutlined />
@@ -72,7 +72,7 @@
           新建
         </a-button>
       </div>
-      <div class="smart-table-setting-block">
+      <div class="nexora-table-setting-block">
         <TableOperator v-model="tableColumns" :tableId="TABLE_ID_CONST.BUSINESS.OA.NOTICE" :refresh="queryNoticeList" />
       </div>
     </a-row>
@@ -103,7 +103,7 @@
           <a-tag v-show="!text" color="success">未删除</a-tag>
         </template>
         <template v-else-if="column.dataIndex === 'action'">
-          <div class="smart-table-operate" v-if="!record.deletedFlag">
+          <div class="nexora-table-operate" v-if="!record.deletedFlag">
             <a-button type="link" @click="addOrUpdate(record.noticeId)" v-privilege="'oa:notice:update'">编辑</a-button>
             <a-button type="link" @click="onDelete(record.noticeId)" v-privilege="'oa:notice:delete'" danger>删除</a-button>
           </div>
@@ -111,7 +111,7 @@
       </template>
     </a-table>
 
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -135,11 +135,11 @@
   import { message, Modal } from 'ant-design-vue';
   import { useRouter } from 'vue-router';
   import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
-  import SmartBooleanSelect from '/@/components/framework/boolean-select/index.vue';
+  import NexoraBooleanSelect from '/@/components/framework/boolean-select/index.vue';
   import { noticeApi } from '/@/api/business/oa/notice-api';
   import NoticeFormDrawer from './components/notice-form-drawer.vue';
   import { defaultTimeRanges } from '/@/lib/default-time-ranges';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
 
@@ -248,7 +248,7 @@
       const result = await noticeApi.getAllNoticeTypeList();
       noticeTypeList.value = result.data;
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     }
   }
 
@@ -271,7 +271,7 @@
       tableData.value = result.data.list;
       total.value = result.data.total;
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
       tableLoading.value = false;
     }
@@ -333,7 +333,7 @@
       message.success('删除成功');
       queryNoticeList();
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
       tableLoading.value = false;
     }

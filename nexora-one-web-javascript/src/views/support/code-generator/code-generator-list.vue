@@ -9,13 +9,13 @@
 -->
 <template>
   <div>
-    <a-form class="smart-query-form">
-      <a-row class="smart-query-form-row">
-        <a-form-item label="表名" class="smart-query-form-item">
+    <a-form class="nexora-query-form">
+      <a-row class="nexora-query-form-row">
+        <a-form-item label="表名" class="nexora-query-form-item">
           <a-input style="width: 300px" v-model:value="queryForm.tableNameKeywords" placeholder="请输入表名关键字" />
         </a-form-item>
 
-        <a-form-item class="smart-query-form-item smart-margin-left10">
+        <a-form-item class="nexora-query-form-item nexora-margin-left10">
           <a-button-group>
             <a-button type="primary" @click="onSearch">
               <template #icon>
@@ -36,7 +36,7 @@
 
     <a-card size="small" :bordered="false" :hoverable="true">
       <a-row justify="end">
-        <TableOperator class="smart-margin-bottom5" v-model="columns" :tableId="TABLE_ID_CONST.SUPPORT.CONFIG" :refresh="ajaxQuery" />
+        <TableOperator class="nexora-margin-bottom5" v-model="columns" :tableId="TABLE_ID_CONST.SUPPORT.CONFIG" :refresh="ajaxQuery" />
       </a-row>
 
       <a-table
@@ -54,7 +54,7 @@
             {{ index + 1 }}
           </template>
           <template v-if="column.dataIndex === 'action'">
-            <div class="smart-table-operate">
+            <div class="nexora-table-operate">
               <a-button @click="showConfig(record)" type="link">代码配置</a-button>
               <a-button @click="showPreview(record)" type="link">代码预览</a-button>
               <a-button @click="download(record)" type="link">下载代码</a-button>
@@ -63,7 +63,7 @@
         </template>
       </a-table>
 
-      <div class="smart-query-table-page">
+      <div class="nexora-query-table-page">
         <a-pagination
           showSizeChanger
           showQuickJumper
@@ -87,7 +87,7 @@
   import { onMounted, reactive, ref } from 'vue';
   import { codeGeneratorApi } from '/@/api/support/code-generator-api';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import CodeGeneratorTableConfigForm from './components/form/code-generator-table-config-form.vue';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
@@ -154,7 +154,7 @@
       total.value = responseModel.data.total;
       tableData.value = list;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }

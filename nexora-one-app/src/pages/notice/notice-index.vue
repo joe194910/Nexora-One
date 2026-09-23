@@ -49,7 +49,7 @@
   import { noticeApi } from '@/api/business/oa/notice-api';
   import { onPageScroll, onReachBottom } from '@dcloudio/uni-app';
   import useMescroll from '@/uni_modules/uni-mescroll/hooks/useMescroll';
-  import { smartSentry } from '@/lib/smart-sentry';
+  import { nexoraSentry } from '@/lib/nexora-sentry';
   import NoticeList from './components/notice-list.vue';
   import _ from 'lodash';
 
@@ -159,7 +159,7 @@
       }
       mescroll.endSuccess(res.data.list.length, res.data.pages > res.data.pageNum);
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
       //联网失败, 结束加载
       mescroll.endErr();
     }

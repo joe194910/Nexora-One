@@ -8,7 +8,7 @@
  * @Copyright  NexoraOne （ # ），Since 2012
  */
 
-export const smartSentry = {
+export const nexoraSentry = {
     /**
      * sentry 主动上报
      */

@@ -31,7 +31,7 @@
         <template #icon><setting-outlined /></template>
       </a-button>
     </a-tooltip>
-    <SmartTableColumnModal ref="smartTableColumnModal" @change="updateColumn" />
+    <NexoraTableColumnModal ref="nexoraTableColumnModal" @change="updateColumn" />
   </span>
 </template>
 
@@ -39,10 +39,10 @@
   import _ from 'lodash';
   import { tableColumnApi } from '/@/api/support/table-column-api';
   import { onMounted, ref, watch, reactive } from 'vue';
-  import SmartTableColumnModal from './smart-table-column-modal.vue';
+  import NexoraTableColumnModal from './nexora-table-column-modal.vue';
   import { message } from 'ant-design-vue';
-  import { mergeColumn } from './smart-table-column-merge';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { mergeColumn } from './nexora-table-column-merge';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import { useAppConfigStore } from '/@/store/modules/system/app-config';
 
   const props = defineProps({
@@ -102,11 +102,11 @@
         try {
           userTableColumnArray = JSON.parse(res.data);
         } catch (e1) {
-          smartSentry.captureError(e1);
+          nexoraSentry.captureError(e1);
         }
       }
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     }
     updateColumn(userTableColumnArray);
   }
@@ -181,10 +181,10 @@
 
   // ----------------- 弹窗 修改表格列 -------------------
 
-  const smartTableColumnModal = ref();
+  const nexoraTableColumnModal = ref();
 
   function showModal() {
-    smartTableColumnModal.value.show(newColumn, props.tableId);
+    nexoraTableColumnModal.value.show(newColumn, props.tableId);
   }
 
   // 将弹窗修改的列数据，赋值给原表格 列数组

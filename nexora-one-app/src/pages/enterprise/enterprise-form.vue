@@ -1,46 +1,46 @@
 <template>
   <view class="container">
-    <view class="smart-form">
+    <view class="nexora-form">
       <uni-forms ref="formRef" :label-width="100" :modelValue="form" label-position="left" :rules="rules">
-        <view class="smart-form-group">
-          <view class="smart-form-group-title"> 基本信息 </view>
-          <view class="smart-form-group-content">
-            <uni-forms-item class="smart-form-item" label="企业名称：" name="enterpriseName" required>
+        <view class="nexora-form-group">
+          <view class="nexora-form-group-title"> 基本信息 </view>
+          <view class="nexora-form-group-content">
+            <uni-forms-item class="nexora-form-item" label="企业名称：" name="enterpriseName" required>
               <uni-easyinput class="uni-mt-5" trim="all" v-model="form.enterpriseName" placeholder="请输入 企业名称" />
             </uni-forms-item>
-            <uni-forms-item class="smart-form-item" label="统一社会信用代码：" name="unifiedSocialCreditCode" required>
+            <uni-forms-item class="nexora-form-item" label="统一社会信用代码：" name="unifiedSocialCreditCode" required>
               <uni-easyinput class="uni-mt-5" trim="all" v-model="form.unifiedSocialCreditCode" placeholder="请输入 统一社会信用代码" />
             </uni-forms-item>
-            <uni-forms-item class="smart-form-item" label="企业类型：" name="type" required>
-              <smart-enum-radio v-model="form.type" enumName="ENTERPRISE_TYPE_ENUM" />
+            <uni-forms-item class="nexora-form-item" label="企业类型：" name="type" required>
+              <nexora-enum-radio v-model="form.type" enumName="ENTERPRISE_TYPE_ENUM" />
             </uni-forms-item>
 
-            <uni-forms-item class="smart-form-item" label="公司地址：" name="address">
+            <uni-forms-item class="nexora-form-item" label="公司地址：" name="address">
               <uni-easyinput class="uni-mt-5" trim="all" v-model="form.address" placeholder="请输入 公司地址" />
             </uni-forms-item>
           </view>
         </view>
 
-        <view class="smart-form-group">
-          <view class="smart-form-group-title"> 联系方式 </view>
-          <view class="smart-form-group-content">
-            <uni-forms-item class="smart-form-item" label="联系人" name="contact" required>
+        <view class="nexora-form-group">
+          <view class="nexora-form-group-title"> 联系方式 </view>
+          <view class="nexora-form-group-content">
+            <uni-forms-item class="nexora-form-item" label="联系人" name="contact" required>
               <uni-easyinput class="uni-mt-5" trim="all" v-model="form.contact" placeholder="请输入 联系人" />
             </uni-forms-item>
-            <uni-forms-item class="smart-form-item" label="联系人电话" name="contactPhone" required>
+            <uni-forms-item class="nexora-form-item" label="联系人电话" name="contactPhone" required>
               <uni-easyinput class="uni-mt-5" trim="all" v-model="form.contactPhone" placeholder="请输入 联系人电话" />
             </uni-forms-item>
-            <uni-forms-item class="smart-form-item" label="邮箱" name="email">
+            <uni-forms-item class="nexora-form-item" label="邮箱" name="email">
               <uni-easyinput class="uni-mt-5" trim="all" v-model="form.email" placeholder="请输入 邮箱" />
             </uni-forms-item>
           </view>
         </view>
       </uni-forms>
 
-      <view class="smart-form-submit smart-margin-top20 bottom-button">
-        <button class="smart-form-submit-btn smart-margin-right20" type="default" @click="cancel">取消</button>
-        <button class="smart-form-submit-btn" type="warn" @click="reset">重置</button>
-        <button class="smart-form-submit-btn" type="primary" @click="ok">保存</button>
+      <view class="nexora-form-submit nexora-margin-top20 bottom-button">
+        <button class="nexora-form-submit-btn nexora-margin-right20" type="default" @click="cancel">取消</button>
+        <button class="nexora-form-submit-btn" type="warn" @click="reset">重置</button>
+        <button class="nexora-form-submit-btn" type="primary" @click="ok">保存</button>
       </view>
     </view>
   </view>
@@ -50,9 +50,9 @@
   import { reactive, ref } from 'vue';
   import { enterpriseApi } from '@/api/business/oa/enterprise-api';
   import { regular } from '@/constants/regular-const';
-  import SmartEnumRadio from '@/components/smart-enum-radio/index.vue';
-  import { smartSentry } from '@/lib/smart-sentry';
-  import { SmartLoading, SmartToast } from '@/lib/smart-support';
+  import NexoraEnumRadio from '@/components/nexora-enum-radio/index.vue';
+  import { nexoraSentry } from '@/lib/nexora-sentry';
+  import { NexoraLoading, NexoraToast } from '@/lib/nexora-support';
   import { onLoad, onReady, onShow } from '@dcloudio/uni-app';
 
   // --------------------- 表单 ---------------------
@@ -110,7 +110,7 @@
 
   async function getDetail(id) {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       let res = await enterpriseApi.detail(id);
       form.enterpriseId = res.data.enterpriseId;
       form.enterpriseName = res.data.enterpriseName;
@@ -121,9 +121,9 @@
       form.email = res.data.email;
       form.address = res.data.address;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -148,25 +148,25 @@
     formRef.value
       .validate()
       .then(async () => {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           if (form.enterpriseId) {
             await enterpriseApi.update(form);
           } else {
             await enterpriseApi.create(form);
           }
-          SmartToast.success(`${form.enterpriseId ? '修改' : '添加'}成功`);
+          NexoraToast.success(`${form.enterpriseId ? '修改' : '添加'}成功`);
 
           uni.navigateBack();
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       })
       .catch((error) => {
         console.log('error', error);
-        SmartToast.toast('参数验证错误，请仔细填写表单数据!');
+        NexoraToast.toast('参数验证错误，请仔细填写表单数据!');
       });
   }
 </script>

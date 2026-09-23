@@ -9,7 +9,7 @@
 -->
 <template>
   <div class="version">
-    <a target="_blank" class="smart-copyright" href="#"> ©2012-{{ currentYear }} NexoraOne | NexoraOne </a>
+    <a target="_blank" class="nexora-copyright" href="#"> ©2012-{{ currentYear }} NexoraOne | NexoraOne </a>
   </div>
 </template>
 <script setup>

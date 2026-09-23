@@ -15,7 +15,7 @@
       </template>
       刷新
     </a-button>
-    <a-table :scroll="{ y: 350 }" size="small" bordered rowKey="id" class="smart-margin-top10" :dataSource="tableData" :columns="columns">
+    <a-table :scroll="{ y: 350 }" size="small" bordered rowKey="id" class="nexora-margin-top10" :dataSource="tableData" :columns="columns">
       <template #bodyCell="{ text, column }">
         <template v-if="column.dataIndex === 'result'">
           <a-tag :color="text ? 'success' : 'error'">{{ text ? '成功' : '失败' }}</a-tag>
@@ -32,7 +32,7 @@
 <script setup>
   import { reactive, ref } from 'vue';
   import { reloadApi } from '/@/api/support/reload-api';
-import { smartSentry } from '/@/lib/smart-sentry';
+import { nexoraSentry } from '/@/lib/nexora-sentry';
   defineExpose({
     showModal,
   });
@@ -66,7 +66,7 @@ import { smartSentry } from '/@/lib/smart-sentry';
       }
       tableData.value = res.data;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }

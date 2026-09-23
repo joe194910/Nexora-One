@@ -29,7 +29,7 @@
       </a-form-item>
 
       <a-form-item label="类型" name="type">
-        <SmartEnumSelect width="100%" v-model:value="form.type" placeholder="请选择类型" enum-name="ENTERPRISE_TYPE_ENUM" />
+        <NexoraEnumSelect width="100%" v-model:value="form.type" placeholder="请选择类型" enum-name="ENTERPRISE_TYPE_ENUM" />
       </a-form-item>
 
       <a-form-item label="联系人" name="contact">
@@ -72,11 +72,11 @@
   import { nextTick, reactive, ref } from 'vue';
   import { enterpriseApi } from '/@/api/business/oa/enterprise-api';
   import AreaCascader from '/@/components/framework/area-cascader/index.vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import Upload from '/@/components/support/file-upload/index.vue';
   import { regular } from '/@/constants/regular-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
-  import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
+  import NexoraEnumSelect from '/@/components/framework/nexora-enum-select/index.vue';
 
   defineExpose({
     showModal,
@@ -141,9 +141,9 @@
         ];
       });
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -186,7 +186,7 @@
     formRef.value
       .validate()
       .then(async () => {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           if (form.enterpriseId) {
             await enterpriseApi.update(form);
@@ -197,9 +197,9 @@
           emit('refresh');
           onClose();
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       })
       .catch((error) => {

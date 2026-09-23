@@ -15,14 +15,14 @@ import lodash from 'lodash';
 import JsonViewer from 'vue3-json-viewer';
 import 'vue3-json-viewer/dist/index.css';
 import App from './App.vue';
-import { smartSentry } from '/@/lib/smart-sentry';
+import { nexoraSentry } from '/@/lib/nexora-sentry';
 import { loginApi } from '/@/api/system/login-api';
 import constantsInfo from '/@/constants/index';
 import { privilegeDirective } from '/@/directives/privilege';
 import i18n from '/@/i18n/index';
 import privilegePlugin from '/@/plugins/privilege-plugin';
 import dictPlugin from '/@/plugins/dict-plugin';
-import smartEnumPlugin from '/@/plugins/smart-enums-plugin';
+import nexoraEnumPlugin from '/@/plugins/nexora-enums-plugin';
 import { buildRoutes, router } from '/@/router';
 import { store } from '/@/store';
 import { useUserStore } from '/@/store/modules/system/user';
@@ -65,7 +65,7 @@ async function getLoginInfo() {
     useUserStore().setUserLoginInfo(res.data);
   } catch (e) {
     message.error(e.data ? e.data.msg : e.message);
-    smartSentry.captureError(e);
+    nexoraSentry.captureError(e);
     initVue();
   }
 }
@@ -77,7 +77,7 @@ async function initVue() {
     .use(store)
     .use(i18n)
     .use(Antd)
-    .use(smartEnumPlugin, constantsInfo)
+    .use(nexoraEnumPlugin, constantsInfo)
     .use(privilegePlugin)
     .use(dictPlugin)
     .use(JsonViewer);

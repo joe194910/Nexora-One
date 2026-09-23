@@ -27,7 +27,7 @@
             </a-button>
           </template>
         </a-input-search>
-        <a-button @click="reset" class="smart-margin-left10">
+        <a-button @click="reset" class="nexora-margin-left10">
           <template #icon>
             <ReloadOutlined />
           </template>
@@ -40,7 +40,7 @@
       <a-button class="btn" @click="updateEmployeeDepartment" v-privilege="'system:employee:department:update'">调整部门</a-button>
       <a-button class="btn" @click="batchDelete" v-privilege="'system:employee:delete'">批量删除</a-button>
 
-      <span class="smart-table-column-operate">
+      <span class="nexora-table-column-operate">
         <TableOperator v-model="columns" :tableId="TABLE_ID_CONST.SYSTEM.EMPLOYEE" :refresh="queryEmployee" />
       </span>
     </div>
@@ -64,10 +64,10 @@
           <a-tag :color="text ? 'error' : 'processing'">{{ text ? '禁用' : '启用' }}</a-tag>
         </template>
         <template v-else-if="column.dataIndex === 'gender'">
-          <span>{{ $smartEnumPlugin.getDescByValue('GENDER_ENUM', text) }}</span>
+          <span>{{ $nexoraEnumPlugin.getDescByValue('GENDER_ENUM', text) }}</span>
         </template>
         <template v-else-if="column.dataIndex === 'operate'">
-          <div class="smart-table-operate">
+          <div class="nexora-table-operate">
             <a-button v-privilege="'system:employee:update'" type="link" size="small" @click="showDrawer(record)">编辑</a-button>
             <a-button
               v-privilege="'system:employee:password:reset'"
@@ -83,7 +83,7 @@
         </template>
       </template>
     </a-table>
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -109,12 +109,12 @@
   import { computed, createVNode, reactive, ref, watch } from 'vue';
   import { employeeApi } from '/@/api/system/employee-api';
   import { PAGE_SIZE } from '/@/constants/common-const';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import EmployeeFormModal from '../employee-form-modal/index.vue';
   import EmployeeDepartmentFormModal from '../employee-department-form-modal/index.vue';
   import EmployeePasswordDialog from '../employee-password-dialog/index.vue';
   import { PAGE_SIZE_OPTIONS, showTableTotal } from '/@/constants/common-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
 
@@ -229,7 +229,7 @@
       selectedRowKeys.value = [];
       selectedRows.value = [];
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       tableLoading.value = false;
     }
@@ -251,7 +251,7 @@
       selectedRowKeys.value = [];
       selectedRows.value = [];
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       tableLoading.value = false;
     }
@@ -295,7 +295,7 @@
       okText: '删除',
       okType: 'danger',
       async onOk() {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           await employeeApi.batchDeleteEmployee(employeeIdArray);
           message.success('删除成功');
@@ -303,9 +303,9 @@
           selectedRowKeys.value = [];
           selectedRows.value = [];
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       },
       cancelText: '取消',
@@ -350,16 +350,16 @@
       okText: '确定',
       okType: 'danger',
       async onOk() {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           let { data: passWord } = await employeeApi.resetPassword(id);
           message.success('重置成功');
           employeePasswordDialog.value.showModal(name, passWord);
           queryEmployee();
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       },
       cancelText: '取消',
@@ -376,15 +376,15 @@
       okText: '确定',
       okType: 'danger',
       async onOk() {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           await employeeApi.updateDisabled(id);
           message.success(`${disabledFlag ? '启用' : '禁用'}成功`);
           queryEmployee();
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       },
       cancelText: '取消',

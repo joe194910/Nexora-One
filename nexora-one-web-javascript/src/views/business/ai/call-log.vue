@@ -57,7 +57,7 @@
   import dayjs from 'dayjs';
   import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, DownloadOutlined, ProfileOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons-vue';
   import { aiPlatformApi } from '/@/api/business/ai/ai-platform-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import './ai-platform.less';
 
   const today = () => [dayjs().startOf('day'), dayjs().endOf('day')];
@@ -97,7 +97,7 @@
     try {
       const [listResponse, summaryResponse] = await Promise.all([aiPlatformApi.queryCallLogs(params()), aiPlatformApi.callLogSummary(params())]);
       rows.value = listResponse.data.list || []; total.value = listResponse.data.total || 0; Object.assign(summary, summaryResponse.data || {});
-    } catch (error) { smartSentry.captureError(error); } finally { loading.value = false; }
+    } catch (error) { nexoraSentry.captureError(error); } finally { loading.value = false; }
   }
   /**
    * 重置日志查询条件。

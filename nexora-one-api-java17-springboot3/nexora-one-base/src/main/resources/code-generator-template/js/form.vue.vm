@@ -41,9 +41,9 @@
           <BooleanSelect v-model:value="form.${field.fieldName}" style="width: 100%" />
         </a-form-item>
       #end
-      #if($field.frontComponent == "SmartEnumSelect")
+      #if($field.frontComponent == "NexoraEnumSelect")
         <a-form-item label="$codeGeneratorTool.removeEnumDesc($!{field.label})"  name="${field.fieldName}">
-          <SmartEnumSelect width="100%" v-model:value="form.${field.fieldName}" enum-name="$!{field.upperUnderscoreEnum}" placeholder="$codeGeneratorTool.removeEnumDesc($!{field.label})"/>
+          <NexoraEnumSelect width="100%" v-model:value="form.${field.fieldName}" enum-name="$!{field.upperUnderscoreEnum}" placeholder="$codeGeneratorTool.removeEnumDesc($!{field.label})"/>
         </a-form-item>
       #end
       #if($field.frontComponent == "DictSelect")
@@ -99,9 +99,9 @@
             <BooleanSelect v-model:value="form.${field.fieldName}" style="width: 100%" />
           </a-form-item>
         #end
-        #if($field.frontComponent == "SmartEnumSelect")
+        #if($field.frontComponent == "NexoraEnumSelect")
           <a-form-item label="$codeGeneratorTool.removeEnumDesc($!{field.label})"  name="${field.fieldName}">
-            <SmartEnumSelect width="100%" v-model:value="form.${field.fieldName}" enum-name="$!{field.upperUnderscoreEnum}" placeholder="$codeGeneratorTool.removeEnumDesc($!{field.label})"/>
+            <NexoraEnumSelect width="100%" v-model:value="form.${field.fieldName}" enum-name="$!{field.upperUnderscoreEnum}" placeholder="$codeGeneratorTool.removeEnumDesc($!{field.label})"/>
           </a-form-item>
         #end
         #if($field.frontComponent == "DictSelect")
@@ -148,9 +148,9 @@
   import { reactive, ref, nextTick } from 'vue';
   import _ from 'lodash';
   import { message } from 'ant-design-vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { $!{name.lowerCamel}Api } from '/@/api/business/$!{name.lowerHyphenCamel}/$!{name.lowerHyphenCamel}-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   #foreach ($import in $frontImportList)
   $!{import}
   #end
@@ -216,7 +216,7 @@
 
   // 新建、编辑API
   async function save() {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       if (form.$!{primaryKeyFieldName}) {
         await $!{name.lowerCamel}Api.update(form);
@@ -227,9 +227,9 @@
       emits('reloadList');
       onClose();
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 

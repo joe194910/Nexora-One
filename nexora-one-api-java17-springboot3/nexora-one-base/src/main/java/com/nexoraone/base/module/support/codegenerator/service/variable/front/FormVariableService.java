@@ -58,7 +58,7 @@ public class FormVariableService extends CodeGenerateBaseVariableService {
             fieldsVariableList.add(objectMap);
 
             if (CodeFrontComponentEnum.ENUM_SELECT.equalsValue(field.getFrontComponent())) {
-                frontImportSet.add("import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';");
+                frontImportSet.add("import NexoraEnumSelect from '/@/components/framework/nexora-enum-select/index.vue';");
             }
 
             if (CodeFrontComponentEnum.BOOLEAN_SELECT.equalsValue(field.getFrontComponent())) {

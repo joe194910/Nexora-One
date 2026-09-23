@@ -691,7 +691,7 @@
   } from '@ant-design/icons-vue';
   import { message } from 'ant-design-vue';
   import { mcpToolApi } from '/@/api/business/open-api/mcp-tool-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import { mcpGuideEditions } from './mcp-guide';
   import './open-api.less';
 
@@ -970,7 +970,7 @@
       rows.value = response.data?.list || [];
       total.value = response.data?.total || 0;
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loading.value = false;
     }
@@ -983,7 +983,7 @@
       Object.assign(summary, summaryResponse.data || {});
       applications.value = applicationsResponse.data || [];
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 
@@ -995,7 +995,7 @@
       serverRows.value = response.data?.list || [];
       serverTotal.value = response.data?.total || 0;
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       serverLoading.value = false;
     }
@@ -1007,7 +1007,7 @@
       const response = await mcpToolApi.serverSummary();
       Object.assign(serverSummary, response.data || {});
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 
@@ -1099,7 +1099,7 @@
       externalDrawer.open = false;
       await Promise.all([queryData(), loadMeta()]);
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       externalDrawer.saving = false;
     }
@@ -1115,7 +1115,7 @@
       const response = await mcpToolApi.serverDetail(record.serverId);
       Object.assign(serverForm, response.data || {}, { authSecret: '' });
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
       serverDrawer.open = false;
     } finally {
       serverDrawer.saving = false;
@@ -1172,7 +1172,7 @@
           const result = probeResponse.data || {};
           message.success(`探活成功，新发现 ${result.createdToolCount || 0} 个工具`);
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
           message.warning('Server配置已保存，但探活失败，请检查Endpoint、网络和鉴权后重试');
         }
       } else {
@@ -1181,7 +1181,7 @@
       serverDrawer.open = false;
       await refreshMcpData();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       serverDrawer.saving = false;
     }
@@ -1195,7 +1195,7 @@
       const response = await mcpToolApi.serverDetail(record.serverId);
       serverDetail.record = response.data;
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       serverDetail.loading = false;
     }
@@ -1212,7 +1212,7 @@
       );
       await refreshMcpData();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
       await Promise.all([queryServers(), loadServerMeta()]);
     } finally {
       serverLoading.value = false;
@@ -1227,7 +1227,7 @@
       message.success(enabledFlag ? 'Server已启用，请重新探活后再启用工具' : 'Server及其工具已停用');
       await refreshMcpData();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 
@@ -1246,7 +1246,7 @@
         await openServerDetail({ serverId });
       }
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 
@@ -1259,7 +1259,7 @@
       detailDrawer.record = response.data;
       await router.replace({ path: route.path, query: { ...route.query, toolId: record.toolId } });
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       detailDrawer.loading = false;
     }
@@ -1317,7 +1317,7 @@
       message.success('连接测试完成');
       await queryData();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       testModal.loading = false;
     }
@@ -1353,7 +1353,7 @@
       reviewModal.open = false;
       await Promise.all([queryData(), loadMeta()]);
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       reviewModal.loading = false;
     }
@@ -1367,7 +1367,7 @@
       message.success(enabledStatus === 'ENABLED' ? '工具已启用' : '工具已停用');
       await queryData();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 
@@ -1378,7 +1378,7 @@
       message.success('Schema已同步到API最新发布版本，助手关联保持不变');
       await queryData();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 
@@ -1405,7 +1405,7 @@
       }
       message.success('代码已复制');
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
       message.error('复制失败，请手动选择代码复制');
     }
   }

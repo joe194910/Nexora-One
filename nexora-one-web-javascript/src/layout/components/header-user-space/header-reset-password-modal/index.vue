@@ -26,8 +26,8 @@
   import { ref, reactive } from 'vue';
   import { message } from 'ant-design-vue';
   import { employeeApi } from '/@/api/system/employee-api';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const visible = ref(false);
   const formRef = ref();
@@ -56,15 +56,15 @@
           message.error('新密码与确认密码不一致');
           return;
         }
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           await employeeApi.updateEmployeePassword(form);
           message.success('修改成功');
           visible.value = false;
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       })
       .catch((error) => {

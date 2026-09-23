@@ -24,89 +24,89 @@
 }
 
 /**********************************  宽度 **********************************/
-.smart-width-100 {
+.nexora-width-100 {
   width: 100%;
 }
 
 /**********************************  左间距 **********************************/
-.smart-margin-left5 {
+.nexora-margin-left5 {
   margin-left: 5px;
 }
 
-.smart-margin-left10 {
+.nexora-margin-left10 {
   margin-left: 10px;
 }
 
-.smart-margin-left15 {
+.nexora-margin-left15 {
   margin-left: 15px;
 }
 
-.smart-margin-left20 {
+.nexora-margin-left20 {
   margin-left: 20px;
 }
 
 /**********************************  右间距 **********************************/
-.smart-margin-right5 {
+.nexora-margin-right5 {
   margin-right: 5px;
 }
 
-.smart-margin-right10 {
+.nexora-margin-right10 {
   margin-right: 10px;
 }
 
-.smart-margin-right15 {
+.nexora-margin-right15 {
   margin-right: 15px;
 }
 
-.smart-margin-right20 {
+.nexora-margin-right20 {
   margin-right: 20px;
 }
 
 /******************************** 上间距 ********************************/
-.smart-margin-top5 {
+.nexora-margin-top5 {
   margin-top: 5px;
 }
 
-.smart-margin-top10 {
+.nexora-margin-top10 {
   margin-top: 10px;
 }
 
-.smart-margin-top15 {
+.nexora-margin-top15 {
   margin-top: 15px;
 }
 
-.smart-margin-top20 {
+.nexora-margin-top20 {
   margin-top: 20px;
 }
 
-.smart-margin-top30 {
+.nexora-margin-top30 {
   margin-top: 30px;
 }
 
-.smart-margin-top40 {
+.nexora-margin-top40 {
   margin-top: 40px;
 }
 
-.smart-margin-top50 {
+.nexora-margin-top50 {
   margin-top: 50px;
 }
 
-.smart-margin-top60 {
+.nexora-margin-top60 {
   margin-top: 60px;
 }
 
 
 /******************************** 下间距 ********************************/
-.smart-margin-bottom5 {
+.nexora-margin-bottom5 {
   margin-bottom: 5px;
 }
 
-.smart-margin-bottom10 {
+.nexora-margin-bottom10 {
   margin-bottom: 10px;
 }
 
 /******************************** 表单 ********************************/
-.smart-form {
+.nexora-form {
   height: auto;
   padding-bottom: 120px;
 
@@ -131,7 +131,7 @@
     box-sizing: border-box;
   }
 
-  .smart-form-item {
+  .nexora-form-item {
     min-height: 100rpx;
     height: auto;
     align-items: center;
@@ -140,14 +140,14 @@
     }
   }
 
-  .smart-form-group {
+  .nexora-form-group {
     box-sizing: border-box;
     width: 100wh;
     margin: 20rpx auto 0;
     background: #fff;
     border-radius: 16rpx;
 
-    .smart-form-group-title {
+    .nexora-form-group-title {
       width: 100%;
       height: 84rpx;
       background-image: url('/static/images/list/form-list.png');
@@ -159,7 +159,7 @@
       font-weight: bold;
     }
 
-    .smart-form-group-content {
+    .nexora-form-group-content {
       padding: 0 30rpx;
     }
     .input {
@@ -169,7 +169,7 @@
     }
   }
 
-  .smart-form-submit {
+  .nexora-form-submit {
     border-top: #eee 1px solid;
     height: 80px;
     display: flex;
@@ -180,7 +180,7 @@
     background-color: white;
     width: 100%;
 
-    .smart-form-submit-btn {
+    .nexora-form-submit-btn {
       margin: 10px;
       height: 2.5;
       flex: 1;
@@ -196,8 +196,8 @@
 
 /******************************** 详情 ********************************/
 
-.smart-detail {
-  .smart-detail-card {
+.nexora-detail {
+  .nexora-detail-card {
     background-color: white;
     margin-right: auto;
     margin-left: auto;
@@ -207,7 +207,7 @@
     box-sizing: border-box;
     padding: 16rpx 30rpx;
 
-    .smart-detail-card-title {
+    .nexora-detail-card-title {
       height: 70rpx;
       display: flex;
       align-items: center;
@@ -225,7 +225,7 @@
       }
     }
 
-    .smart-detail-card-cell {
+    .nexora-detail-card-cell {
       display: flex;
       min-height: 80rpx;
       padding: 10rpx 0;
@@ -233,11 +233,11 @@
       align-items: center;
       flex-wrap: wrap;
       border-top: 1rpx solid #ededed;
-      .smart-detail-card-label {
+      .nexora-detail-card-label {
         color: #666666;
         font-size: $uni-font-size-lg;
       }
-      .smart-detail-card-value {
+      .nexora-detail-card-value {
         font-size: $uni-font-size-lg;
         padding: 20rpx 0;
       }

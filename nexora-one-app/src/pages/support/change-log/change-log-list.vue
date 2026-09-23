@@ -26,11 +26,11 @@
         <view class="list-item" @click="gotoDetail(item.changeLogId)" v-for="item in listData" :key="item.changeLogId">
           <view class="list-item-row">
             <view class="list-item-content bolder"
-              >{{ item.version }}版本{{ $smartEnumPlugin.getDescByValue('CHANGE_LOG_TYPE_ENUM', item.type) }}</view
+              >{{ item.version }}版本{{ $nexoraEnumPlugin.getDescByValue('CHANGE_LOG_TYPE_ENUM', item.type) }}</view
             >
             <uni-tag
-              :text="$smartEnumPlugin.getDescByValue('CHANGE_LOG_TYPE_ENUM', item.type)"
-              :type="$smartEnumPlugin.getObjectByValue('CHANGE_LOG_TYPE_ENUM', item.type).type"
+              :text="$nexoraEnumPlugin.getDescByValue('CHANGE_LOG_TYPE_ENUM', item.type)"
+              :type="$nexoraEnumPlugin.getObjectByValue('CHANGE_LOG_TYPE_ENUM', item.type).type"
             />
           </view>
           <view class="list-item-row">
@@ -47,7 +47,7 @@
   import { changeLogApi } from '@/api/support/change-log-api';
   import { onPageScroll, onReachBottom, onShow } from '@dcloudio/uni-app';
   import useMescroll from '@/uni_modules/uni-mescroll/hooks/useMescroll';
-  import { smartSentry } from '@/lib/smart-sentry';
+  import { nexoraSentry } from '@/lib/nexora-sentry';
   import _ from 'lodash';
 
   // --------------------------- 查询 ---------------------------------
@@ -78,7 +78,7 @@
       }
       mescroll.endSuccess(res.data.list.length, res.data.pages > res.data.pageNum);
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
       //联网失败, 结束加载
       mescroll.endErr();
     }

@@ -1,6 +1,6 @@
 <template>
-  <view class="smart-detail-card">
-    <view class="smart-detail-card-title"> 结算信息 </view>
+  <view class="nexora-detail-card">
+    <view class="nexora-detail-card-title"> 结算信息 </view>
     <view class="view-item">
       <view class="item-left"> 订单号： </view>
       <view class="item-right"> TYD2023080979 </view>

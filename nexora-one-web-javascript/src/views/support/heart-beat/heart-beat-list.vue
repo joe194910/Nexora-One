@@ -11,11 +11,11 @@
   <a-card size="small" :bordered="false" :hoverable="true">
     <a-alert>
       <template v-slot:message>
-        <h4>Smart-Heart-Beat 心跳服务介绍：</h4>
+        <h4>Nexora-Heart-Beat 心跳服务介绍：</h4>
       </template>
       <template v-slot:description>
         <pre>
-简介：Smart-Heart-Beat 是心跳服务，用于监测Java应用的状态等其他信息。
+简介：Nexora-Heart-Beat 是心跳服务，用于监测Java应用的状态等其他信息。
 原理：Java后端会在项目启动的时候开启一个线程，每隔一段时间将该应用的IP、进程号更新到数据库t_heart_beat_record表中。
 
 用途：
@@ -27,17 +27,17 @@
       </template>
     </a-alert>
 
-    <a-form class="smart-query-form">
-      <a-row class="smart-query-form-row">
-        <a-form-item label="关键字" class="smart-query-form-item">
+    <a-form class="nexora-query-form">
+      <a-row class="nexora-query-form-row">
+        <a-form-item label="关键字" class="nexora-query-form-item">
           <a-input style="width: 300px" v-model:value="queryForm.keywords" placeholder="关键字" />
         </a-form-item>
 
-        <a-form-item label="心跳时间" class="smart-query-form-item">
+        <a-form-item label="心跳时间" class="nexora-query-form-item">
           <a-range-picker @change="changeCreateDate" v-model:value="createDateRange" :presets="defaultChooseTimeRange" style="width: 240px" />
         </a-form-item>
 
-        <a-form-item class="smart-query-form-item smart-margin-left10">
+        <a-form-item class="nexora-query-form-item nexora-margin-left10">
           <a-button-group>
             <a-button type="primary" @click="onSearch">
               <template #icon>
@@ -56,19 +56,19 @@
       </a-row>
     </a-form>
     <a-row justify="end">
-      <TableOperator class="smart-margin-bottom5" v-model="columns" :tableId="TABLE_ID_CONST.SUPPORT.HEART_BEAT" :refresh="ajaxQuery" />
+      <TableOperator class="nexora-margin-bottom5" v-model="columns" :tableId="TABLE_ID_CONST.SUPPORT.HEART_BEAT" :refresh="ajaxQuery" />
     </a-row>
     <a-table
       size="small"
       bordered
       :loading="tableLoading"
-      class="smart-margin-top10"
+      class="nexora-margin-top10"
       :dataSource="tableData"
       :columns="columns"
       rowKey="goodsId"
       :pagination="false"
     />
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -89,7 +89,7 @@
   import { heartBeatApi } from '/@/api/support/heart-beat-api';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import { defaultTimeRanges } from '/@/lib/default-time-ranges';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
 
@@ -163,7 +163,7 @@
       total.value = responseModel.data.total;
       tableData.value = list;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }

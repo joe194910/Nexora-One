@@ -29,8 +29,8 @@
   import { message } from 'ant-design-vue';
   import { reactive, ref } from 'vue';
   import { configApi } from '/@/api/support/config-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
 
   // emit
   const emit = defineEmits(['reloadList']);
@@ -71,7 +71,7 @@
     formRef.value
       .validate()
       .then(async () => {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           if (form.configId) {
             await configApi.updateConfig(form);
@@ -82,9 +82,9 @@
           emit('reloadList');
           onClose();
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       })
       .catch((error) => {

@@ -22,8 +22,8 @@
   import { ref } from 'vue';
   import DepartmentTree from '../department-tree/index.vue';
   import { employeeApi } from '/@/api/system/employee-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
 
   // ----------------------- 以下是字段定义 emits props ---------------------
 
@@ -48,7 +48,7 @@
 
   // ----------------------- form操作 ---------------------------------
   async function handleOk() {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       if (_.isEmpty(employeeIdList.value)) {
         message.warning('请选择要调整的员工');
@@ -68,9 +68,9 @@
       emit('refresh');
       closeModal();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 

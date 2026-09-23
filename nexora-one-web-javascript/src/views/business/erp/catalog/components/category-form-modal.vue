@@ -19,10 +19,10 @@
 <script setup>
   import { ref, reactive, nextTick } from 'vue';
   import { message } from 'ant-design-vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import _ from 'lodash';
   import { categoryApi } from '/@/api/business/category/category-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   // emit
   const emit = defineEmits(['reloadList']);
@@ -83,7 +83,7 @@
     formRef.value
       .validate()
       .then(async () => {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           if (form.categoryId) {
             await categoryApi.updateCategory(form);
@@ -94,9 +94,9 @@
           emit('reloadList', form.parentId);
           onClose();
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       })
       .catch((error) => {

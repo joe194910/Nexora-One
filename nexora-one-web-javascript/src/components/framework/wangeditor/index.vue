@@ -27,7 +27,7 @@
   import { fileApi } from '/@/api/support/file-api';
   import '@wangeditor-next/editor/dist/css/style.css';
   import { Editor, Toolbar } from '@wangeditor-next/editor-for-vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   //菜单
   const editorConfig = { MENU_CONF: {} };
@@ -42,7 +42,7 @@
         let data = res.data;
         insertFn(data.fileUrl);
       } catch (error) {
-        smartSentry.captureError(error);
+        nexoraSentry.captureError(error);
       }
     },
   };

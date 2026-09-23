@@ -378,7 +378,7 @@
   import { AppstoreOutlined, CheckCircleFilled, CopyOutlined, DownloadOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons-vue';
   import { applicationApi } from '/@/api/business/application/application-api';
   import Upload from '/@/components/support/file-upload/index.vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import './application.less';
 
   const route = useRoute();
@@ -559,7 +559,7 @@
       const response = await applicationApi.detail(applicationId.value);
       fillDetail(response.data);
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loading.value = false;
     }
@@ -570,7 +570,7 @@
       const response = await applicationApi.queryOpenApiCatalog();
       openApis.value = response.data || [];
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 
@@ -626,7 +626,7 @@
       if (currentStep.value === 8) await loadDetail();
     } catch (error) {
       if (error?.message) message.warning(error.message);
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       saving.value = false;
     }
@@ -649,7 +649,7 @@
       await loadDetail();
       navigateToStep(8);
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       saving.value = false;
     }
@@ -662,7 +662,7 @@
       message.success('应用已提交审核');
       router.push({ path: '/application/detail', query: { applicationId: applicationId.value } });
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       saving.value = false;
     }
@@ -681,7 +681,7 @@
       secretVisible.value = true;
       message.success('新密钥已生成');
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 
@@ -694,7 +694,7 @@
         message.info('尚未收到外部应用成功换取 Access Token 的请求');
       }
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 

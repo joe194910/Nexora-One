@@ -119,8 +119,8 @@
 import { message } from 'ant-design-vue';
 import { reactive, ref } from 'vue';
 import { jobApi } from '/@/api/support/job-api';
-import { smartSentry } from '/@/lib/smart-sentry';
-import { SmartLoading } from '/@/components/framework/smart-loading/index';
+import { nexoraSentry } from '/@/lib/nexora-sentry';
+import { NexoraLoading } from '/@/components/framework/nexora-loading/index';
 import { TRIGGER_TYPE_ENUM } from '/@/constants/support/job-const';
 
 // emit
@@ -192,7 +192,7 @@ async function confirmUpdateJob() {
         }
 
         try {
-          SmartLoading.show();
+          NexoraLoading.show();
           if(isAdd.value){
             await jobApi.addJob(updateForm)
             message.success('添加成功');
@@ -203,9 +203,9 @@ async function confirmUpdateJob() {
           closeUpdateModal();
           emit('reloadList');
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       })
       .catch((error) => {
@@ -245,15 +245,15 @@ async function confirmExecuteJob() {
     };
     await jobApi.executeJob(executeParam);
     // loading 延迟后再提示刷新
-    SmartLoading.show();
+    NexoraLoading.show();
     await new Promise((resolve) => setTimeout(resolve, 2000));
     message.success('执行成功');
     closeExecuteModal();
     emit('reloadList');
   } catch (e) {
-    smartSentry.captureError(e);
+    nexoraSentry.captureError(e);
   } finally {
-    SmartLoading.hide();
+    NexoraLoading.hide();
   }
 }
 

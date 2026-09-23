@@ -317,7 +317,7 @@
   } from '@ant-design/icons-vue';
   import { Empty, message } from 'ant-design-vue';
   import { openApiApi } from '/@/api/business/open-api/open-api-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import ApiAiToolPanel from './components/api-ai-tool-panel.vue';
   import './open-api.less';
 
@@ -617,7 +617,7 @@
       currentStep.value = Math.min(currentStep.value + 1, 5);
       await syncRouteStep();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       saving.value = false;
     }
@@ -712,7 +712,7 @@
         rowKey: String(item.errorCodeId || `${Date.now()}-${index}`),
       }));
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loading.value = false;
     }
@@ -723,7 +723,7 @@
       const response = await openApiApi.categories();
       categories.value = response.data || [];
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 

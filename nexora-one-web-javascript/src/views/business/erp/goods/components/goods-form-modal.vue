@@ -17,7 +17,7 @@
         <a-input v-model:value="form.goodsName" placeholder="请输入商品名称" />
       </a-form-item>
       <a-form-item label="商品状态" name="goodsStatus">
-        <SmartEnumSelect enum-name="GOODS_STATUS_ENUM" v-model:value="form.goodsStatus" />
+        <NexoraEnumSelect enum-name="GOODS_STATUS_ENUM" v-model:value="form.goodsStatus" />
       </a-form-item>
       <a-form-item label="产地" name="place">
         <DictSelect width="100%" :dict-code="DICT_CODE_ENUM.GOODS_PLACE" v-model:value="form.place" mode="tags" />
@@ -58,12 +58,12 @@
   import CategoryTree from '/@/components/business/category-tree-select/index.vue';
   import { CATEGORY_TYPE_ENUM } from '/@/constants/business/erp/category-const';
   import { message } from 'ant-design-vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { GOODS_STATUS_ENUM } from '/@/constants/business/erp/goods-const';
   import _ from 'lodash';
   import { goodsApi } from '/@/api/business/goods/goods-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
-  import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
+  import NexoraEnumSelect from '/@/components/framework/nexora-enum-select/index.vue';
   import DictSelect from '/@/components/support/dict-select/index.vue';
   import { DICT_CODE_ENUM } from '/@/constants/support/dict-const';
 
@@ -125,7 +125,7 @@
     formRef.value
       .validate()
       .then(async () => {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           if (form.goodsId) {
             await goodsApi.updateGoods(form);
@@ -136,9 +136,9 @@
           onClose();
           emit('reloadList');
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       })
       .catch((error) => {

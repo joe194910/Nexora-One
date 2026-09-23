@@ -7,7 +7,7 @@
  * @Email:     NexoraOne
  * @Copyright  NexoraOne （ # ），Since 2012
  */
-import { postRequest } from '/src/lib/smart-request';
+import { postRequest } from '/src/lib/nexora-request';
 
 export const feedbackApi = {
   // 意见反馈-新增

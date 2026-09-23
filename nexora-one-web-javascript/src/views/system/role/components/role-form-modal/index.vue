@@ -33,8 +33,8 @@
   import { message } from 'ant-design-vue';
   import { reactive, ref } from 'vue';
   import { roleApi } from '/@/api/system/role-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   // ----------------------- 以下是字段定义 emits props ---------------------
   let emits = defineEmits(['refresh']);
 
@@ -82,7 +82,7 @@
     formRef.value
       .validate()
       .then(async () => {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           if (form.roleId) {
             await roleApi.updateRole(form);
@@ -93,9 +93,9 @@
           emits('refresh');
           onClose();
         } catch (e) {
-          smartSentry.captureError(e);
+          nexoraSentry.captureError(e);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       })
       .catch((error) => {

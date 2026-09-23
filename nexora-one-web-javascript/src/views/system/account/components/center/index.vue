@@ -25,7 +25,7 @@
               <a-input class="form-item" v-model:value.trim="form.actualName" placeholder="请输入员工名称" />
             </a-form-item>
             <a-form-item label="性别" name="gender">
-              <smart-enum-select class="form-item" v-model:value="form.gender" placeholder="请选择性别" enum-name="GENDER_ENUM" />
+              <nexora-enum-select class="form-item" v-model:value="form.gender" placeholder="请选择性别" enum-name="GENDER_ENUM" />
             </a-form-item>
             <a-form-item label="手机号码" name="phone">
               <a-input class="form-item" v-model:value.trim="form.phone" placeholder="请输入手机号码" />
@@ -79,13 +79,13 @@
   import { regular } from '/@/constants/regular-const';
   import DepartmentTreeSelect from '/@/components/system/department-tree-select/index.vue';
   import PositionSelect from '/@/components/system/position-select/index.vue';
-  import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
+  import NexoraEnumSelect from '/@/components/framework/nexora-enum-select/index.vue';
   import { loginApi } from '/@/api/system/login-api';
   import { useUserStore } from '/@/store/modules/system/user';
   import { message } from 'ant-design-vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import { employeeApi } from '/@/api/system/employee-api';
-  import { SmartLoading } from '/@/components/framework/smart-loading/index';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading/index';
   import { fileApi } from '/@/api/support/file-api';
   import { FILE_FOLDER_TYPE_ENUM } from '/@/constants/support/file-const';
 
@@ -154,7 +154,7 @@
       // 头像展示
       avatarUrl.value = data.avatar;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     }
   }
 
@@ -194,7 +194,7 @@
       // 重新获取详情，刷新整体缓存
       await getLoginInfo();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       updateAvatarLoading.value = false;
     }
@@ -202,16 +202,16 @@
 
   // 更新员工信息
   async function updateEmployee() {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       await employeeApi.updateCenter(form);
       message.success('更新成功');
       // 重新获取详情，刷新整体缓存
       await getLoginInfo();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 

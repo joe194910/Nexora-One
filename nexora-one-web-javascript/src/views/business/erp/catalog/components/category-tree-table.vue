@@ -9,8 +9,8 @@
 -->
 <template>
   <a-card size="small" :bordered="false" :hoverable="true">
-    <a-row class="smart-table-btn-block">
-      <div class="smart-table-operate-block">
+    <a-row class="nexora-table-btn-block">
+      <div class="nexora-table-operate-block">
         <a-button @click="addCategory()" type="primary" v-privilege="`${privilegePrefix}category:add`">
           <template #icon>
             <PlusOutlined />
@@ -18,7 +18,7 @@
           新建
         </a-button>
       </div>
-      <div class="smart-table-setting-block"></div>
+      <div class="nexora-table-setting-block"></div>
     </a-row>
 
     <a-table
@@ -34,7 +34,7 @@
     >
       <template #bodyCell="{ record, column }">
         <template v-if="column.dataIndex === 'action'">
-          <div class="smart-table-operate">
+          <div class="nexora-table-operate">
             <a-button @click="addCategory(record.categoryId)" type="link" v-privilege="`${privilegePrefix}category:addChild`">增加子分类</a-button>
             <a-button @click="addCategory(undefined, record)" type="link" v-privilege="`${privilegePrefix}category:update`">编辑</a-button>
             <a-button @click="confirmDeleteCategory(record.categoryId)" danger type="link" v-privilege="`${privilegePrefix}category:delete`"
@@ -50,11 +50,11 @@
 <script setup>
   import { computed, onMounted, reactive, ref } from 'vue';
   import { message, Modal } from 'ant-design-vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import CategoryFormModal from './category-form-modal.vue';
   import { categoryApi } from '/@/api/business/category/category-api';
   import { CATEGORY_TYPE_ENUM } from '/@/constants/business/erp/category-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const columnNameList = [
     {
@@ -104,7 +104,7 @@
       let responseModel = await categoryApi.queryCategoryTree(queryForm);
       tableData.value = responseModel.data;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }
@@ -151,14 +151,14 @@
   }
   async function deleteCategory(categoryId) {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       await categoryApi.deleteCategoryById(categoryId);
       message.success('删除成功');
       queryList();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 </script>

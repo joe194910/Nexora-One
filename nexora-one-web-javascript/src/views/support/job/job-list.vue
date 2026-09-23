@@ -8,26 +8,26 @@
     <a-card size="small" :bordered="false" :hoverable="true">
       <a-tabs v-model:activeKey="activeKey">
         <a-tab-pane key="1" tab="有效任务">
-          <a-form class="smart-query-form">
-            <a-row class="smart-query-form-row">
-              <a-form-item label="关键字" class="smart-query-form-item">
+          <a-form class="nexora-query-form">
+            <a-row class="nexora-query-form-row">
+              <a-form-item label="关键字" class="nexora-query-form-item">
                 <a-input style="width: 200px" v-model:value="queryForm.searchWord" placeholder="请输入关键字" :maxlength="30" />
               </a-form-item>
-              <a-form-item label="触发类型" class="smart-query-form-item">
+              <a-form-item label="触发类型" class="nexora-query-form-item">
                 <a-select style="width: 155px" v-model:value="queryForm.triggerType" placeholder="请选择触发类型" allowClear>
-                  <a-select-option v-for="item in $smartEnumPlugin.getValueDescList('TRIGGER_TYPE_ENUM')" :key="item.value" :value="item.value">
+                  <a-select-option v-for="item in $nexoraEnumPlugin.getValueDescList('TRIGGER_TYPE_ENUM')" :key="item.value" :value="item.value">
                     {{ item.desc }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
-              <a-form-item label="状态" class="smart-query-form-item">
+              <a-form-item label="状态" class="nexora-query-form-item">
                 <a-select style="width: 150px" v-model:value="queryForm.enabledFlag" placeholder="请选择状态" allowClear>
                   <a-select-option :key="1"> 开启 </a-select-option>
                   <a-select-option :key="0"> 停止 </a-select-option>
                 </a-select>
               </a-form-item>
 
-              <a-form-item class="smart-query-form-item smart-margin-left10">
+              <a-form-item class="nexora-query-form-item nexora-margin-left10">
                 <a-button-group>
                   <a-button type="primary" @click="onSearch" v-privilege="'support:job:query'">
                     <template #icon>
@@ -43,7 +43,7 @@
                   </a-button>
                 </a-button-group>
 
-                <a-button class="smart-margin-left20" type="primary" @click="openUpdateModal()" v-privilege="'support:job:add'">
+                <a-button class="nexora-margin-left20" type="primary" @click="openUpdateModal()" v-privilege="'support:job:add'">
                   <template #icon>
                     <plus-outlined />
                   </template>
@@ -53,9 +53,9 @@
             </a-row>
           </a-form>
           <a-flex align="end" vertical>
-            <div class="smart-table-setting-block smart-margin-bottom10">
+            <div class="nexora-table-setting-block nexora-margin-bottom10">
               <TableOperator
-                class="smart-margin-bottom5 pull-right"
+                class="nexora-margin-bottom5 pull-right"
                 v-model="columns"
                 :tableId="TABLE_ID_CONST.SUPPORT.JOB"
                 :refresh="queryJobList"
@@ -114,7 +114,7 @@
                 />
               </template>
               <template v-if="column.dataIndex === 'action'">
-                <div class="smart-table-operate">
+                <div class="nexora-table-operate">
                   <a-button v-privilege="'support:job:update'" @click="openUpdateModal(record)" type="link">编辑</a-button>
                   <a-button v-privilege="'support:job:execute'" type="link" @click="openExecuteModal(record)">执行</a-button>
                   <a-button v-privilege="'support:job:log:query'" @click="openJobLogModal(record.jobId, record.jobName)" type="link">记录</a-button>
@@ -125,7 +125,7 @@
               </template>
             </template>
           </a-table>
-          <div class="smart-query-table-page">
+          <div class="nexora-query-table-page">
             <a-pagination
               showSizeChanger
               showQuickJumper
@@ -156,14 +156,14 @@
   import { onMounted, reactive, ref } from 'vue';
   import { jobApi } from '/@/api/support/job-api';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
   import DeletedJobList from './components/deleted-job-list.vue';
   import { TRIGGER_TYPE_ENUM } from '/@/constants/support/job-const';
   import JobFormModal from './components/job-form-modal.vue';
   import JobLogListModal from './components/job-log-list-modal.vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading/index';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading/index';
   const activeKey = ref('1');
   const columns = ref([
     {
@@ -286,7 +286,7 @@
       total.value = responseModel.data.total;
       tableData.value = list;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }
@@ -309,7 +309,7 @@
       message.success('更新成功');
     } catch (e) {
       record.enabledFlag = !checked;
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       record.enabledLoading = false;
     }
@@ -321,7 +321,7 @@
       let res = await jobApi.queryJobInfo(jobId);
       return res.data;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     }
   }
 
@@ -349,14 +349,14 @@
 
   async function deleteJob(jobId) {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       await jobApi.deleteJob(jobId);
       message.success('删除成功!');
       queryJobList();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 

@@ -34,7 +34,7 @@
     </div>
   </a-card>
 
-  <a-card title="记录" size="small" class="smart-margin-top10">
+  <a-card title="记录" size="small" class="nexora-margin-top10">
     <NoticeViewRecordList ref="noticeViewRecordList" :noticeId="route.query.noticeId" />
   </a-card>
 </template>
@@ -44,9 +44,9 @@
   import { useRoute } from 'vue-router';
   import NoticeViewRecordList from './components/notice-view-record-list.vue';
   import { noticeApi } from '/@/api/business/oa/notice-api';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import FilePreview from '/@/components/support/file-preview/index.vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const route = useRoute();
 
@@ -63,15 +63,15 @@
   // 查询详情
   async function queryNoticeDetail() {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       const result = await noticeApi.view(route.query.noticeId);
       noticeDetail.value = result.data;
 
       noticeViewRecordList.value.onSearch();
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 

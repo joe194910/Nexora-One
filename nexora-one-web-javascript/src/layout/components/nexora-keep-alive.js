@@ -11,7 +11,7 @@ import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '/@/store/modules/system/user';
 
-export function smartKeepAlive() {
+export function nexoraKeepAlive() {
   const route = useRoute();
   const router = useRouter();
   // 需要keep-alive的页面

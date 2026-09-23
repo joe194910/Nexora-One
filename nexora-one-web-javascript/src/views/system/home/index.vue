@@ -201,7 +201,7 @@
   } from '@ant-design/icons-vue';
   import { applicationApi } from '/@/api/business/application/application-api';
   import { knowledgeApi } from '/@/api/business/knowledge/knowledge-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import { useUserStore } from '/@/store/modules/system/user';
   import { alertList } from './home-mock';
 
@@ -389,22 +389,22 @@
         color: applicationColors[index % applicationColors.length],
       }));
     } else {
-      smartSentry.captureError(applicationsResult.reason);
+      nexoraSentry.captureError(applicationsResult.reason);
     }
     if (overviewResult.status === 'fulfilled') {
       Object.assign(overview, overviewResult.value.data);
     } else {
-      smartSentry.captureError(overviewResult.reason);
+      nexoraSentry.captureError(overviewResult.reason);
     }
     if (knowledgeResult.status === 'fulfilled') {
       knowledgeBases.value = knowledgeResult.value.data || [];
     } else {
-      smartSentry.captureError(knowledgeResult.reason);
+      nexoraSentry.captureError(knowledgeResult.reason);
     }
     if (assistantsResult.status === 'fulfilled') {
       knowledgeAssistants.value = assistantsResult.value.data || [];
     } else {
-      smartSentry.captureError(assistantsResult.reason);
+      nexoraSentry.captureError(assistantsResult.reason);
     }
     selectedAssistantId.value =
       assistantList.value.find((item) => item.enabledFlag)?.assistantId || assistantList.value[0]?.assistantId;
@@ -418,7 +418,7 @@
       const target = response.data.openMode === 'CURRENT' ? '_self' : '_blank';
       window.open(response.data.launchUrl, target, target === '_blank' ? 'noopener,noreferrer' : undefined);
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 

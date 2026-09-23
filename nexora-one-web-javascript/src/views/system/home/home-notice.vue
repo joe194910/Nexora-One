@@ -35,7 +35,7 @@
   import { onMounted, ref } from 'vue';
   import { useRouter } from 'vue-router';
   import { noticeApi } from '/@/api/business/oa/notice-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import DefaultHomeCard from '/@/views/system/home/components/default-home-card.vue';
 
   const props = defineProps({
@@ -62,7 +62,7 @@
       const result = await noticeApi.queryEmployeeNotice(queryForm);
       data.value = result.data.list;
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
       loading.value = false;
     }

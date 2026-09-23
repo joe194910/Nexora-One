@@ -21,7 +21,7 @@
       </template>
     </a-table>
 
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -41,7 +41,7 @@
   import { reactive, ref } from 'vue';
   import { serialNumberApi } from '/@/api/support/serial-number-api';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
-import { smartSentry } from '/@/lib/smart-sentry';
+import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   defineExpose({
     showModal,
@@ -106,7 +106,7 @@ import { smartSentry } from '/@/lib/smart-sentry';
       total.value = responseModel.data.total;
       tableData.value = list;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }

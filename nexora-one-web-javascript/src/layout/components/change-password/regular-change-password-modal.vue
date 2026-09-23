@@ -18,8 +18,8 @@
   import Password from '/@/views/system/account/components/password/index.vue';
   import { useUserStore } from '/@/store/modules/system/user';
   import { loginApi } from '/@/api/system/login-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
-  import { SmartLoading } from '/@/components/framework/smart-loading/index';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading/index';
 
   /**
    * 修改密码弹窗
@@ -33,15 +33,15 @@
    */
   async function refresh() {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       //获取登录用户信息
       const res = await loginApi.getLoginInfo();
       //更新用户信息到pinia
       useUserStore().setUserLoginInfo(res.data);
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 </script>

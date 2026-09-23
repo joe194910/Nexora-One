@@ -35,9 +35,9 @@
   import { message } from 'ant-design-vue';
   import { reactive, ref } from 'vue';
   import { serialNumberApi } from '/@/api/support/serial-number-api';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import _ from 'lodash';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   // emit
   const emit = defineEmits(['refresh']);
@@ -88,15 +88,15 @@
     formRef.value
       .validate()
       .then(async () => {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           let res = await serialNumberApi.generate(form);
           message.success('生成成功');
           generateResult.value = _.join(res.data, ', ');
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       })
       .catch((error) => {

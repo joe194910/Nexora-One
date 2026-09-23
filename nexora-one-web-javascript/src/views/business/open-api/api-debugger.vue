@@ -75,7 +75,7 @@
   import { ReloadOutlined, SendOutlined } from '@ant-design/icons-vue';
   import { message } from 'ant-design-vue';
   import { openApiApi } from '/@/api/business/open-api/open-api-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import './open-api.less';
 
   const applications = ref([]);
@@ -115,7 +115,7 @@
       const response = await openApiApi.debug(form);
       result.value = response.data;
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       sending.value = false;
     }

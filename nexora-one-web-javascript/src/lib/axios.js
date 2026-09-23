@@ -20,7 +20,7 @@ import LocalStorageKeyConst from '/@/constants/local-storage-key-const';
 const TOKEN_HEADER = 'Authorization';
 
 // 创建axios对象
-const smartAxios = axios.create({
+const nexoraAxios = axios.create({
   baseURL: import.meta.env.DEV ? '/api' : import.meta.env.VITE_APP_API_URL,
 });
 
@@ -32,7 +32,7 @@ function logout() {
 
 // ================================= 请求拦截器 =================================
 
-smartAxios.interceptors.request.use(
+nexoraAxios.interceptors.request.use(
   (config) => {
     // 在发送请求之前消息头加入token token
     const token = localRead(LocalStorageKeyConst.USER_TOKEN);
@@ -52,7 +52,7 @@ smartAxios.interceptors.request.use(
 // ================================= 响应拦截器 =================================
 
 // 添加响应拦截器
-smartAxios.interceptors.response.use(
+nexoraAxios.interceptors.response.use(
   (response) => {
     // 根据content-type ，判断是否为 json 数据
     let contentType = response.headers['content-type'] ? response.headers['content-type'] : response.headers['Content-Type'];
@@ -140,7 +140,7 @@ export const getRequest = (url, params) => {
  * @param config
  */
 export const request = (config) => {
-  return smartAxios.request(config);
+  return nexoraAxios.request(config);
 };
 
 /**

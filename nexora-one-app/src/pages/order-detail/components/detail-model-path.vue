@@ -1,6 +1,6 @@
 <template>
-  <view class="smart-detail-card">
-    <view class="smart-detail-card-title"> 物流信息</view>
+  <view class="nexora-detail-card">
+    <view class="nexora-detail-card-title"> 物流信息</view>
     <view class="view-item">
       <view class="title">
         <view class="title-icon-text" type="default"> 提 </view>

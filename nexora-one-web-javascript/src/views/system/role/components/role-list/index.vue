@@ -34,9 +34,9 @@
   import _ from 'lodash';
   import { computed, onMounted, ref } from 'vue';
   import { roleApi } from '/@/api/system/role-api';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import RoleFormModal from '../role-form-modal/index.vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   // ----------------------- 角色列表显示 ---------------------
   const roleList = ref([]);
@@ -78,15 +78,15 @@
       okText: '确定',
       okType: 'danger',
       async onOk() {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           await roleApi.deleteRole(roleId);
           message.info('删除成功');
           queryAllRole();
         } catch (e) {
-          smartSentry.captureError(e);
+          nexoraSentry.captureError(e);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       },
       cancelText: '取消',

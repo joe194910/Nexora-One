@@ -10,7 +10,7 @@
 import { defineStore } from 'pinia';
 import { appDefaultConfig } from '/@/config/app-config';
 import localStorageKeyConst from '/@/constants/local-storage-key-const';
-import { smartSentry } from '/@/lib/smart-sentry';
+import { nexoraSentry } from '/@/lib/nexora-sentry';
 import { localRead } from '/@/utils/local-util';
 
 let state = {
@@ -24,7 +24,7 @@ if (appConfigStr) {
     state = JSON.parse(appConfigStr);
     language = state.language;
   } catch (e) {
-    smartSentry.captureError(e);
+    nexoraSentry.captureError(e);
   }
 }
 

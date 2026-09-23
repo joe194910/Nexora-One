@@ -10,7 +10,7 @@
 import { defineStore } from 'pinia';
 import { USER_TOKEN } from '@/constants/local-storage-key-const';
 import { loginApi } from '@/api/system/login-api';
-import { smartSentry } from '@/lib/smart-sentry';
+import { nexoraSentry } from '@/lib/nexora-sentry';
 import { messageApi } from '@/api/support/message-api';
 
 const defaultUserInfo = {
@@ -85,7 +85,7 @@ export const useUserStore = defineStore({
         const res = await loginApi.getLoginInfo();
         this.setUserLoginInfo({ ...res.data, token });
       } catch (error) {
-        smartSentry.captureError(error);
+        nexoraSentry.captureError(error);
       }
     },
 
@@ -97,7 +97,7 @@ export const useUserStore = defineStore({
         const result = await messageApi.queryUnreadCount();
         this.unreadMessageCount = result.data;
       } catch (error) {
-        smartSentry.captureError(error);
+        nexoraSentry.captureError(error);
       }
     },
 

@@ -270,7 +270,7 @@
     CloseCircleOutlined, CopyOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, SendOutlined,
   } from '@ant-design/icons-vue';
   import { aiPlatformApi } from '/@/api/business/ai/ai-platform-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import '../ai-platform.less';
 
   const props = defineProps({ resource: { type: String, required: true } });
@@ -381,7 +381,7 @@
       rows.value = response.data.list || [];
       total.value = response.data.total || 0;
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loading.value = false;
     }
@@ -400,7 +400,7 @@
       if (resource.value !== 'vector') services.value = results[0].data || [];
       Object.assign(summary, results[resource.value === 'vector' ? 0 : 1].data || {});
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 
@@ -496,7 +496,7 @@
       debug.result = response.data;
     } catch (error) {
       debug.error = error.response?.data?.msg || error.message || '模型调用失败，请检查服务配置和调用日志';
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       debug.loading = false;
     }

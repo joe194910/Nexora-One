@@ -9,14 +9,14 @@
  */
 import { HOME_PAGE_NAME } from '/@/constants/system/home-const';
 import { MENU_TYPE_ENUM } from '/@/constants/system/menu-const';
-import SmartLayout from '/@/layout/index.vue';
+import NexoraLayout from '/@/layout/index.vue';
 
 export const homeRouters = [
   {
     path: '/',
     name: '_home',
     redirect: { name: HOME_PAGE_NAME },
-    component: SmartLayout,
+    component: NexoraLayout,
     meta: {
       title: '首页',
       menuType: MENU_TYPE_ENUM.CATALOG.value,

@@ -8,19 +8,19 @@
   * @Copyright  NexoraOne （ # ），Since 2012
 -->
 <template>
-  <a-form class="smart-query-form">
-    <a-row class="smart-query-form-row">
-      <a-form-item label="关键字" class="smart-query-form-item">
+  <a-form class="nexora-query-form">
+    <a-row class="nexora-query-form-row">
+      <a-form-item label="关键字" class="nexora-query-form-item">
         <a-input style="width: 300px" v-model:value="queryForm.keywords" placeholder="开户银行/账户名称/账户/创建人" />
       </a-form-item>
 
-      <a-form-item label="创建时间" class="smart-query-form-item">
+      <a-form-item label="创建时间" class="nexora-query-form-item">
         <a-space direction="vertical" :size="12">
           <a-range-picker v-model:value="searchDate" :presets="defaultTimeRanges"  @change="dateChange" />
         </a-space>
       </a-form-item>
 
-      <a-form-item class="smart-query-form-item smart-margin-left10">
+      <a-form-item class="nexora-query-form-item nexora-margin-left10">
         <a-button-group>
           <a-button type="primary" @click="onSearch">
             <template #icon>
@@ -36,7 +36,7 @@
           </a-button>
         </a-button-group>
 
-        <a-button @click="addOrUpdate()" type="primary" class="smart-margin-left20" v-if="$privilege('oa:bank:add')">
+        <a-button @click="addOrUpdate()" type="primary" class="nexora-margin-left20" v-if="$privilege('oa:bank:add')">
           <template #icon>
             <PlusOutlined />
           </template>
@@ -48,7 +48,7 @@
 
   <a-card size="small" :bordered="false" :hoverable="false">
     <a-row justify="end">
-      <TableOperator class="smart-margin-bottom5" v-model="columns" :tableId="TABLE_ID_CONST.BUSINESS.OA.ENTERPRISE_BANK" :refresh="ajaxQuery" />
+      <TableOperator class="nexora-margin-bottom5" v-model="columns" :tableId="TABLE_ID_CONST.BUSINESS.OA.ENTERPRISE_BANK" :refresh="ajaxQuery" />
     </a-row>
     <a-table :scroll="{ x: 1300 }" size="small" :dataSource="tableData" bordered :columns="columns" rowKey="bankId" :pagination="false">
       <template #bodyCell="{ record, column }">
@@ -59,7 +59,7 @@
           {{ record.businessFlag ? '是' : '否' }}
         </template>
         <template v-else-if="column.dataIndex === 'action'">
-          <div class="smart-table-operate">
+          <div class="nexora-table-operate">
             <a-button @click="addOrUpdate(record)" type="link" v-if="$privilege('oa:bank:update')">编辑</a-button>
             <a-button @click="confirmDelete(record.bankId)" danger type="link" v-if="$privilege('oa:bank:delete')">删除</a-button>
           </div>
@@ -67,7 +67,7 @@
       </template>
     </a-table>
 
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -90,9 +90,9 @@
   import { bankApi } from '/@/api/business/oa/bank-api';
   import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import BankOperateModal from './enterprise-bank-operate-modal.vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { message, Modal } from 'ant-design-vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import { defaultTimeRanges } from '/@/lib/default-time-ranges';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
@@ -195,7 +195,7 @@
       total.value = responseModel.data.total;
       tableData.value = list;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }
@@ -216,14 +216,14 @@
   }
   async function del(bankId) {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       await bankApi.delete(bankId);
       message.success('删除成功');
       ajaxQuery();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 

@@ -1,11 +1,11 @@
 <template>
   <a-modal v-model:open="visible" title="推送人" width="1100px" ok-text="确定" cancel-text="取消" @ok="onSubmit" @cancel="onClose" :zIndex="9999">
-    <a-form class="smart-query-form">
-      <a-row class="smart-query-form-row">
-        <a-form-item label="关键词搜索" class="smart-query-form-item">
+    <a-form class="nexora-query-form">
+      <a-row class="nexora-query-form-row">
+        <a-form-item label="关键词搜索" class="nexora-query-form-item">
           <a-input v-model:value="queryParam.searchWord" :style="{ width: '250px' }" placeholder="请输入姓名" @change="selectSearchWord" />
         </a-form-item>
-        <a-form-item class="smart-query-form-item">
+        <a-form-item class="nexora-query-form-item">
           <a-button type="primary" @click="searchQuery">
             <template #icon>
               <SearchOutlined />
@@ -13,7 +13,7 @@
             查询
           </a-button>
         </a-form-item>
-        <a-form-item class="smart-query-form-item">
+        <a-form-item class="nexora-query-form-item">
           <a-button @click="searchReset">
             <template #icon>
               <ReloadOutlined />
@@ -36,7 +36,7 @@
       }"
     >
     </a-table>
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -56,8 +56,8 @@
 <script setup>
   import { reactive, ref } from 'vue';
   import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { employeeApi } from '/@/api/system/employee-api';
   // ---------------查询条件----------------
   const queryParamState = {
@@ -114,7 +114,7 @@
       total.value = res.data.total;
       tableData.value = list;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }
@@ -141,9 +141,9 @@
     try {
       onClose();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 

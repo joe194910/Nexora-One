@@ -64,8 +64,8 @@
 
   onMounted(() => {
     const internalInstance = getCurrentInstance(); // 有效  全局
-    const smartEnumPlugin = internalInstance.appContext.config.globalProperties.$smartEnumPlugin;
-    valueDescList.value = smartEnumPlugin.getValueDescList(props.enumName).filter((item) => !props.hiddenOption.includes(item.value));
+    const nexoraEnumPlugin = internalInstance.appContext.config.globalProperties.$nexoraEnumPlugin;
+    valueDescList.value = nexoraEnumPlugin.getValueDescList(props.enumName).filter((item) => !props.hiddenOption.includes(item.value));
   });
 
   const selectValue = ref(props.value);

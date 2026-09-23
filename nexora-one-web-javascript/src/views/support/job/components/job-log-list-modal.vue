@@ -5,24 +5,24 @@
 -->
 <template>
   <a-drawer v-model:open="showFlag" :width="1100" :title="title" placement="right" :destroyOnClose="true">
-    <a-form class="smart-query-form">
-      <a-row class="smart-query-form-row">
-        <a-form-item label="关键字" class="smart-query-form-item">
+    <a-form class="nexora-query-form">
+      <a-row class="nexora-query-form-row">
+        <a-form-item label="关键字" class="nexora-query-form-item">
           <a-input style="width: 200px" v-model:value="queryForm.searchWord" placeholder="请输入关键字" :maxlength="30" />
         </a-form-item>
-        <a-form-item label="执行结果" class="smart-query-form-item">
+        <a-form-item label="执行结果" class="nexora-query-form-item">
           <a-select style="width: 100px" v-model:value="queryForm.successFlag" placeholder="请选择" allowClear>
             <a-select-option :key="1"> 成功</a-select-option>
             <a-select-option :key="0"> 失败</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="执行时间" class="smart-query-form-item">
+        <a-form-item label="执行时间" class="nexora-query-form-item">
           <a-space direction="vertical" :size="12">
             <a-range-picker v-model:value="searchDate" style="width: 220px" :presets="defaultTimeRanges" @change="dateChange" />
           </a-space>
         </a-form-item>
 
-        <a-form-item class="smart-query-form-item smart-margin-left10">
+        <a-form-item class="nexora-query-form-item nexora-margin-left10">
           <a-button-group>
             <a-button type="primary" @click="onSearch">
               <template #icon>
@@ -42,7 +42,7 @@
     </a-form>
 
       <a-row justify="end">
-        <TableOperator class="smart-margin-bottom5" v-model="columns" :tableId="TABLE_ID_CONST.SUPPORT.JOB_LOG" :refresh="queryLogList" />
+        <TableOperator class="nexora-margin-bottom5" v-model="columns" :tableId="TABLE_ID_CONST.SUPPORT.JOB_LOG" :refresh="queryLogList" />
       </a-row>
 
       <a-table size="small" :loading="tableLoading" bordered :dataSource="tableData" :columns="columns" rowKey="jobLogId" :pagination="false">
@@ -71,7 +71,7 @@
         </template>
       </a-table>
 
-      <div class="smart-query-table-page">
+      <div class="nexora-query-table-page">
         <a-pagination
           showSizeChanger
           showQuickJumper
@@ -91,7 +91,7 @@
   import { reactive, ref } from 'vue';
   import { jobApi } from '/@/api/support/job-api';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
   import { defaultTimeRanges } from '/@/lib/default-time-ranges';
@@ -202,7 +202,7 @@
       total.value = responseModel.data.total;
       tableData.value = list;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }

@@ -15,7 +15,7 @@
         <div class="title">
           <component :is="$antIcons[props.icon]" v-if="props.icon" :style="{ fontSize: '18px', color: token.colorPrimary }" />
           <slot name="title"></slot>
-          <span v-if="!$slots.title" class="smart-margin-left10">{{ props.title }} </span>
+          <span v-if="!$slots.title" class="nexora-margin-left10">{{ props.title }} </span>
         </div>
       </template>
       <template v-if="props.extra" #extra>

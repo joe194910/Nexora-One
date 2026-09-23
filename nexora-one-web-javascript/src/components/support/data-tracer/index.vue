@@ -9,13 +9,13 @@
   *
 -->
 <template>
-  <a-form class="smart-query-form">
-    <a-row class="smart-query-form-row">
-      <a-form-item label="关键字" class="smart-query-form-item">
+  <a-form class="nexora-query-form">
+    <a-row class="nexora-query-form-row">
+      <a-form-item label="关键字" class="nexora-query-form-item">
         <a-input style="width: 300px" v-model:value="queryForm.keywords" placeholder="变更内容" />
       </a-form-item>
 
-      <a-form-item class="smart-query-form-item smart-margin-left10">
+      <a-form-item class="nexora-query-form-item nexora-margin-left10">
         <a-button-group>
           <a-button type="primary" @click="onSearch">
             <template #icon>
@@ -66,7 +66,7 @@
   import { nextTick, reactive, ref, watch } from 'vue';
   import { dataTracerApi } from '/@/api/support/data-tracer-api';
   import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import DataTracerTimeline from './data-tracer-timeline.vue';
 
   let props = defineProps({
@@ -121,7 +121,7 @@
       total.value = responseModel.data.total;
       tableData.value = list;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }

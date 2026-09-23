@@ -25,7 +25,7 @@
 
 <script setup>
   import { onMounted, ref, watch } from 'vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import { positionApi } from '/@/api/system/position-api';
 
   // =========== 属性定义 和 事件方法暴露 =============
@@ -57,7 +57,7 @@
       let resp = await positionApi.queryList();
       positionList.value = resp.data;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     }
   }
   onMounted(query);

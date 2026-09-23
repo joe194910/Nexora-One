@@ -28,7 +28,7 @@
         </template>
       </a-table>
       <a-empty v-if="!loading && !records.length" description="当前没有待审核应用" />
-      <div v-if="total" class="smart-query-table-page">
+      <div v-if="total" class="nexora-query-table-page">
         <a-pagination v-model:current="queryForm.pageNum" v-model:page-size="queryForm.pageSize" :total="total" @change="queryData" />
       </div>
     </section>
@@ -55,7 +55,7 @@
   import { AppstoreOutlined, AuditOutlined, ReloadOutlined } from '@ant-design/icons-vue';
   import { message } from 'ant-design-vue';
   import { applicationApi } from '/@/api/business/application/application-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import './application.less';
 
   const router = useRouter();
@@ -83,7 +83,7 @@
       records.value = response.data.list || [];
       total.value = response.data.total || 0;
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loading.value = false;
     }
@@ -120,7 +120,7 @@
       modalVisible.value = false;
       await queryData();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       reviewing.value = false;
     }

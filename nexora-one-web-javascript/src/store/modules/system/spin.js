@@ -8,7 +8,7 @@
  * @Copyright  NexoraOne （ # ），Since 2012
  */
 import { defineStore } from 'pinia';
-import { smartSentry } from '/@/lib/smart-sentry';
+import { nexoraSentry } from '/@/lib/nexora-sentry';
 
 export const useSpinStore = defineStore({
   id: 'spin',
@@ -26,7 +26,7 @@ export const useSpinStore = defineStore({
           spins.style.zIndex = '999';
         }
       } catch (error) {
-        smartSentry.captureError('Spin hide操作失败:', error);
+        nexoraSentry.captureError('Spin hide操作失败:', error);
       }
     },
     show() {
@@ -38,7 +38,7 @@ export const useSpinStore = defineStore({
           spins.style.zIndex = '1001';
         }
       } catch (error) {
-        smartSentry.captureError('Spin hide操作失败:', error);
+        nexoraSentry.captureError('Spin hide操作失败:', error);
       }
     },
   },

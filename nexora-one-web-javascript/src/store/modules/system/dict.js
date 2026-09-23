@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { DICT_SPLIT } from '/@/constants/support/dict-const';
 import _ from 'lodash';
 import { dictApi } from '/@/api/support/dict-api';
-import { smartSentry } from '/@/lib/smart-sentry';
+import { nexoraSentry } from '/@/lib/nexora-sentry';
 
 export const useDictStore = defineStore({
   id: 'dict',
@@ -87,7 +87,7 @@ export const useDictStore = defineStore({
         const dictRes = await dictApi.getAllDictData();
         this.initData(dictRes.data);
       }catch (e){
-        smartSentry.captureError(e);
+        nexoraSentry.captureError(e);
       }
     },
     // 初始化字典

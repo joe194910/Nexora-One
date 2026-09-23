@@ -14,8 +14,8 @@
   <a-table
     size="small"
     bordered
-    id="smartCodeQueryFieldsTable"
-    class="smart-margin-top10"
+    id="nexoraCodeQueryFieldsTable"
+    class="nexora-margin-top10"
     :dataSource="tableData"
     row-class-name="column-row"
     :columns="columns"
@@ -42,7 +42,7 @@
       </template>
 
       <template v-if="column.dataIndex === 'queryTypeEnum'">
-        <SmartEnumSelect
+        <NexoraEnumSelect
           @change="(value) => onChangeQueryType(value, record)"
           enumName="CODE_QUERY_FIELD_QUERY_TYPE_ENUM"
           v-model:value="record.queryTypeEnum"
@@ -66,7 +66,7 @@
       </template>
 
       <template v-if="column.dataIndex === 'operate'">
-        <div class="smart-table-operate">
+        <div class="nexora-table-operate">
           <a-button type="link" @click="onDelete(index)" danger>删除</a-button>
         </div>
       </template>
@@ -77,7 +77,7 @@
 <script setup>
   import Sortable from 'sortablejs';
   import { inject, nextTick, ref } from 'vue';
-  import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
+  import NexoraEnumSelect from '/@/components/framework/nexora-enum-select/index.vue';
   import { CODE_QUERY_FIELD_QUERY_TYPE_ENUM } from '/@/constants/support/code-generator-const';
   import { convertLowerCamel } from '/@/utils/str-util';
 
@@ -170,12 +170,12 @@
 
   //初始化拖拽
   function initDrag() {
-    let tbody = document.querySelector('#smartCodeQueryFieldsTable tbody');
+    let tbody = document.querySelector('#nexoraCodeQueryFieldsTable tbody');
     Sortable.create(tbody, {
       animation: 300,
-      dragClass: 'smart-ghost-class', //设置拖拽样式类名
-      ghostClass: 'smart-ghost-class', //设置拖拽停靠样式类名
-      chosenClass: 'smart-ghost-class', //设置选中样式类名
+      dragClass: 'nexora-ghost-class', //设置拖拽样式类名
+      ghostClass: 'nexora-ghost-class', //设置拖拽停靠样式类名
+      chosenClass: 'nexora-ghost-class', //设置选中样式类名
       handle: '.handle',
       onEnd: ({ oldIndex, newIndex }) => {
         const oldRow = tableData.value.splice(oldIndex - 1, 1)[0];

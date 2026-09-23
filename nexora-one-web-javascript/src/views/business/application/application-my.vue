@@ -36,7 +36,7 @@
   import { useRouter } from 'vue-router';
   import { ShopOutlined } from '@ant-design/icons-vue';
   import { applicationApi } from '/@/api/business/application/application-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import ApplicationPortalCard from './components/application-portal-card.vue';
   import './application.less';
 
@@ -52,7 +52,7 @@
       const response = await applicationApi.queryMyApplications();
       Object.assign(data, response.data);
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loading.value = false;
     }
@@ -66,7 +66,7 @@
       });
       await loadData();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 
@@ -77,7 +77,7 @@
       const target = response.data.openMode === 'CURRENT' ? '_self' : '_blank';
       window.open(response.data.launchUrl, target, target === '_blank' ? 'noopener,noreferrer' : undefined);
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 

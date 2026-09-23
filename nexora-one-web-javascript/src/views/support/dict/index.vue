@@ -8,15 +8,15 @@
   * @Copyright  NexoraOne （ # ），Since 2012
 -->
 <template>
-  <a-form class="smart-query-form">
-    <a-row class="smart-query-form-row">
-      <a-form-item label="关键字" class="smart-query-form-item">
+  <a-form class="nexora-query-form">
+    <a-row class="nexora-query-form-row">
+      <a-form-item label="关键字" class="nexora-query-form-item">
         <a-input style="width: 300px" v-model:value="queryForm.keywords" placeholder="编码/名称/备注" />
       </a-form-item>
-      <a-form-item label="禁用" class="smart-query-form-item">
+      <a-form-item label="禁用" class="nexora-query-form-item">
         <BooleanSelect v-model:value="queryForm.disabledFlag" style="width: 150px" />
       </a-form-item>
-      <a-form-item class="smart-query-form-item smart-margin-left10">
+      <a-form-item class="nexora-query-form-item nexora-margin-left10">
         <a-button-group>
           <a-button type="primary" @click="onSearch">
             <template #icon>
@@ -36,8 +36,8 @@
   </a-form>
 
   <a-card size="small" :bordered="false" :hoverable="true">
-    <a-row class="smart-table-btn-block">
-      <div class="smart-table-operate-block">
+    <a-row class="nexora-table-btn-block">
+      <div class="nexora-table-operate-block">
         <a-button @click="addOrUpdateDict" v-privilege="'support:dict:add'" type="primary">
           <template #icon>
             <PlusOutlined />
@@ -52,8 +52,8 @@
           批量删除
         </a-button>
       </div>
-      <div class="smart-table-setting-block">
-        <TableOperator class="smart-margin-bottom5" v-model="columns" :tableId="TABLE_ID_CONST.SUPPORT.DICT" :refresh="ajaxQuery" />
+      <div class="nexora-table-setting-block">
+        <TableOperator class="nexora-margin-bottom5" v-model="columns" :tableId="TABLE_ID_CONST.SUPPORT.DICT" :refresh="ajaxQuery" />
       </div>
     </a-row>
 
@@ -80,14 +80,14 @@
           />
         </template>
         <template v-else-if="column.dataIndex === 'action'">
-          <div class="smart-table-operate">
+          <div class="nexora-table-operate">
             <a-button @click="addOrUpdateDict(record)" v-privilege="'support:dict:update'" type="link">编辑</a-button>
           </div>
         </template>
       </template>
     </a-table>
 
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -112,10 +112,10 @@
   import DictDataModal from './components/dict-data-modal.vue';
   import { onMounted, reactive, ref } from 'vue';
   import { message, Modal } from 'ant-design-vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { dictApi } from '/@/api/support/dict-api';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
   import BooleanSelect from '/@/components/framework/boolean-select/index.vue';
@@ -200,7 +200,7 @@
       total.value = responseData.data.total;
       tableData.value = list;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }
@@ -208,16 +208,16 @@
 
   // ----------------------- 启用/禁用 ------------------------
   async function handleChangeDisabled(disabledFlag, dict) {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       await dictApi.updateDisabled(dict.dictId);
       dict.disabledFlag = !disabledFlag;
       message.success('操作成功');
       onSearch();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -239,14 +239,14 @@
 
   async function batchDelete() {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       await dictApi.batchDeleteDict(selectedRowKeyList.value);
       message.success('删除成功');
       await ajaxQuery();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 

@@ -8,13 +8,13 @@
   * @Copyright  NexoraOne （ # ），Since 2012
 -->
 <template>
-  <a-form class="smart-query-form" ref="queryFormRef">
-    <a-row class="smart-query-form-row">
-      <a-form-item label="时间" class="smart-query-form-item">
+  <a-form class="nexora-query-form" ref="queryFormRef">
+    <a-row class="nexora-query-form-row">
+      <a-form-item label="时间" class="nexora-query-form-item">
         <a-range-picker @change="changeCreateDate" v-model:value="createDateRange" :presets="defaultChooseTimeRange" style="width: 240px" />
       </a-form-item>
 
-      <a-form-item class="smart-query-form-item smart-margin-left10">
+      <a-form-item class="nexora-query-form-item nexora-margin-left10">
         <a-button-group>
           <a-button type="primary" @click="onSearch">
             <template #icon>
@@ -52,7 +52,7 @@
     </template>
   </a-table>
 
-  <div class="smart-query-table-page">
+  <div class="nexora-query-table-page">
     <a-pagination
       showSizeChanger
       showQuickJumper
@@ -74,7 +74,7 @@
   import uaparser from 'ua-parser-js';
   import { LOGIN_RESULT_ENUM } from '/@/constants/support/login-log-const';
   import { loginLogApi } from '/@/api/support/login-log-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import { calcTableHeight } from '/@/lib/table-auto-height';
 
   const columns = ref([
@@ -164,7 +164,7 @@
       total.value = responseModel.data.total;
       tableData.value = list;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }

@@ -17,7 +17,7 @@
 <script setup>
   import { inject, onMounted, ref, watch } from 'vue';
 
-  const smartEnumPlugin = inject('smartEnumPlugin');
+  const nexoraEnumPlugin = inject('nexoraEnumPlugin');
 
   const props = defineProps({
     enumName: String,
@@ -27,7 +27,7 @@
   // -------------------------- 枚举数据列表 --------------------------
   const dataList = ref([]);
   function getEnumData() {
-    dataList.value = smartEnumPlugin.getValueDescList(props.enumName).map((e) => Object.assign({}, { text: e.desc, value: e.value }));
+    dataList.value = nexoraEnumPlugin.getValueDescList(props.enumName).map((e) => Object.assign({}, { text: e.desc, value: e.value }));
   }
   onMounted(getEnumData);
 
@@ -44,6 +44,6 @@
   const emit = defineEmits(['update:modelValue', 'change']);
   function onChange(value) {
     emit('update:modelValue', value);
-    emit('change', value, smartEnumPlugin.getDescByValue(props.enumName, value));
+    emit('change', value, nexoraEnumPlugin.getDescByValue(props.enumName, value));
   }
 </script>

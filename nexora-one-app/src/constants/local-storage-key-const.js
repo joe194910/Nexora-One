@@ -11,7 +11,7 @@
 /**
  * key前缀
  */
-const KEY_PREFIX = 'smart_h5_';
+const KEY_PREFIX = 'nexora_h5_';
 /**
  * localStorageKey集合
  */

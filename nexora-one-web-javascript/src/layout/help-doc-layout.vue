@@ -51,7 +51,7 @@
         </router-view>
         <!-- footer 版权公司信息 -->
         <a-layout-footer class="layout-footer">
-          <SmartFooter />
+          <NexoraFooter />
         </a-layout-footer>
       </a-layout-content>
     </a-layout>
@@ -64,15 +64,15 @@
   import _ from 'lodash';
   import { computed, onMounted, ref } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
-  import { smartSentry } from '../lib/smart-sentry';
+  import { nexoraSentry } from '../lib/nexora-sentry';
   import { useAppConfigStore } from '../store/modules/system/app-config';
-  import SmartFooter from './components/smart-footer/index.vue';
+  import NexoraFooter from './components/nexora-footer/index.vue';
   import { helpDocApi } from '/@/api/support/help-doc-api';
   import { helpDocCatalogApi } from '/@/api/support/help-doc-catalog-api';
   import logoImg from '/@/assets/images/logo/nexora-one-logo-white.png';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { HOME_PAGE_NAME } from '/@/constants/system/home-const';
-  import watermark from '../lib/smart-watermark';
+  import watermark from '../lib/nexora-watermark';
   import { useUserStore } from '/@/store/modules/system/user';
   import HeaderAvatar from './components/header-user-space/header-avatar.vue';
   import { LAYOUT_ELEMENT_IDS } from '/@/layout/layout-const';
@@ -143,7 +143,7 @@
   const HELP_DOC_CATALOG_PARENT_ID = 0;
   //查询帮助文档树形结构
   async function queryHelpDocTree() {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       let { data: catalogList } = await helpDocCatalogApi.getAll();
       let { data: helpDocList } = await helpDocApi.getAllHelpDocList();
@@ -174,9 +174,9 @@
       //更新展开节点
       updateExpandedKeys(route.query.helpDocId, helpDocList, catalogList);
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -302,4 +302,4 @@
     justify-content: center;
   }
 </style>
-../lib/smart-watermark
+../lib/nexora-watermark

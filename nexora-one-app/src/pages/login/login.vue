@@ -145,7 +145,7 @@
   import { encryptData } from '@/lib/encrypt';
   import { useThemeStore } from '@/store/modules/system/theme';
   import { useUserStore } from '@/store/modules/system/user';
-  import { smartSentry } from '@/lib/smart-sentry';
+  import { nexoraSentry } from '@/lib/nexora-sentry';
 
   const themeStore = useThemeStore();
   const loginPageStyle = computed(
@@ -223,7 +223,7 @@
     } catch (error) {
       loginForm.captchaCode = '';
       await getCaptcha();
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loginLoading.value = false;
     }
@@ -239,7 +239,7 @@
       loginForm.captchaUuid = captchaResult.data.captchaUuid;
       beginRefreshCaptchaInterval(captchaResult.data.expireSeconds);
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
       uni.showToast({ title: '验证码加载失败', icon: 'none' });
     }
   }
@@ -273,7 +273,7 @@
       const result = await loginApi.getTwoFactorLoginFlag();
       emailCodeShowFlag.value = Boolean(result.data);
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 
@@ -294,7 +294,7 @@
       });
       runCountDown();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       uni.hideLoading();
     }

@@ -5,7 +5,7 @@
  * @Date:      2022-09-26 14:53:50
  * @Copyright  NexoraOne
  */
-import { postRequest, getRequest } from '@/lib/smart-request';
+import { postRequest, getRequest } from '@/lib/nexora-request';
 
 export const changeLogApi = {
   /**

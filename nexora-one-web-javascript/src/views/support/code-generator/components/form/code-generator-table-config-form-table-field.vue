@@ -15,7 +15,7 @@
     size="small"
     bordered
     :scroll="{ x: 1000 }"
-    class="smart-margin-top10"
+    class="nexora-margin-top10"
     :dataSource="tableData"
     :columns="columns"
     rowKey="columnName"

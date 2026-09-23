@@ -46,7 +46,7 @@
   import { NOTICE_VISIBLE_RANGE_DATA_TYPE_ENUM } from '/@/constants/business/oa/notice-const';
   import { departmentApi } from '/@/api/system/department-api';
   import { employeeApi } from '/@/api/system/employee-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const props = defineProps({
     // 已选择的员工数据列表
@@ -76,7 +76,7 @@
         });
       }
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     }
   }
 

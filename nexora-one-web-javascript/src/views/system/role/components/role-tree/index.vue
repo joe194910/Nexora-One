@@ -25,8 +25,8 @@
   import RoleTreeCheckbox from './role-tree-checkbox.vue';
   import { roleMenuApi } from '/@/api/system/role-menu-api';
   import { useRoleStore } from '/@/store/modules/system/role';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   let roleStore = useRoleStore();
   let tree = ref();
@@ -58,15 +58,15 @@
       roleId: selectRoleId.value,
       menuIdList: checkedData,
     };
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       await roleMenuApi.updateRoleMenu(params);
       await getRoleSelectedMenu();
       message.success('保存成功');
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 </script>

@@ -22,17 +22,17 @@ import { onMounted, reactive, ref } from 'vue';
 import { PlusOutlined } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 import { aiPlatformApi as api } from '/@/api/business/ai/ai-platform-api';
-import { smartSentry } from '/@/lib/smart-sentry';
+import { nexoraSentry } from '/@/lib/nexora-sentry';
 import './ai-platform.less';
 const bases=ref([]),plans=ref([]),models=ref([]),vectors=ref([]),loading=ref(false),saving=ref(false),drawer=ref(false),uploading=ref(null);
 const form=reactive({baseName:'',description:'',parsePlanId:undefined,embeddingModelId:undefined,vectorDatabaseId:undefined});
 /** 读取知识库和解析/向量依赖选项。 */
-async function load(){loading.value=true;try{const [b,p,m,v]=await Promise.all([api.knowledgeBases(),api.parsePlans(),api.queryModels({pageNum:1,pageSize:500,type:'EMBEDDING'}),api.queryVectors({pageNum:1,pageSize:500})]);bases.value=b.data||[];plans.value=p.data||[];models.value=m.data?.list||[];vectors.value=v.data?.list||[];}catch(e){smartSentry.captureError(e);}finally{loading.value=false;}}
+async function load(){loading.value=true;try{const [b,p,m,v]=await Promise.all([api.knowledgeBases(),api.parsePlans(),api.queryModels({pageNum:1,pageSize:500,type:'EMBEDDING'}),api.queryVectors({pageNum:1,pageSize:500})]);bases.value=b.data||[];plans.value=p.data||[];models.value=m.data?.list||[];vectors.value=v.data?.list||[];}catch(e){nexoraSentry.captureError(e);}finally{loading.value=false;}}
 /** 打开知识库创建或编辑抽屉。 */
 function edit(record){Object.keys(form).forEach(k=>delete form[k]);Object.assign(form,record||{baseName:'',description:'',parsePlanId:plans.value.find(p=>p.defaultFlag && p.enabledFlag)?.configId,embeddingModelId:undefined,vectorDatabaseId:vectors.value.find(v=>v.defaultFlag && v.enabledFlag)?.vectorDatabaseId});drawer.value=true;}
 /** 保存解析方案与向量依赖的绑定。 */
-async function save(){if(!form.baseName?.trim()||!form.parsePlanId||!form.embeddingModelId||!form.vectorDatabaseId)return message.warning('请填写名称、解析方案、向量模型与实例');saving.value=true;try{await api.saveKnowledgeBase(form);message.success('知识库已保存');drawer.value=false;await load();}catch(e){smartSentry.captureError(e);}finally{saving.value=false;}}
+async function save(){if(!form.baseName?.trim()||!form.parsePlanId||!form.embeddingModelId||!form.vectorDatabaseId)return message.warning('请填写名称、解析方案、向量模型与实例');saving.value=true;try{await api.saveKnowledgeBase(form);message.success('知识库已保存');drawer.value=false;await load();}catch(e){nexoraSentry.captureError(e);}finally{saving.value=false;}}
 /** 上传文档并确认后端创建任务。 */
-function upload(record,file){const body=new FormData();body.append('file',file);uploading.value=record.knowledgeBaseId;api.uploadKnowledgeDocument(record.knowledgeBaseId,body).then(r=>message.success(`文档已入队，任务 #${r.data.taskId}`)).catch(smartSentry.captureError).finally(()=>uploading.value=null);return false;}
+function upload(record,file){const body=new FormData();body.append('file',file);uploading.value=record.knowledgeBaseId;api.uploadKnowledgeDocument(record.knowledgeBaseId,body).then(r=>message.success(`文档已入队，任务 #${r.data.taskId}`)).catch(nexoraSentry.captureError).finally(()=>uploading.value=null);return false;}
 onMounted(load);
 </script>

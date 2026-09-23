@@ -12,16 +12,16 @@ import _ from 'lodash';
 import { FLAG_NUMBER_ENUM } from '/@/constants/common-const';
 
 export default {
-  install: (app, smartEnumWrapper) => {
-    const smartEnumPlugin = {};
+  install: (app, nexoraEnumWrapper) => {
+    const nexoraEnumPlugin = {};
     /**
      * 根据枚举值获取描述
      * @param {*} constantName 枚举名
      * @param {*} value          枚举值
      * @returns
      */
-    smartEnumPlugin.getDescByValue = function (constantName, value) {
-      if (!smartEnumWrapper || !Object.prototype.hasOwnProperty.call(smartEnumWrapper, constantName)) {
+    nexoraEnumPlugin.getDescByValue = function (constantName, value) {
+      if (!nexoraEnumWrapper || !Object.prototype.hasOwnProperty.call(nexoraEnumWrapper, constantName)) {
         console.error('无法找到变量名称：' + constantName + '，请检查 /constants/index.js 文件中是否引入此变量！');
         return '';
       }
@@ -30,10 +30,10 @@ export default {
         value = value ? FLAG_NUMBER_ENUM.TRUE.value : FLAG_NUMBER_ENUM.FALSE.value;
       }
 
-      let smartEnum = smartEnumWrapper[constantName];
-      for (let item in smartEnum) {
-        if (smartEnum[item].value === value) {
-          return smartEnum[item].desc;
+      let nexoraEnum = nexoraEnumWrapper[constantName];
+      for (let item in nexoraEnum) {
+        if (nexoraEnum[item].value === value) {
+          return nexoraEnum[item].desc;
         }
       }
       return '';
@@ -43,15 +43,15 @@ export default {
      * @param {*} constantName 枚举名
      * @returns
      */
-    smartEnumPlugin.getValueDescList = function (constantName) {
-      if (!Object.prototype.hasOwnProperty.call(smartEnumWrapper, constantName)) {
+    nexoraEnumPlugin.getValueDescList = function (constantName) {
+      if (!Object.prototype.hasOwnProperty.call(nexoraEnumWrapper, constantName)) {
         console.error('无法找到变量名称：' + constantName + '，请检查 /constants/index.js 文件中是否引入此变量！');
         return [];
       }
       const result = [];
-      let targetSmartEnum = smartEnumWrapper[constantName];
-      for (let item in targetSmartEnum) {
-        result.push(targetSmartEnum[item]);
+      let targetNexoraEnum = nexoraEnumWrapper[constantName];
+      for (let item in targetNexoraEnum) {
+        result.push(targetNexoraEnum[item]);
       }
       return result;
     };
@@ -61,21 +61,21 @@ export default {
      * @param {*} constantName 枚举名
      * @returns
      */
-    smartEnumPlugin.getValueDesc = function (constantName) {
-      if (!Object.prototype.hasOwnProperty.call(smartEnumWrapper, constantName)) {
+    nexoraEnumPlugin.getValueDesc = function (constantName) {
+      if (!Object.prototype.hasOwnProperty.call(nexoraEnumWrapper, constantName)) {
         console.error('无法找到变量名称：' + constantName + '，请检查 /constants/index.js 文件中是否引入此变量！');
         return {};
       }
-      let smartEnum = smartEnumWrapper[constantName];
+      let nexoraEnum = nexoraEnumWrapper[constantName];
       let result = {};
-      for (let item in smartEnum) {
-        let key = smartEnum[item].value + '';
-        result[key] = smartEnum[item].desc;
+      for (let item in nexoraEnum) {
+        let key = nexoraEnum[item].value + '';
+        result[key] = nexoraEnum[item].desc;
       }
       return result;
     };
 
-    app.config.globalProperties.$smartEnumPlugin = smartEnumPlugin;
-    app.provide('smartEnumPlugin', smartEnumPlugin);
+    app.config.globalProperties.$nexoraEnumPlugin = nexoraEnumPlugin;
+    app.provide('nexoraEnumPlugin', nexoraEnumPlugin);
   },
 };

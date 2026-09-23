@@ -1,74 +1,74 @@
 <template>
   <view class="container">
     <view>
-      <smart-detail-tabs :tabsList="tabs" v-model="smartTabIndex" @change="onTabChange" :fixed="true" />
+      <nexora-detail-tabs :tabsList="tabs" v-model="nexoraTabIndex" @change="onTabChange" :fixed="true" />
     </view>
-    <view class="smart-detail smart-margin-top60 content" id="detail1">
-      <view class="smart-detail-card">
-        <view class="smart-detail-card-title"> 企业基础信息</view>
-        <view class="smart-detail-card-cell">
-          <view class="smart-detail-card-label"> 企业名称 </view>
-          <view class="smart-detail-card-value">
+    <view class="nexora-detail nexora-margin-top60 content" id="detail1">
+      <view class="nexora-detail-card">
+        <view class="nexora-detail-card-title"> 企业基础信息</view>
+        <view class="nexora-detail-card-cell">
+          <view class="nexora-detail-card-label"> 企业名称 </view>
+          <view class="nexora-detail-card-value">
             {{ data.enterpriseName }}
           </view>
         </view>
-        <view class="smart-detail-card-cell">
-          <view class="smart-detail-card-label"> 统一社会信用代码 </view>
-          <view class="smart-detail-card-value">
+        <view class="nexora-detail-card-cell">
+          <view class="nexora-detail-card-label"> 统一社会信用代码 </view>
+          <view class="nexora-detail-card-value">
             {{ data.unifiedSocialCreditCode }}
           </view>
         </view>
-        <view class="smart-detail-card-cell">
-          <view class="smart-detail-card-label"> 类型 </view>
-          <view class="smart-detail-card-value">
-            {{ $smartEnumPlugin.getDescByValue('ENTERPRISE_TYPE_ENUM', data.type) }}
+        <view class="nexora-detail-card-cell">
+          <view class="nexora-detail-card-label"> 类型 </view>
+          <view class="nexora-detail-card-value">
+            {{ $nexoraEnumPlugin.getDescByValue('ENTERPRISE_TYPE_ENUM', data.type) }}
           </view>
         </view>
-        <view class="smart-detail-card-cell">
-          <view class="smart-detail-card-label"> 企业ID </view>
-          <view class="smart-detail-card-value">
+        <view class="nexora-detail-card-cell">
+          <view class="nexora-detail-card-label"> 企业ID </view>
+          <view class="nexora-detail-card-value">
             {{ data.enterpriseId }}
           </view>
         </view>
       </view>
 
-      <view class="smart-detail-card" id="detail2">
-        <view class="smart-detail-card-title"> 图片信息</view>
+      <view class="nexora-detail-card" id="detail2">
+        <view class="nexora-detail-card-title"> 图片信息</view>
 
-        <view class="smart-detail-card-cell" v-if="data.enterpriseLogo && data.enterpriseLogo.length > 0">
-          <view class="smart-detail-card-label"> 企业logo </view>
-          <view class="smart-detail-card-value" @click="preview([data.enterpriseLogo[0].fileUrl])">
+        <view class="nexora-detail-card-cell" v-if="data.enterpriseLogo && data.enterpriseLogo.length > 0">
+          <view class="nexora-detail-card-label"> 企业logo </view>
+          <view class="nexora-detail-card-value" @click="preview([data.enterpriseLogo[0].fileUrl])">
             <image :src="data.enterpriseLogo[0].fileUrl"></image>
           </view>
         </view>
 
-        <view class="smart-detail-card-cell" v-if="data.businessLicense && data.businessLicense.length > 0">
-          <view class="smart-detail-card-label"> 营业执照 </view>
-          <view class="smart-detail-card-value" @click="preview([data.businessLicense[0].fileUrl])">
+        <view class="nexora-detail-card-cell" v-if="data.businessLicense && data.businessLicense.length > 0">
+          <view class="nexora-detail-card-label"> 营业执照 </view>
+          <view class="nexora-detail-card-value" @click="preview([data.businessLicense[0].fileUrl])">
             <image :src="data.businessLicense[0].fileUrl"></image>
           </view>
         </view>
       </view>
 
-      <view class="smart-detail-card" id="detail3">
-        <view class="smart-detail-card-title"> 联系方式</view>
+      <view class="nexora-detail-card" id="detail3">
+        <view class="nexora-detail-card-title"> 联系方式</view>
 
-        <view class="smart-detail-card-cell">
-          <view class="smart-detail-card-label"> 联系人 </view>
-          <view class="smart-detail-card-value">
+        <view class="nexora-detail-card-cell">
+          <view class="nexora-detail-card-label"> 联系人 </view>
+          <view class="nexora-detail-card-value">
             {{ data.contact }}
           </view>
         </view>
 
-        <view class="smart-detail-card-cell">
-          <view class="smart-detail-card-label"> 联系人电话 </view>
-          <view class="smart-detail-card-value">
+        <view class="nexora-detail-card-cell">
+          <view class="nexora-detail-card-label"> 联系人电话 </view>
+          <view class="nexora-detail-card-value">
             {{ data.contactPhone }}
           </view>
         </view>
-        <view class="smart-detail-card-cell">
-          <view class="smart-detail-card-label"> 邮箱 </view>
-          <view class="smart-detail-card-value">
+        <view class="nexora-detail-card-cell">
+          <view class="nexora-detail-card-label"> 邮箱 </view>
+          <view class="nexora-detail-card-value">
             {{ data.email }}
           </view>
         </view>
@@ -83,12 +83,12 @@
 </template>
 
 <script setup>
-  import SmartDetailTabs from '@/components/smart-detail-tabs/index.vue';
+  import NexoraDetailTabs from '@/components/nexora-detail-tabs/index.vue';
   import { ref, reactive } from 'vue';
   import { enterpriseApi } from '@/api/business/oa/enterprise-api';
   import { onShow, onLoad } from '@dcloudio/uni-app';
-  import { smartSentry } from '@/lib/smart-sentry';
-  import { SmartLoading, SmartToast } from '@/lib/smart-support';
+  import { nexoraSentry } from '@/lib/nexora-sentry';
+  import { NexoraLoading, NexoraToast } from '@/lib/nexora-support';
 
   // ----------------------- tab -----------------------
 
@@ -107,7 +107,7 @@
     },
   ]);
 
-  const smartTabIndex = ref(1);
+  const nexoraTabIndex = ref(1);
 
   function onTabChange(tabIndex) {
     console.log(12, tabIndex);
@@ -146,7 +146,7 @@
 
   async function getDetail(id) {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       let res = await enterpriseApi.detail(id);
       data.enterpriseId = res.data.enterpriseId;
       data.enterpriseName = res.data.enterpriseName;
@@ -159,9 +159,9 @@
       data.enterpriseLogo = res.data.enterpriseLogo;
       data.businessLicense = res.data.businessLicense;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -201,16 +201,16 @@
 
   async function doDelete() {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       await enterpriseApi.delete(data.enterpriseId);
-      SmartToast.success('删除成功');
+      NexoraToast.success('删除成功');
       setTimeout(() => {
         uni.redirectTo({ url: '/pages/enterprise/enterprise-list' });
       }, 500);
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 </script>

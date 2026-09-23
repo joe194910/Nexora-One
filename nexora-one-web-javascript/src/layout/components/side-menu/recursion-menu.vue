@@ -8,7 +8,7 @@
   * @Copyright  NexoraOne （ # ），Since 2012 
 -->
 <template>
-  <a-menu :open-keys="openKeys" v-model:selectedKeys="selectedKeys" class="smart-menu" mode="inline" :theme="theme" @openChange="onOpenChange">
+  <a-menu :open-keys="openKeys" v-model:selectedKeys="selectedKeys" class="nexora-menu" mode="inline" :theme="theme" @openChange="onOpenChange">
     <template v-for="item in menuTree" :key="item.menuId">
       <template v-if="item.visibleFlag && !item.disabledFlag">
         <template v-if="$lodash.isEmpty(item.children)">
@@ -115,7 +115,7 @@
 </script>
 
 <style lang="less" scoped>
-  .smart-menu {
+  .nexora-menu {
     position: relative;
   }
 </style>

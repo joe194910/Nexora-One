@@ -21,7 +21,7 @@
         <a-input style="width: 100%" v-model:value="form.updateVersion" placeholder="版本" />
       </a-form-item>
       <a-form-item label="更新类型" name="type">
-        <SmartEnumSelect width="100%" v-model:value="form.type" enumName="CHANGE_LOG_TYPE_ENUM" placeholder="更新类型" />
+        <NexoraEnumSelect width="100%" v-model:value="form.type" enumName="CHANGE_LOG_TYPE_ENUM" placeholder="更新类型" />
       </a-form-item>
       <a-form-item label="发布人" name="publishAuthor">
         <a-input style="width: 100%" v-model:value="form.publishAuthor" placeholder="发布人" />
@@ -49,10 +49,10 @@
   import { reactive, ref, nextTick } from 'vue';
   import _ from 'lodash';
   import { message } from 'ant-design-vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { changeLogApi } from '/@/api/support/change-log-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
-  import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
+  import NexoraEnumSelect from '/@/components/framework/nexora-enum-select/index.vue';
 
   // ------------------------ 事件 ------------------------
 
@@ -115,7 +115,7 @@
 
   // 新建、编辑API
   async function save() {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       if (form.changeLogId) {
         await changeLogApi.update(form);
@@ -126,9 +126,9 @@
       emits('reloadList');
       onClose();
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 

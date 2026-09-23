@@ -37,7 +37,7 @@
   import { computed, ref, onMounted } from 'vue';
   import { loginApi } from '/@/api/system/login-api';
   import { useUserStore } from '/@/store/modules/system/user';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import HeaderResetPassword from './header-reset-password-modal/index.vue';
   import { useRouter } from 'vue-router';
   import { ACCOUNT_MENU } from '/@/views/system/account/account-menu';
@@ -50,7 +50,7 @@
     try {
       await loginApi.logout();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       useUserStore().logout();
       location.reload();

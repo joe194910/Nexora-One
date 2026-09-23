@@ -16,7 +16,7 @@
   >
     <template #icon><smile-outlined /></template>
   </a-alert>
-  <a-row type="flex" class="smart-margin-top10">
+  <a-row type="flex" class="nexora-margin-top10">
     <a-col flex="350px">
       <a-form ref="formRef" :model="formData" :rules="formRules" :label-col="{ span: 5 }" :wrapper-col="{ span: 16 }">
         <a-form-item label="表"> {{ tableInfo.tableName }} </a-form-item>

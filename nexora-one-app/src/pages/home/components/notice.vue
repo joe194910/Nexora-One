@@ -12,7 +12,7 @@
 <script setup>
   import { ref } from 'vue';
   import { noticeApi } from '@/api/business/oa/notice-api';
-  import { smartSentry } from '@/lib/smart-sentry';
+  import { nexoraSentry } from '@/lib/nexora-sentry';
   import { onShow } from '@dcloudio/uni-app';
 
   const queryForm = {
@@ -31,7 +31,7 @@
       const result = await noticeApi.queryEmployeeNotice(queryForm);
       data.value = result.data.list;
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
       loading.value = false;
     }

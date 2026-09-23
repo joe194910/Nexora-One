@@ -11,10 +11,10 @@
 <template>
   <a-modal :width="800" :open="visible" title="设置列" :destroyOnClose="true" :closable="false">
     <div v-if="!tableId">
-      <a-alert type="error" show-icon class="smart-margin-bottom10">
+      <a-alert type="error" show-icon class="nexora-margin-bottom10">
         <template #message> 您尚未设置 TableOperator 组件的 tableId</template>
       </a-alert>
-      <a-alert type="error" class="smart-margin-bottom10">
+      <a-alert type="error" class="nexora-margin-bottom10">
         <template #message>
           1. 请在 src\constants\support\table-id-const.js 中配置 tableId 常量
           <br />
@@ -31,12 +31,12 @@
       </a-alert>
     </div>
     <div v-else>
-      <a-alert type="info" show-icon class="smart-margin-bottom10">
+      <a-alert type="info" show-icon class="nexora-margin-bottom10">
         <template #icon><smile-outlined /></template>
         <template #message> 可以通过拖拽行直接修改顺序哦；（ <pushpin-outlined />为固定列，不可拖拽 ）</template>
       </a-alert>
       <a-table
-        id="smartTableColumnModalTable"
+        id="nexoraTableColumnModalTable"
         rowKey="columnKey"
         row-class-name="column-row"
         :columns="tableColumns"
@@ -60,7 +60,7 @@
             <a-input-number v-model:value="record.width" style="width: 90px; margin-left: 10px; margin-right: 3px" size="small" />px
           </template>
           <template v-if="column.dataIndex === 'operate'">
-            <div class="smart-table-operate" v-if="!record.fixed">
+            <div class="nexora-table-operate" v-if="!record.fixed">
               <a-button @click="up(index)" v-show="index > 0" type="link" class="handle" size="small" style="margin-right: 12px"> 上移 </a-button>
               <a-button @click="down(index)" type="link" class="handle" size="small" v-show="index !== tableData.length - 1"> 下移</a-button>
             </div>
@@ -77,14 +77,14 @@
   </a-modal>
 </template>
 <script setup>
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { tableColumnApi } from '/@/api/support/table-column-api';
   import { nextTick, ref } from 'vue';
   import _ from 'lodash';
   import Sortable from 'sortablejs';
   import { message, Modal } from 'ant-design-vue';
-  import { mergeColumn } from './smart-table-column-merge';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { mergeColumn } from './nexora-table-column-merge';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const emit = defineEmits(['change']);
 
@@ -110,7 +110,7 @@
     if (!tableId) {
       return;
     }
-    SmartLoading.show();
+    NexoraLoading.show();
     let userTableColumnArray = [];
     try {
       let res = await tableColumnApi.getColumns(tableId);
@@ -118,13 +118,13 @@
         try {
           userTableColumnArray = JSON.parse(res.data);
         } catch (e1) {
-          smartSentry.captureError(e1);
+          nexoraSentry.captureError(e1);
         }
       }
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
 
     //根据前端列和后端列构建新的列数据
@@ -170,12 +170,12 @@
   // --------------------- 表格移动【拖拽移动、上移、下移】 --------------------------------
   //初始化拖拽
   function initDrag() {
-    let tbody = document.querySelector('#smartTableColumnModalTable tbody');
+    let tbody = document.querySelector('#nexoraTableColumnModalTable tbody');
     Sortable.create(tbody, {
       animation: 300,
-      dragClass: 'smart-ghost-class', //设置拖拽样式类名
-      ghostClass: 'smart-ghost-class', //设置拖拽停靠样式类名
-      chosenClass: 'smart-ghost-class', //设置选中样式类名
+      dragClass: 'nexora-ghost-class', //设置拖拽样式类名
+      ghostClass: 'nexora-ghost-class', //设置拖拽停靠样式类名
+      chosenClass: 'nexora-ghost-class', //设置选中样式类名
       handle: '.handle',
       onEnd({ newIndex, oldIndex }) {
         if (newIndex === oldIndex) {
@@ -245,7 +245,7 @@
             emit('change', []);
             hide();
           } catch (e) {
-            smartSentry.captureError(e);
+            nexoraSentry.captureError(e);
           } finally {
             submitLoading.value = false;
           }
@@ -287,7 +287,7 @@
         hide();
       }
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       submitLoading.value = false;
     }

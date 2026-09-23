@@ -18,10 +18,10 @@
     <!--中间内容，一共三部分：1、顶部;2、中间内容区域;3、底部（一般是公司版权信息）;-->
     <a-layout class="admin-layout-main" :style="`height: ${windowHeight}px`" :id="LAYOUT_ELEMENT_IDS.main">
       <!-- 顶部头部信息 -->
-      <a-layout-header class="smart-layout-header" :id="LAYOUT_ELEMENT_IDS.header" v-show="!fullScreenFlag">
-        <a-row justify="space-between" class="smart-layout-header-user">
+      <a-layout-header class="nexora-layout-header" :id="LAYOUT_ELEMENT_IDS.header" v-show="!fullScreenFlag">
+        <a-row justify="space-between" class="nexora-layout-header-user">
           <a-col
-            class="smart-layout-header-left"
+            class="nexora-layout-header-left"
             :style="{
               'max-width': `calc(100% - ${rightWidth}px)`,
             }"
@@ -42,7 +42,7 @@
             </span>
           </a-col>
           <!---用戶操作区域-->
-          <a-col class="smart-layout-header-right">
+          <a-col class="nexora-layout-header-right">
             <HeaderUserSpace />
           </a-col>
         </a-row>
@@ -71,7 +71,7 @@
         </div>
       </a-layout-content>
       <!-- footer 版权公司信息 -->
-      <a-layout-footer class="smart-layout-footer" v-show="footerFlag"> <SmartFooter /></a-layout-footer>
+      <a-layout-footer class="nexora-layout-footer" v-show="footerFlag"> <NexoraFooter /></a-layout-footer>
       <!---- 回到顶部 --->
       <a-back-top :target="backTopTarget" :visibilityHeight="80" />
     </a-layout>
@@ -95,10 +95,10 @@
   import MenuLocationBreadcrumb from './components/menu-location-breadcrumb/index.vue';
   import PageTag from './components/page-tag/index.vue';
   import SideExpandMenu from './components/side-expand-menu/index.vue';
-  import SmartFooter from './components/smart-footer/index.vue';
-  import { smartKeepAlive } from './components/smart-keep-alive';
+  import NexoraFooter from './components/nexora-footer/index.vue';
+  import { nexoraKeepAlive } from './components/nexora-keep-alive';
   import IframeIndex from '/@/components/framework/iframe/iframe-index.vue';
-  import watermark from '../lib/smart-watermark';
+  import watermark from '../lib/nexora-watermark';
   import { useAppConfigStore } from '/@/store/modules/system/app-config';
   import { useUserStore } from '/@/store/modules/system/user';
   import SideHelpDoc from './components/side-help-doc/index.vue';
@@ -154,8 +154,8 @@
   function sizeComputed() {
     const tagParentElement = document.querySelector('.location-breadcrumb');
     const tagsElement = tagParentElement.querySelector('.ant-tabs-nav-list');
-    const parentElement = document.querySelector('.smart-layout-header-user');
-    const rightElement = document.querySelector('.smart-layout-header-right');
+    const parentElement = document.querySelector('.nexora-layout-header-user');
+    const rightElement = document.querySelector('.nexora-layout-header-right');
     rightWidth.value = rightElement.offsetWidth;
     let ro = new ResizeObserver((e) => {
       rightWidth.value = rightElement.offsetWidth + 10;
@@ -196,7 +196,7 @@
     return document.getElementById(LAYOUT_ELEMENT_IDS.main);
   };
   // ----------------------- keep-alive相关 -----------------------
-  let { route, keepAliveIncludes, iframeNotKeepAlivePageFlag, keepAliveIframePages } = smartKeepAlive();
+  let { route, keepAliveIncludes, iframeNotKeepAlivePageFlag, keepAliveIframePages } = nexoraKeepAlive();
   const router = useRouter();
   function goHome() {
     router.push({ name: HOME_PAGE_NAME });
@@ -216,18 +216,18 @@
     height: auto;
   }
 
-  .smart-layout-header {
+  .nexora-layout-header {
     background: @color-bg-container;
     padding: 0;
     z-index: 21;
   }
 
-  .smart-layout-header-user {
+  .nexora-layout-header-user {
     height: @header-user-height;
     border-bottom: 1px solid @color-border-secondary;
   }
 
-  .smart-layout-header-left {
+  .nexora-layout-header-left {
     display: flex;
     height: @header-user-height;
 
@@ -254,7 +254,7 @@
     }
   }
 
-  .smart-layout-header-right {
+  .nexora-layout-header-right {
     display: flex;
     height: @header-user-height;
   }
@@ -314,7 +314,7 @@
     }
   }
 
-  .smart-layout-footer {
+  .nexora-layout-footer {
     position: relative;
     padding: 10px 0;
     display: flex;

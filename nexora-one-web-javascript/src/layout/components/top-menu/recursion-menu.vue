@@ -11,7 +11,7 @@
   <a-menu
     v-model:openKeys="openKeys"
     v-model:selectedKeys="selectedKeys"
-    class="smart-menu"
+    class="nexora-menu"
     mode="horizontal"
     :theme="theme"
   >
@@ -81,7 +81,7 @@
 </script>
 
 <style lang="less" scoped>
-  .smart-menu {
+  .nexora-menu {
     position: relative;
   }
 

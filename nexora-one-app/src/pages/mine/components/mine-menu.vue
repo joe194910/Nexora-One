@@ -66,7 +66,7 @@
   </view>
 </template>
 <script setup>
-  import { SmartToast } from '@/lib/smart-support';
+  import { NexoraToast } from '@/lib/nexora-support';
   import { useUserStore } from '@/store/modules/system/user';
   import { computed } from 'vue';
 
@@ -79,7 +79,7 @@
   }
 
   function developing() {
-    SmartToast.toast('敬请期待');
+    NexoraToast.toast('敬请期待');
   }
 
   function callService() {

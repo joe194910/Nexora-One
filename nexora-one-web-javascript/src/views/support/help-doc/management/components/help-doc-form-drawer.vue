@@ -67,14 +67,14 @@
   import { nextTick, reactive, ref } from 'vue';
   import { message } from 'ant-design-vue';
   import _ from 'lodash';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { FILE_FOLDER_TYPE_ENUM } from '/@/constants/support/file-const';
   import { helpDocApi } from '/@/api/support/help-doc-api';
   import Wangeditor from '/@/components/framework/wangeditor/index.vue';
   import Upload from '/@/components/support/file-upload/index.vue';
   import HelpDocCatalogTreeSelect from './help-doc-catalog-tree-select.vue';
   import MenuTreeSelect from '/@/components/system/menu-tree-select/index.vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const emits = defineEmits(['reloadList']);
 
@@ -130,7 +130,7 @@
   // 查询详情
   async function getDetail(helpDocId) {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       const result = await helpDocApi.getDetail(helpDocId);
       const attachment = result.data.attachment;
       if (!_.isEmpty(attachment)) {
@@ -146,9 +146,9 @@
         relateHomeFlag.value = false;
       }
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -169,7 +169,7 @@
 
   async function save() {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       let param = _.cloneDeep(formData);
       // 首页显示的话，为0
       if (relateHomeFlag.value) {
@@ -193,9 +193,9 @@
       emits('reloadList');
       onClose();
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 

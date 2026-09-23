@@ -16,7 +16,7 @@
         <li class="un-read">
           <a class="content" @click="goDetail(item)">
             <a-badge status="geekblue" />
-            {{ $smartEnumPlugin.getDescByValue('CHANGE_LOG_TYPE_ENUM', item.type) }}：{{ item.updateVersion }} 版本
+            {{ $nexoraEnumPlugin.getDescByValue('CHANGE_LOG_TYPE_ENUM', item.type) }}：{{ item.updateVersion }} 版本
           </a>
           <span class="time"> {{ item.publicDate }}</span>
         </li>
@@ -29,7 +29,7 @@
 <script setup>
   import { onMounted, ref } from 'vue';
   import { useRouter } from 'vue-router';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import { changeLogApi } from '/@/api/support/change-log-api';
   import DefaultHomeCard from '/@/views/system/home/components/default-home-card.vue';
   import ChangeLogForm from '/@/views/support/change-log/change-log-modal.vue';
@@ -52,7 +52,7 @@
       let queryResult = await changeLogApi.queryPage(queryForm);
       data.value = queryResult.data.list;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       loading.value = false;
     }

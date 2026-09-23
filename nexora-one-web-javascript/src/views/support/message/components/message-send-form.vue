@@ -9,7 +9,7 @@
         <div>{{ nameListString }}</div>
       </a-form-item>
       <a-form-item label="消息类型" name="messageType">
-        <SmartEnumSelect width="100%" v-model:value="form.messageType" placeholder="请选择类型" enum-name="MESSAGE_TYPE_ENUM" />
+        <NexoraEnumSelect width="100%" v-model:value="form.messageType" placeholder="请选择类型" enum-name="MESSAGE_TYPE_ENUM" />
       </a-form-item>
       <a-form-item label="推送内容" name="content">
         <a-textarea style="width: 100%" v-model:value="form.content" placeholder="推送内容" />
@@ -27,9 +27,9 @@
 <script setup>
   import { nextTick, reactive, ref } from 'vue';
   import { message } from 'ant-design-vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
-  import { smartSentry } from '/@/lib/smart-sentry';
-  import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
+  import NexoraEnumSelect from '/@/components/framework/nexora-enum-select/index.vue';
   import MessageReceiverModal from './message-receiver-modal.vue';
   import { USER_TYPE_ENUM } from '/@/constants/common-const';
   import { messageApi } from '/@/api/support/message-api';
@@ -100,7 +100,7 @@
 
   // 新建、编辑API
   async function save() {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       let messageList = [];
       for (const userId of form.receiverUserIdList) {
@@ -117,9 +117,9 @@
       emits('reloadList');
       onClose();
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
   defineExpose({

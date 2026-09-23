@@ -75,7 +75,7 @@
   import { computed, ref } from 'vue';
   import { BellOutlined } from '@ant-design/icons-vue';
   import { useUserStore } from '/@/store/modules/system/user';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import { messageApi } from '/@/api/support/message-api';
   import dayjs from 'dayjs';
   import { theme } from 'ant-design-vue';
@@ -128,7 +128,7 @@
       // 若中途有新消息了 打开列表也能及时更新未读数量
       useUserStore().queryUnreadMessageCount();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       loading.value = false;
     }
@@ -166,7 +166,7 @@
         toBeDoneList.value = JSON.parse(localToBeDoneList).filter((e) => !e.doneFlag);
       }
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
       loading.value = false;
     }
@@ -217,7 +217,7 @@
 </script>
 
 <style lang="less" scoped>
-  @smart-page-tag-operate-width: 40px;
+  @nexora-page-tag-operate-width: 40px;
   @color-primary: v-bind('token.colorPrimary');
 
   .message-icon-div {

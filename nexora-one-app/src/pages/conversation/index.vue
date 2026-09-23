@@ -80,7 +80,7 @@
   } from '@/api/business/knowledge-api';
   import { useAssistantStore } from '@/store/modules/business/assistant';
   import { useThemeStore } from '@/store/modules/system/theme';
-  import { smartSentry } from '@/lib/smart-sentry';
+  import { nexoraSentry } from '@/lib/nexora-sentry';
 
   const assistantStore = useAssistantStore();
   const themeStore = useThemeStore();
@@ -162,7 +162,7 @@
             dayjs(left.updateTime || left.createTime).valueOf(),
         );
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
       uni.showToast({ title: '会话加载失败，请稍后重试', icon: 'none' });
     } finally {
       loading.value = false;
@@ -212,7 +212,7 @@
       );
       uni.showToast({ title: '会话已删除', icon: 'none' });
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
       uni.showToast({ title: '会话删除失败', icon: 'none' });
     }
   }

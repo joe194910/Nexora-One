@@ -50,14 +50,14 @@
           <a-tag :color="text ? 'error' : 'processing'">{{ text ? '禁用' : '启用' }}</a-tag>
         </template>
         <template v-else-if="column.dataIndex === 'gender'">
-          <span>{{ $smartEnumPlugin.getDescByValue('GENDER_ENUM', text) }}</span>
+          <span>{{ $nexoraEnumPlugin.getDescByValue('GENDER_ENUM', text) }}</span>
         </template>
         <template v-if="column.dataIndex === 'operate'">
           <a @click="deleteEmployeeRole(record.employeeId)" v-privilege="'system:role:employee:delete'">移除</a>
         </template>
       </template>
     </a-table>
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -80,9 +80,9 @@
   import { computed, inject, onMounted, reactive, ref, watch } from 'vue';
   import { roleApi } from '/@/api/system/role-api';
   import { PAGE_SIZE, showTableTotal, PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import EmployeeTableSelectModal from '/@/components/system/employee-table-select-modal/index.vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   // ----------------------- 以下是字段定义 emits props ---------------------
   let selectRoleId = inject('selectRoleId');
@@ -128,7 +128,7 @@
       tableData.value = res.data.list;
       total.value = res.data.total;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }
@@ -176,7 +176,7 @@
       message.warning('请选择角色人员');
       return;
     }
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       let params = {
         employeeIdList: list,
@@ -186,9 +186,9 @@
       message.success('添加成功');
       await queryRoleEmployee();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -201,15 +201,15 @@
       okText: '确定',
       okType: 'danger',
       async onOk() {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           await roleApi.deleteEmployeeRole(employeeId, selectRoleId.value);
           message.success('移除成功');
           await queryRoleEmployee();
         } catch (e) {
-          smartSentry.captureError(e);
+          nexoraSentry.captureError(e);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       },
       cancelText: '取消',
@@ -238,7 +238,7 @@
       okText: '确定',
       okType: 'danger',
       async onOk() {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           let params = {
             employeeIdList: selectedRowKeyList.value,
@@ -249,9 +249,9 @@
           selectedRowKeyList.value = [];
           await queryRoleEmployee();
         } catch (e) {
-          smartSentry.captureError(e);
+          nexoraSentry.captureError(e);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       },
       cancelText: '取消',

@@ -8,23 +8,23 @@
   * @Copyright  NexoraOne （ # ），Since 2012
 -->
 <template>
-  <a-form class="smart-query-form" v-privilege="'support:operateLog:query'">
-    <a-row class="smart-query-form-row">
-      <a-form-item label="操作关键字" class="smart-query-form-item">
+  <a-form class="nexora-query-form" v-privilege="'support:operateLog:query'">
+    <a-row class="nexora-query-form-row">
+      <a-form-item label="操作关键字" class="nexora-query-form-item">
         <a-input style="width: 150px" v-model:value="queryForm.keywords" placeholder="模块/操作内容" />
       </a-form-item>
-      <a-form-item label="请求关键字" class="smart-query-form-item">
+      <a-form-item label="请求关键字" class="nexora-query-form-item">
         <a-input style="width: 270px" v-model:value="queryForm.requestKeywords" placeholder="请求地址/请求方法/请求参数/返回结果" />
       </a-form-item>
-      <a-form-item label="用户名称" class="smart-query-form-item">
+      <a-form-item label="用户名称" class="nexora-query-form-item">
         <a-input style="width: 100px" v-model:value="queryForm.userName" placeholder="用户名称" />
       </a-form-item>
 
-      <a-form-item label="请求时间" class="smart-query-form-item">
+      <a-form-item label="请求时间" class="nexora-query-form-item">
         <a-range-picker @change="changeCreateDate" v-model:value="createDateRange" :presets="defaultChooseTimeRange" style="width: 240px" />
       </a-form-item>
 
-      <a-form-item label="状态：" class="smart-query-form-item">
+      <a-form-item label="状态：" class="nexora-query-form-item">
         <a-radio-group v-model:value="queryForm.successFlag" @change="onSearch">
           <a-radio-button :value="undefined">全部</a-radio-button>
           <a-radio-button :value="true">成功</a-radio-button>
@@ -32,7 +32,7 @@
         </a-radio-group>
       </a-form-item>
 
-      <a-form-item class="smart-query-form-item smart-margin-left10">
+      <a-form-item class="nexora-query-form-item nexora-margin-left10">
         <a-button-group>
           <a-button type="primary" @click="ajaxQuery">
             <template #icon>
@@ -53,7 +53,7 @@
 
   <a-card size="small" :bordered="false" :hoverable="true" >
     <a-row justify="end">
-      <TableOperator class="smart-margin-bottom5" v-model="columns" :tableId="TABLE_ID_CONST.SUPPORT.CONFIG" :refresh="ajaxQuery" />
+      <TableOperator class="nexora-margin-bottom5" v-model="columns" :tableId="TABLE_ID_CONST.SUPPORT.CONFIG" :refresh="ajaxQuery" />
     </a-row>
     <a-table size="small" :loading="tableLoading" :dataSource="tableData" :columns="columns" bordered rowKey="operateLogId" :pagination="false">
       <template #bodyCell="{ text, record, column }">
@@ -71,18 +71,18 @@
         </template>
 
         <template v-if="column.dataIndex === 'operateUserType'">
-          <div>{{ $smartEnumPlugin.getDescByValue('USER_TYPE_ENUM', text) }}</div>
+          <div>{{ $nexoraEnumPlugin.getDescByValue('USER_TYPE_ENUM', text) }}</div>
         </template>
 
         <template v-else-if="column.dataIndex === 'action'">
-          <div class="smart-table-operate">
+          <div class="nexora-table-operate">
             <a-button @click="showDetail(record.operateLogId)" type="link" v-privilege="'support:operateLog:detail'">详情</a-button>
           </div>
         </template>
       </template>
     </a-table>
 
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -107,7 +107,7 @@
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import { defaultTimeRanges } from '/@/lib/default-time-ranges';
   import uaparser from 'ua-parser-js';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
 
@@ -229,7 +229,7 @@
       total.value = responseModel.data.total;
       tableData.value = list;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }

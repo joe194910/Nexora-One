@@ -22,13 +22,13 @@
         <a-radio-button :value="true">物理删除</a-radio-button>
         <a-radio-button :value="false">假删</a-radio-button>
       </a-radio-group>
-      <div class="smart-margin-top10" v-if="!formData.isPhysicallyDeleted">
+      <div class="nexora-margin-top10" v-if="!formData.isPhysicallyDeleted">
         <span v-if="deleteFlagColumnName"> 假删字段为：{{ deleteFlagColumnName }} </span>
         <span stlye="color:red" v-else> 系统未检测出假删字段，假删字段名词应该为 ： <strong>deleted_flag</strong> </span>
       </div>
     </a-form-item>
     <a-form-item label="删除类型" name="deleteEnum" v-if="formData.isSupportDelete">
-      <SmartEnumSelect enumName="CODE_DELETE_ENUM" v-model:value="formData.deleteEnum" width="200px" />
+      <NexoraEnumSelect enumName="CODE_DELETE_ENUM" v-model:value="formData.deleteEnum" width="200px" />
     </a-form-item>
   </a-form>
 </template>
@@ -37,7 +37,7 @@
   import { message } from 'ant-design-vue';
   import _ from 'lodash';
   import { inject, reactive, ref } from 'vue';
-  import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
+  import NexoraEnumSelect from '/@/components/framework/nexora-enum-select/index.vue';
   import { CODE_DELETE_ENUM } from '/@/constants/support/code-generator-const';
 
   const tableInfo = inject('tableInfo');

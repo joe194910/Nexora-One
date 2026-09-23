@@ -27,7 +27,7 @@ export const CODE_FRONT_COMPONENT_ENUM = {
     desc: '布尔下拉框',
   },
   ENUM_SELECT: {
-    value: 'SmartEnumSelect',
+    value: 'NexoraEnumSelect',
     desc: '枚举下拉框',
   },
   DICT_SELECT: {

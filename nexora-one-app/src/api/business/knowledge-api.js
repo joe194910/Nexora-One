@@ -1,4 +1,4 @@
-import { getRequest, postRequest } from '@/lib/smart-request';
+import { getRequest, postRequest } from '@/lib/nexora-request';
 
 /**
  * 查询助手市场。

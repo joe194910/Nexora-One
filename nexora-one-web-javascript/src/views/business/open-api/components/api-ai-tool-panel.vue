@@ -156,7 +156,7 @@
   } from '@ant-design/icons-vue';
   import { message } from 'ant-design-vue';
   import { mcpToolApi } from '/@/api/business/open-api/mcp-tool-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import PublishAiToolDrawer from './publish-ai-tool-drawer.vue';
 
   const props = defineProps({
@@ -224,7 +224,7 @@
         ...(response.data || {}),
       });
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loading.value = false;
     }
@@ -238,7 +238,7 @@
       message.success('AI 工具 Schema 已同步到最新发布版本，助手关联保持不变');
       await loadRelation();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       syncing.value = false;
     }
@@ -251,7 +251,7 @@
       message.success(enabledStatus === 'ENABLED' ? 'AI 工具已启用' : 'AI 工具已停用');
       await loadRelation();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 

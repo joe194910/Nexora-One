@@ -33,7 +33,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { PlusOutlined, ApiOutlined, ReloadOutlined } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 import { aiPlatformApi as api } from '/@/api/business/ai/ai-platform-api';
-import { smartSentry } from '/@/lib/smart-sentry';
+import { nexoraSentry } from '/@/lib/nexora-sentry';
 import './ai-platform.less';
 const types={TIKA:'文档解析',OCR:'OCR',TABLE:'表格解析',IMAGE:'图片理解'};
 const statuses={CONNECTED:'就绪',FAILED:'异常',UNTESTED:'未检测'};
@@ -44,16 +44,16 @@ const form=reactive({...defaults}),filter=reactive({name:'',type:undefined,deplo
 const filtered=computed(()=>services.value.filter(s=>(!filter.name || s.serviceName?.includes(filter.name)) && (!filter.type || s.serviceType===filter.type) && (!filter.deployment || s.deploymentType===filter.deployment)));
 const summary=computed(()=>[{label:'服务总数',value:services.value.length},{label:'运行正常',value:services.value.filter(s=>s.enabledFlag && s.connectionStatus==='CONNECTED').length},{label:'未配置',value:services.value.filter(s=>s.connectionStatus==='UNTESTED').length},{label:'异常',value:services.value.filter(s=>s.connectionStatus==='FAILED').length}]);
 /** 查询真实服务及连接状态。 */
-async function load(){loading.value=true;try{services.value=(await api.parseServices()).data||[];}catch(e){smartSentry.captureError(e);}finally{loading.value=false;}}
+async function load(){loading.value=true;try{services.value=(await api.parseServices()).data||[];}catch(e){nexoraSentry.captureError(e);}finally{loading.value=false;}}
 /** 打开服务配置抽屉。 */
 function edit(record){Object.keys(form).forEach(k=>delete form[k]);Object.assign(form,record?{...record,apiKey:record.apiKeyCipher==='******'?'******':'',supportedFormats:(record.supportedFormats||'').split(',') }:{...defaults,supportedFormats:[...defaults.supportedFormats]});testResult.value=null;drawer.value=true;}
 /** 根据服务类型切换有实现的部署方式。 */
 function typeChanged(){if(!['TIKA','TABLE'].includes(form.serviceType))form.deploymentType='HTTP';form.supportedFormats= form.serviceType==='OCR'||form.serviceType==='IMAGE'?['pdf','png','jpg','jpeg']:form.serviceType==='TABLE'?['xls','xlsx','csv']:[...defaults.supportedFormats];}
 /** 保存解析服务配置。 */
-async function save(){if(!form.serviceName?.trim() || !form.supportedFormats?.length)return message.warning('请填写名称和支持格式');saving.value=true;try{await api.saveParseService(form);message.success('服务已保存');drawer.value=false;await load();}catch(e){smartSentry.captureError(e);}finally{saving.value=false;}}
+async function save(){if(!form.serviceName?.trim() || !form.supportedFormats?.length)return message.warning('请填写名称和支持格式');saving.value=true;try{await api.saveParseService(form);message.success('服务已保存');drawer.value=false;await load();}catch(e){nexoraSentry.captureError(e);}finally{saving.value=false;}}
 /** 发起后端内置/外部健康检测。 */
-async function test(record){try{testResult.value=(await api.testParseService(record.parseServiceId)).data;message.info(testResult.value.message);await load();}catch(e){smartSentry.captureError(e);}}
+async function test(record){try{testResult.value=(await api.testParseService(record.parseServiceId)).data;message.info(testResult.value.message);await load();}catch(e){nexoraSentry.captureError(e);}}
 /** 删除未被方案关联的服务。 */
-async function remove(record){try{await api.deleteParseService(record.parseServiceId);message.success('已删除');await load();}catch(e){smartSentry.captureError(e);}}
+async function remove(record){try{await api.deleteParseService(record.parseServiceId);message.success('已删除');await load();}catch(e){nexoraSentry.captureError(e);}}
 onMounted(load);
 </script>

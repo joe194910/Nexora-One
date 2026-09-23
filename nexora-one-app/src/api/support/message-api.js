@@ -1,4 +1,4 @@
-import { postRequest, getRequest } from '@/lib/smart-request';
+import { postRequest, getRequest } from '@/lib/nexora-request';
 
 export const messageApi = {
   // 通知消息-分页查询

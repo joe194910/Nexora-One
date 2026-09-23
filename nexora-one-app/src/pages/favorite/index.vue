@@ -78,7 +78,7 @@
   import AssistantAvatar from '@/components/assistant-avatar/assistant-avatar.vue';
   import { useAssistantStore } from '@/store/modules/business/assistant';
   import { useThemeStore } from '@/store/modules/system/theme';
-  import { smartSentry } from '@/lib/smart-sentry';
+  import { nexoraSentry } from '@/lib/nexora-sentry';
 
   const assistantStore = useAssistantStore();
   const themeStore = useThemeStore();
@@ -123,7 +123,7 @@
     try {
       await assistantStore.loadAssistantStore();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
       uni.showToast({ title: '收藏加载失败，请稍后重试', icon: 'none' });
     } finally {
       loading.value = false;
@@ -152,7 +152,7 @@
       await assistantStore.toggleFavorite(item);
       uni.showToast({ title: '已取消收藏', icon: 'none' });
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
       uni.showToast({ title: '取消收藏失败', icon: 'none' });
     }
   }

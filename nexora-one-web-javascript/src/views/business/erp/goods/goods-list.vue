@@ -9,9 +9,9 @@
 -->
 <template>
   <!---------- 查询表单form begin ----------->
-  <a-form class="smart-query-form">
-    <a-row class="smart-query-form-row" v-privilege="'goods:query'">
-      <a-form-item label="商品分类" class="smart-query-form-item">
+  <a-form class="nexora-query-form">
+    <a-row class="nexora-query-form-row" v-privilege="'goods:query'">
+      <a-form-item label="商品分类" class="nexora-query-form-item">
         <category-tree
           width="150px"
           v-model:value="queryForm.categoryId"
@@ -20,19 +20,19 @@
         />
       </a-form-item>
 
-      <a-form-item label="商品名称" class="smart-query-form-item">
+      <a-form-item label="商品名称" class="nexora-query-form-item">
         <a-input style="width: 200px" v-model:value="queryForm.searchWord" placeholder="商品名称" />
       </a-form-item>
 
-      <a-form-item label="产地" name="place" class="smart-query-form-item">
+      <a-form-item label="产地" name="place" class="nexora-query-form-item">
         <DictSelect :dict-code="DICT_CODE_ENUM.GOODS_PLACE" v-model:value="queryForm.place" width="120px" />
       </a-form-item>
 
-      <a-form-item label="商品状态" name="goodsStatus" class="smart-query-form-item">
-        <SmartEnumSelect enum-name="GOODS_STATUS_ENUM" v-model:value="queryForm.goodsStatus" width="160px" />
+      <a-form-item label="商品状态" name="goodsStatus" class="nexora-query-form-item">
+        <NexoraEnumSelect enum-name="GOODS_STATUS_ENUM" v-model:value="queryForm.goodsStatus" width="160px" />
       </a-form-item>
 
-      <a-form-item label="快速筛选" class="smart-query-form-item">
+      <a-form-item label="快速筛选" class="nexora-query-form-item">
         <a-radio-group v-model:value="queryForm.shelvesFlag" @change="onSearch">
           <a-radio-button :value="undefined">全部</a-radio-button>
           <a-radio-button :value="'true'">上架</a-radio-button>
@@ -40,7 +40,7 @@
         </a-radio-group>
       </a-form-item>
 
-      <a-form-item class="smart-query-form-item">
+      <a-form-item class="nexora-query-form-item">
         <a-button-group>
           <a-button type="primary" @click="onSearch" v-privilege="'goods:query'">
             <template #icon>
@@ -62,8 +62,8 @@
 
   <a-card size="small" :bordered="false" :hoverable="true">
     <!---------- 表格操作行 begin ----------->
-    <a-row class="smart-table-btn-block">
-      <div class="smart-table-operate-block">
+    <a-row class="nexora-table-btn-block">
+      <div class="nexora-table-operate-block">
         <a-button @click="addGoods" type="primary" v-privilege="'goods:add'">
           <template #icon>
             <PlusOutlined />
@@ -92,7 +92,7 @@
           导出
         </a-button>
       </div>
-      <div class="smart-table-setting-block">
+      <div class="nexora-table-setting-block">
         <TableOperator v-model="columns" :tableId="TABLE_ID_CONST.BUSINESS.ERP.GOODS" :refresh="queryData" />
       </div>
     </a-row>
@@ -111,7 +111,7 @@
       @resizeColumn="handleResizeColumn"
     >
       <template #headerCell="{ column }">
-        <SmartHeaderCell v-model:value="queryForm[column.filterOptions?.key || column.dataIndex]" :column="column" @change="queryData" />
+        <NexoraHeaderCell v-model:value="queryForm[column.filterOptions?.key || column.dataIndex]" :column="column" @change="queryData" />
       </template>
       <template #bodyCell="{ text, record, column }">
         <template v-if="column.dataIndex === 'goodsName'">
@@ -124,13 +124,13 @@
           <span>{{ text ? text : '' }}</span>
         </template>
         <template v-if="column.dataIndex === 'goodsStatus'">
-          <span>{{ $smartEnumPlugin.getDescByValue('GOODS_STATUS_ENUM', text) }}</span>
+          <span>{{ $nexoraEnumPlugin.getDescByValue('GOODS_STATUS_ENUM', text) }}</span>
         </template>
         <template v-if="column.dataIndex === 'shelvesFlag'">
           <span>{{ text ? '上架' : '下架' }}</span>
         </template>
         <template v-if="column.dataIndex === 'action'">
-          <div class="smart-table-operate">
+          <div class="nexora-table-operate">
             <a-button @click="addGoods(record)" type="link" v-privilege="'goods:update'">编辑</a-button>
             <a-button @click="deleteGoods(record)" danger type="link" v-privilege="'goods:delete'">删除</a-button>
           </div>
@@ -138,7 +138,7 @@
       </template>
     </a-table>
 
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -188,18 +188,18 @@
   import GoodsFormModal from './components/goods-form-modal.vue';
   import { onMounted, reactive, ref } from 'vue';
   import { message, Modal } from 'ant-design-vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { goodsApi } from '/@/api/business/goods/goods-api';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import CategoryTree from '/@/components/business/category-tree-select/index.vue';
   import { CATEGORY_TYPE_ENUM } from '/@/constants/business/erp/category-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
   import DictSelect from '/@/components/support/dict-select/index.vue';
-  import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
+  import NexoraEnumSelect from '/@/components/framework/nexora-enum-select/index.vue';
   import _ from 'lodash';
-  import SmartHeaderCell from '/@/components/support/table-header-cell/index.vue';
+  import NexoraHeaderCell from '/@/components/support/table-header-cell/index.vue';
   import { DICT_CODE_ENUM } from '/@/constants/support/dict-const';
   import DictLabel from '/@/components/support/dict-label/index.vue';
 
@@ -336,7 +336,7 @@
       tableData.value = queryResult.data.list;
       total.value = queryResult.data.total;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }
@@ -368,14 +368,14 @@
 
   async function singleDelete(goodsData) {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       await goodsApi.deleteGoods(goodsData.goodsId);
       message.success('删除成功');
       queryData();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -405,14 +405,14 @@
 
   async function batchDelete() {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       await goodsApi.batchDelete(selectedRowKeyList.value);
       message.success('删除成功');
       queryData();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -457,14 +457,14 @@
       formData.append('file', file.originFileObj);
     });
 
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       let res = await goodsApi.importGoods(formData);
       message.success(res.msg);
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -504,11 +504,11 @@
     // 搜索部分高度
     let doc = document.querySelector('.ant-form');
     // 按钮部分高度
-    let btn = document.querySelector('.smart-table-btn-block');
+    let btn = document.querySelector('.nexora-table-btn-block');
     // 表格头高度
     let tableCell = document.querySelector('.ant-table-cell');
     // 分页高度
-    let page = document.querySelector('.smart-query-table-page');
+    let page = document.querySelector('.nexora-query-table-page');
     // 内容区总高度
     let box = document.querySelector('.admin-content');
     setTimeout(() => {

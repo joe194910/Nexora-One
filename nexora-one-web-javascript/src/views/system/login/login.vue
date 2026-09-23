@@ -71,12 +71,10 @@
   import { onMounted, onUnmounted, reactive, ref } from 'vue';
   import { useRouter } from 'vue-router';
   import { loginApi } from '/@/api/system/login-api';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { LOGIN_DEVICE_ENUM } from '/@/constants/system/login-device-const';
   import { useUserStore } from '/@/store/modules/system/user';
-  import zhuoda from '/@/assets/images/nexoraone/zhuoda-wechat.jpg';
   import loginQR from '/@/assets/images/login/login-qr.png';
-  import gzh from '/@/assets/images/nexoraone/gzh.jpg';
   import wechatIcon from '/@/assets/images/login/wechat-icon.png';
   import aliIcon from '/@/assets/images/login/ali-icon.png';
   import douyinIcon from '/@/assets/images/login/douyin-icon.png';
@@ -86,7 +84,7 @@
   import googleIcon from '/@/assets/images/login/google-icon.png';
 
   import { buildRoutes } from '/@/router/index';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import { encryptData } from '/@/lib/encrypt';
   import { localSave } from '/@/utils/local-util';
   import LocalStorageKeyConst from '/@/constants/local-storage-key-const';
@@ -130,7 +128,7 @@
   async function onLogin() {
     formRef.value.validate().then(async () => {
       try {
-        SmartLoading.show();
+        NexoraLoading.show();
         // 密码加密
         let encryptPasswordForm = Object.assign({}, loginForm, {
           password: encryptData(loginForm.password),
@@ -152,9 +150,9 @@
           loginForm.captchaCode = '';
           getCaptcha();
         }
-        smartSentry.captureError(e);
+        nexoraSentry.captureError(e);
       } finally {
-        SmartLoading.hide();
+        NexoraLoading.hide();
       }
     });
   }
@@ -225,21 +223,21 @@
       let result = await loginApi.getTwoFactorLoginFlag();
       emailCodeShowFlag.value = result.data;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     }
   }
 
   // 发送邮箱验证码
   async function sendSmsCode() {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       let result = await loginApi.sendLoginEmailCode(loginForm.loginName);
       message.success('验证码发送成功!请登录邮箱查看验证码~');
       runCountDown();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 </script>

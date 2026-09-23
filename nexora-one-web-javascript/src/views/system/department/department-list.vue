@@ -1,11 +1,11 @@
 <template>
-  <a-form class="smart-query-form">
-    <a-row class="smart-query-form-row">
-      <a-form-item label="部门名称" class="smart-query-form-item">
+  <a-form class="nexora-query-form">
+    <a-row class="nexora-query-form-row">
+      <a-form-item label="部门名称" class="nexora-query-form-item">
         <a-input style="width: 300px" v-model:value="keywords" placeholder="请输入部门名称" />
       </a-form-item>
 
-      <a-form-item class="smart-query-form-item smart-margin-left10">
+      <a-form-item class="nexora-query-form-item nexora-margin-left10">
         <a-button-group>
           <a-button v-privilege="'support:department:query'" type="primary" @click="onSearch">
             <template #icon>
@@ -20,7 +20,7 @@
             重置
           </a-button>
         </a-button-group>
-        <a-button v-privilege="'system:department:add'" type="primary" @click="addDepartment" class="smart-margin-left20">
+        <a-button v-privilege="'system:department:add'" type="primary" @click="addDepartment" class="nexora-margin-left20">
           <template #icon>
             <PlusOutlined />
           </template>
@@ -44,7 +44,7 @@
     >
       <template #bodyCell="{ record, column }">
         <template v-if="column.dataIndex === 'action'">
-          <div class="smart-table-operate">
+          <div class="nexora-table-operate">
             <a-button @click="addDepartment(record)" v-privilege="'system:department:add'" type="link">添加下级</a-button>
             <a-button @click="updateDepartment(record)" v-privilege="'system:department:update'" type="link">编辑</a-button>
             <a-button
@@ -70,9 +70,9 @@
   import { Modal } from 'ant-design-vue';
   import { ExclamationCircleOutlined } from '@ant-design/icons-vue';
   import _ from 'lodash';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import DepartmentFormModal from './components/department-form-modal.vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const DEPARTMENT_PARENT_ID = 0;
 
@@ -154,7 +154,7 @@
       defaultExpandedRowList.value = [];
       defaultExpandedRowList.push(topDepartmentId.value);
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }
@@ -239,14 +239,14 @@
       okText: '删除',
       okType: 'danger',
       async onOk() {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           await departmentApi.deleteDepartment(id);
           await queryDepartmentTree();
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       },
       cancelText: '取消',

@@ -21,7 +21,7 @@ public enum CodeFrontComponentEnum implements BaseEnum {
 
     BOOLEAN_SELECT("BooleanSelect", "布尔下拉框"),
 
-    ENUM_SELECT("SmartEnumSelect", "枚举下拉"),
+    ENUM_SELECT("NexoraEnumSelect", "枚举下拉"),
 
     DICT_SELECT("DictSelect", "字典下拉"),
 

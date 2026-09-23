@@ -33,8 +33,8 @@
   import { departmentApi } from '/@/api/system/department-api';
   import DepartmentTreeSelect from '/@/components/system/department-tree-select/index.vue';
   import EmployeeSelect from '/@/components/system/employee-select/index.vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
 
 // ----------------------- 对外暴漏 ---------------------
 
@@ -122,21 +122,21 @@ function resetFormData() {
   // ----------------------- form 表单  ajax 操作 ---------------------
   //添加部门ajax请求
   async function addDepartment() {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       await departmentApi.addDepartment(formState);
       emits('refresh');
       closeModal();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
   //更新部门ajax请求
   async function updateDepartment() {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       if (formState.parentId == formState.departmentId) {
         message.warning('上级菜单不能为自己');
@@ -146,9 +146,9 @@ function resetFormData() {
       emits('refresh');
       closeModal();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 </script>

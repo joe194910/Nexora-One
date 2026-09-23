@@ -12,12 +12,10 @@
   <default-home-card icon="SmileOutlined" title="联系我们">
     <div class="app-qr-box">
       <div class="app-qr">
-        <img :src="zhuoda" />
         <span class="qr-desc strong"> 卓大的微信号！ </span>
         <span class="qr-desc"> 骚扰卓大 :) </span>
       </div>
       <div class="app-qr">
-        <img :src="xiaozhen" />
         <span class="qr-desc strong"> 六边形工程师 </span>
         <span class="qr-desc"> 赚钱、代码、生活 </span>
       </div>
@@ -26,8 +24,6 @@
 </template>
 <script setup>
   import DefaultHomeCard from '/@/views/system/home/components/default-home-card.vue';
-  import zhuoda from '/@/assets/images/nexoraone/zhuoda-wechat.jpg';
-  import xiaozhen from '/@/assets/images/nexoraone/gzh.jpg';
 </script>
 <style lang="less" scoped>
   .app-qr-box {

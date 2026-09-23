@@ -9,21 +9,21 @@
 -->
 <template>
   <a-drawer :width="1000" :open="visible" :body-style="{ paddingBottom: '80px' }" title="字典值" @close="onClose">
-    <a-form class="smart-query-form">
-      <a-row class="smart-query-form-row">
-        <a-form-item label="关键字" class="smart-query-form-item">
+    <a-form class="nexora-query-form">
+      <a-row class="nexora-query-form-row">
+        <a-form-item label="关键字" class="nexora-query-form-item">
           <a-input style="width: 300px" v-model:value="keywords" @change="search" placeholder="关键字" />
         </a-form-item>
-        <a-form-item label="禁用" class="smart-query-form-item">
+        <a-form-item label="禁用" class="nexora-query-form-item">
           <BooleanSelect v-model:value="disabledFlag" @change="search" style="width: 150px" />
         </a-form-item>
 
-        <a-form-item class="smart-query-form-item smart-margin-left10">
+        <a-form-item class="nexora-query-form-item nexora-margin-left10">
           <a-button type="primary" @click="queryData">
             <template #icon> <SearchOutlined /> </template>
             查询
           </a-button>
-          <a-button @click="resetQuery" class="smart-margin-left10">
+          <a-button @click="resetQuery" class="nexora-margin-left10">
             <template #icon> <ReloadOutlined /> </template>
             重置
           </a-button>
@@ -31,8 +31,8 @@
       </a-row>
     </a-form>
 
-    <a-row class="smart-table-btn-block">
-      <div class="smart-table-operate-block">
+    <a-row class="nexora-table-btn-block">
+      <div class="nexora-table-operate-block">
         <a-button @click="addOrUpdateData" type="primary" v-privilege="'support:dictData:add'">
           <template #icon>
             <PlusOutlined />
@@ -53,7 +53,7 @@
           批量删除
         </a-button>
       </div>
-      <div class="smart-table-setting-block"></div>
+      <div class="nexora-table-setting-block"></div>
     </a-row>
 
     <a-table
@@ -84,7 +84,7 @@
       </template>
     </a-table>
 
-    <div class="smart-query-table-page">共计 {{ tableData.length }} 条</div>
+    <div class="nexora-query-table-page">共计 {{ tableData.length }} 条</div>
     <DictDataFormModal ref="dictDataFormModalRef" @reloadList="queryData" />
   </a-drawer>
 </template>
@@ -92,9 +92,9 @@
   import { reactive, ref } from 'vue';
   import DictDataFormModal from './dict-data-form-modal.vue';
   import { dictApi } from '/@/api/support/dict-api';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { message, Modal, theme } from 'ant-design-vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import BooleanSelect from '/@/components/framework/boolean-select/index.vue';
   import _ from 'lodash';
   import { DICT_DATA_STYLE_ENUM } from '/@/constants/support/dict-const';
@@ -203,7 +203,7 @@
       dictDataList.value = responseData.data;
       search();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }
@@ -211,15 +211,15 @@
 
   // ----------------------- 启用/禁用 ------------------------
   async function handleChangeDisabled(disabledFlag, dictData) {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       await dictApi.updateDictDataDisabled(dictData.dictDataId);
       dictData.disabledFlag = !disabledFlag;
       message.success('操作成功');
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -241,14 +241,14 @@
 
   async function batchDelete() {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       await dictApi.batchDeleteDictData(selectedRowKeyList.value);
       message.success('删除成功');
       await queryData();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 

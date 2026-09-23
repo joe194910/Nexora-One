@@ -49,7 +49,7 @@ public class ListVariableService extends CodeGenerateBaseVariableService {
             if (CodeQueryFieldQueryTypeEnum.ENUM.equalsValue(queryField.getQueryTypeEnum()) && SmartStringUtil.isNotBlank(codeField.getEnumName())) {
                 String upperUnderscoreEnum = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, codeField.getEnumName());
                 objectMap.put("frontEnumName", upperUnderscoreEnum);
-                frontImportSet.add("import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';");
+                frontImportSet.add("import NexoraEnumSelect from '/@/components/framework/nexora-enum-select/index.vue';");
             }
 
             if (CodeQueryFieldQueryTypeEnum.DICT.equalsValue(queryField.getQueryTypeEnum())) {
@@ -80,7 +80,7 @@ public class ListVariableService extends CodeGenerateBaseVariableService {
             // 是否存在枚举
             if (SmartStringUtil.isNotBlank(codeField.getEnumName())) {
                 String upperUnderscoreEnum = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, codeField.getEnumName());
-                objectMap.put("frontEnumPlugin", "$smartEnumPlugin.getDescByValue('" + upperUnderscoreEnum + "', text)");
+                objectMap.put("frontEnumPlugin", "$nexoraEnumPlugin.getDescByValue('" + upperUnderscoreEnum + "', text)");
             }
 
             // 是否存在字典

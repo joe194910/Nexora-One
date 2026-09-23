@@ -9,28 +9,28 @@
 -->
 <template>
   <a-modal v-model:open="visible" :width="900" title="选择人员" @cancel="closeModal" @ok="onSelectEmployee">
-    <a-form class="smart-query-form">
-      <a-row class="smart-query-form-row">
-        <a-form-item label="关键字" class="smart-query-form-item">
+    <a-form class="nexora-query-form">
+      <a-row class="nexora-query-form-row">
+        <a-form-item label="关键字" class="nexora-query-form-item">
           <a-input style="width: 150px" v-model:value="params.keyword" placeholder="关键字" />
         </a-form-item>
-        <a-form-item label="部门" class="smart-query-form-item">
+        <a-form-item label="部门" class="nexora-query-form-item">
           <DepartmentTreeSelect style="width: 200px" ref="departmentTreeSelect" v-model:value="params.departmentId" />
         </a-form-item>
-        <a-form-item label="状态" class="smart-query-form-item">
+        <a-form-item label="状态" class="nexora-query-form-item">
           <a-select style="width: 120px" v-model:value="params.disabledFlag" placeholder="请选择状态" allowClear>
             <a-select-option :key="1"> 禁用 </a-select-option>
             <a-select-option :key="0"> 启用 </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item class="smart-query-form-item smart-margin-left10">
+        <a-form-item class="nexora-query-form-item nexora-margin-left10">
           <a-button type="primary" @click="onSearch">
             <template #icon>
               <SearchOutlined />
             </template>
             查询
           </a-button>
-          <a-button @click="reset" class="smart-margin-left10">
+          <a-button @click="reset" class="nexora-margin-left10">
             <template #icon>
               <ReloadOutlined />
             </template>
@@ -56,11 +56,11 @@
         </template>
 
         <template v-if="column.dataIndex === 'gender'">
-          <span>{{ $smartEnumPlugin.getDescByValue('GENDER_ENUM', text) }}</span>
+          <span>{{ $nexoraEnumPlugin.getDescByValue('GENDER_ENUM', text) }}</span>
         </template>
       </template>
     </a-table>
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -82,7 +82,7 @@
   import { employeeApi } from '/@/api/system/employee-api';
   import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import DepartmentTreeSelect from '/@/components/system/department-tree-select/index.vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   // ----------------------- 以下是字段定义 emits props ---------------------
   const emits = defineEmits(['selectData']);
@@ -137,7 +137,7 @@
       tableData.value = res.data.list;
       total.value = res.data.total;
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       tableLoading.value = false;
     }

@@ -13,8 +13,8 @@
     <!-- 1、logo区域 -->
     <div class="logo" @click="onGoHome">
       <img class="logo-img" :src="logoImg" />
-      <div class="title smart-logo title-light" v-if="sideMenuTheme === 'light'">{{ websiteName }}</div>
-      <div class="title smart-logo title-dark" v-if="sideMenuTheme === 'dark'">{{ websiteName }}</div>
+      <div class="title nexora-logo title-light" v-if="sideMenuTheme === 'light'">{{ websiteName }}</div>
+      <div class="title nexora-logo title-dark" v-if="sideMenuTheme === 'dark'">{{ websiteName }}</div>
     </div>
     <!-- 2、菜单区域 -->
     <RecursionMenu ref="menuRef" />

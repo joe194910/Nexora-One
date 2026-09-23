@@ -42,9 +42,9 @@
   import { reactive, ref, nextTick } from 'vue';
   import _ from 'lodash';
   import { message } from 'ant-design-vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { positionApi } from '/@/api/system/position-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   // ------------------------ 事件 ------------------------
 
@@ -115,7 +115,7 @@
 
   // 新建、编辑API
   async function save() {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       if (form.positionId) {
         await positionApi.update(form);
@@ -126,9 +126,9 @@
       emits('reloadList');
       onClose();
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 

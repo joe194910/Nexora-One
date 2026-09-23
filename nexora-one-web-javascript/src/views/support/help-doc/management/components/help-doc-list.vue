@@ -8,17 +8,17 @@
   * @Copyright  NexoraOne （ # ），Since 2012
 -->
 <template>
-  <a-form class="smart-query-form" v-privilege="'support:helpDoc:query'">
-    <a-row class="smart-query-form-row">
-      <a-form-item label="关键字" class="smart-query-form-item">
+  <a-form class="nexora-query-form" v-privilege="'support:helpDoc:query'">
+    <a-row class="nexora-query-form-row">
+      <a-form-item label="关键字" class="nexora-query-form-item">
         <a-input style="width: 300px" v-model:value="queryForm.keywords" placeholder="标题、作者" />
       </a-form-item>
 
-      <a-form-item label="创建时间" class="smart-query-form-item">
+      <a-form-item label="创建时间" class="nexora-query-form-item">
         <a-range-picker :presets="defaultTimeRanges" v-model:value="createDate" @change="createDateChange" style="width: 220px" />
       </a-form-item>
 
-      <a-form-item class="smart-query-form-item smart-margin-left10">
+      <a-form-item class="nexora-query-form-item nexora-margin-left10">
         <a-button-group>
           <a-button type="primary" @click="onSearch">
             <template #icon>
@@ -38,8 +38,8 @@
   </a-form>
 
   <a-card size="small" :bordered="false">
-    <a-row class="smart-table-btn-block">
-      <div class="smart-table-operate-block">
+    <a-row class="nexora-table-btn-block">
+      <div class="nexora-table-operate-block">
         <a-button type="primary" @click="addOrUpdate()" v-privilege="'support:helpDoc:add'">
           <template #icon>
             <PlusOutlined />
@@ -47,7 +47,7 @@
           新建
         </a-button>
       </div>
-      <div class="smart-table-setting-block">
+      <div class="nexora-table-setting-block">
         <TableOperator v-model="tableColumns" :tableId="TABLE_ID_CONST.SUPPORT.HELP_DOC" :refresh="queryHelpDocList" />
       </div>
     </a-row>
@@ -69,7 +69,7 @@
           }}</router-link>
         </template>
         <template v-else-if="column.dataIndex === 'action'">
-          <div class="smart-table-operate">
+          <div class="nexora-table-operate">
             <a-button type="link" @click="addOrUpdate(record.helpDocId)" v-privilege="'support:helpDoc:update'">编辑</a-button>
             <a-button type="link" danger @click="onDelete(record.helpDocId)" v-privilege="'support:helpDoc:delete'">删除</a-button>
           </div>
@@ -77,7 +77,7 @@
       </template>
     </a-table>
 
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -102,7 +102,7 @@
   import HelpDocFormDrawer from './help-doc-form-drawer.vue';
   import { helpDocApi } from '/@/api/support/help-doc-api';
   import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import { defaultTimeRanges } from '/@/lib/default-time-ranges';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
@@ -186,7 +186,7 @@
       tableData.value = result.data.list;
       total.value = result.data.total;
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
       tableLoading.value = false;
     }
@@ -248,7 +248,7 @@
       message.success('删除成功');
       queryHelpDocList();
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
       tableLoading.value = false;
     }

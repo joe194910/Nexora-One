@@ -7,27 +7,27 @@
 -->
 <template>
   <!---------- 查询表单form begin ----------->
-  <a-form class="smart-query-form" v-privilege="'support:file:query'">
-    <a-row class="smart-query-form-row">
-      <a-form-item label="文件夹类型" class="smart-query-form-item">
-        <SmartEnumSelect width="150px" v-model:value="queryForm.folderType" enumName="FILE_FOLDER_TYPE_ENUM" placeholder="文件夹类型" />
+  <a-form class="nexora-query-form" v-privilege="'support:file:query'">
+    <a-row class="nexora-query-form-row">
+      <a-form-item label="文件夹类型" class="nexora-query-form-item">
+        <NexoraEnumSelect width="150px" v-model:value="queryForm.folderType" enumName="FILE_FOLDER_TYPE_ENUM" placeholder="文件夹类型" />
       </a-form-item>
-      <a-form-item label="文件名" class="smart-query-form-item">
+      <a-form-item label="文件名" class="nexora-query-form-item">
         <a-input style="width: 150px" v-model:value="queryForm.fileName" placeholder="文件名" />
       </a-form-item>
-      <a-form-item label="文件Key" class="smart-query-form-item">
+      <a-form-item label="文件Key" class="nexora-query-form-item">
         <a-input style="width: 150px" v-model:value="queryForm.fileKey" placeholder="文件Key" />
       </a-form-item>
-      <a-form-item label="文件类型" class="smart-query-form-item">
+      <a-form-item label="文件类型" class="nexora-query-form-item">
         <a-input style="width: 150px" v-model:value="queryForm.fileType" placeholder="文件类型" />
       </a-form-item>
-      <a-form-item label="创建人" class="smart-query-form-item">
+      <a-form-item label="创建人" class="nexora-query-form-item">
         <a-input style="width: 150px" v-model:value="queryForm.creatorName" placeholder="创建人" />
       </a-form-item>
-      <a-form-item label="创建时间" class="smart-query-form-item">
+      <a-form-item label="创建时间" class="nexora-query-form-item">
         <a-range-picker v-model:value="queryForm.createTime" :presets="defaultTimeRanges" style="width: 220px" @change="onChangeCreateTime" />
       </a-form-item>
-      <a-form-item class="smart-query-form-item">
+      <a-form-item class="nexora-query-form-item">
         <a-button-group>
           <a-button type="primary" @click="queryData">
             <template #icon>
@@ -49,8 +49,8 @@
 
   <a-card size="small" :bordered="false" :hoverable="true">
     <!---------- 表格操作行 begin ----------->
-    <a-row class="smart-table-btn-block">
-      <div class="smart-table-operate-block">
+    <a-row class="nexora-table-btn-block">
+      <div class="nexora-table-operate-block">
         <a-button type="primary" @click="showUploadModal">
           <template #icon>
             <cloud-upload-outlined />
@@ -58,7 +58,7 @@
           上传文件
         </a-button>
       </div>
-      <div class="smart-table-setting-block">
+      <div class="nexora-table-setting-block">
         <TableOperator v-model="columns" :tableId="null" :refresh="queryData" />
       </div>
     </a-row>
@@ -77,13 +77,13 @@
     >
       <template #bodyCell="{ text, record, column }">
         <template v-if="column.dataIndex === 'folderType'">
-          <span>{{ $smartEnumPlugin.getDescByValue('FILE_FOLDER_TYPE_ENUM', text) }}</span>
+          <span>{{ $nexoraEnumPlugin.getDescByValue('FILE_FOLDER_TYPE_ENUM', text) }}</span>
         </template>
         <template v-if="column.dataIndex === 'creatorUserType'">
-          <span>{{ $smartEnumPlugin.getDescByValue('USER_TYPE_ENUM', text) }}</span>
+          <span>{{ $nexoraEnumPlugin.getDescByValue('USER_TYPE_ENUM', text) }}</span>
         </template>
         <template v-if="column.dataIndex === 'action'">
-          <div class="smart-table-operate">
+          <div class="nexora-table-operate">
             <a-button @click="view(record)" type="link">查看</a-button>
             <a-button @click="download(record)" type="link">下载</a-button>
           </div>
@@ -92,7 +92,7 @@
     </a-table>
     <!---------- 表格 end ----------->
 
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -124,11 +124,11 @@
 <script setup>
   import { onMounted, reactive, ref } from 'vue';
   import { fileApi } from '/@/api/support/file-api';
-  import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
+  import NexoraEnumSelect from '/@/components/framework/nexora-enum-select/index.vue';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import { defaultTimeRanges } from '/@/lib/default-time-ranges';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import FilePreviewModal from '/@/components/support/file-preview-modal/index.vue';
   import FileUpload from '/@/components/support/file-upload/index.vue';
   import { FILE_FOLDER_TYPE_ENUM } from '/@/constants/support/file-const';
@@ -233,7 +233,7 @@
       tableData.value = queryResult.data.list;
       total.value = queryResult.data.total;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }
@@ -266,7 +266,7 @@
     try {
       await fileApi.downLoadFile(file.fileKey);
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     }
   }
 

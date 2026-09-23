@@ -1,4 +1,4 @@
-export const SmartLoading = {
+export const NexoraLoading = {
   show: function (msg) {
     uni.showLoading({ title: msg ? msg : '加载中' });
   },
@@ -8,7 +8,7 @@ export const SmartLoading = {
   },
 };
 
-export const SmartToast = {
+export const NexoraToast = {
   success: (message) => {
     uni.showToast({
       title: message,

@@ -249,7 +249,7 @@
   } from '@ant-design/icons-vue';
   import { message } from 'ant-design-vue';
   import { openApiApi } from '/@/api/business/open-api/open-api-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import PublishAiToolDrawer from './components/publish-ai-tool-drawer.vue';
   import './open-api.less';
 
@@ -390,7 +390,7 @@
       tableData.value = response.data.list || [];
       total.value = response.data.total || 0;
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loading.value = false;
     }
@@ -403,7 +403,7 @@
       Object.assign(summary, summaryResponse.data || {});
       categories.value = categoryResponse.data || [];
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 
@@ -504,7 +504,7 @@
         query: { openApiId: response.data.openApiId, step: 1 },
       });
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       versionModal.loading = false;
     }
@@ -522,7 +522,7 @@
       const response = await openApiApi.versionList(record.openApiId);
       historyModal.list = response.data || [];
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       historyModal.loading = false;
     }
@@ -576,7 +576,7 @@
       message.success(status === 4 ? 'API已启用' : 'API已停用');
       await Promise.all([queryData(), loadMeta()]);
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     }
   }
 

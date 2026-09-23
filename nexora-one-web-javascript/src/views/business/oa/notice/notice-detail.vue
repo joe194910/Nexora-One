@@ -64,9 +64,9 @@
   import NoticeFormDrawer from './components/notice-form-drawer.vue';
   import NoticeViewRecordList from './components/notice-view-record-list.vue';
   import { noticeApi } from '/@/api/business/oa/notice-api';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import FilePreviewModal from '/@/components/support/file-preview-modal/index.vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const route = useRoute();
 
@@ -91,13 +91,13 @@
   // 查询详情
   async function queryNoticeDetail() {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       const result = await noticeApi.getUpdateNoticeInfo(route.query.noticeId);
       noticeDetail.value = result.data;
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 

@@ -11,15 +11,15 @@
   <a-card size="small" :bordered="false" :hoverable="true">
     <a-alert>
       <template v-slot:message>
-        <h4>Smart-Reload 心跳服务介绍：</h4>
+        <h4>Nexora-Reload 心跳服务介绍：</h4>
       </template>
       <template v-slot:description>
         <pre>
-简介：SmartReload是一个可以在不重启进程的情况下动态重新加载配置或者执行某些预先设置的代码。
+简介：NexoraReload是一个可以在不重启进程的情况下动态重新加载配置或者执行某些预先设置的代码。
 
 原理：
-- Java后端会在项目启动的时候开启一个Daemon线程，这个Daemon线程会每隔几秒轮询t_smart_item表的状态。
-- 如果【状态标识】与【上次状态标识】比较发生变化，会将参数传入SmartReload实现类，进行自定义操作。
+- Java后端会在项目启动的时候开启一个Daemon线程，这个Daemon线程会每隔几秒轮询t_nexora_item表的状态。
+- 如果【状态标识】与【上次状态标识】比较发生变化，会将参数传入NexoraReload实现类，进行自定义操作。
 用途：
 · 用于刷新内存中的缓存
 · 用于执行某些后门代码
@@ -31,13 +31,13 @@
     </a-alert>
 
     <a-row justify="end">
-      <TableOperator class="smart-margin-bottom5 smart-margin-top5" v-model="columns" :tableId="TABLE_ID_CONST.SUPPORT.RELOAD" :refresh="ajaxQuery" />
+      <TableOperator class="nexora-margin-bottom5 nexora-margin-top5" v-model="columns" :tableId="TABLE_ID_CONST.SUPPORT.RELOAD" :refresh="ajaxQuery" />
     </a-row>
 
     <a-table
       size="small"
       bordered
-      class="smart-margin-top10"
+      class="nexora-margin-top10"
       :dataSource="tableData"
       :loading="tableLoading"
       :columns="columns"
@@ -46,7 +46,7 @@
     >
       <template #bodyCell="{ record, column }">
         <template v-if="column.dataIndex === 'action'">
-          <div class="smart-table-operate">
+          <div class="nexora-table-operate">
             <a-button @click="doReload(record.tag)" v-privilege="'support:reload:execute'" type="link">执行</a-button>
             <a-button @click="showResultList(record.tag)" v-privilege="'support:reload:result'" type="link">查看结果</a-button>
           </div>
@@ -63,7 +63,7 @@
   import DoReloadForm from './do-reload-form-modal.vue';
   import ReloadResultList from './reload-result-list.vue';
   import { reloadApi } from '/@/api/support/reload-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
 
@@ -110,7 +110,7 @@
       let res = await reloadApi.queryList();
       tableData.value = res.data;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }

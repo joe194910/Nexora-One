@@ -27,9 +27,9 @@
 <script setup>
   import { ref, reactive } from 'vue';
   import { message } from 'ant-design-vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { dictApi } from '/@/api/support/dict-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   // emit
   const emit = defineEmits(['reloadList']);
@@ -68,7 +68,7 @@
     formRef.value
       .validate()
       .then(async () => {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           if (form.dictId) {
             await dictApi.updateDict(form);
@@ -79,9 +79,9 @@
           emit('reloadList');
           onClose();
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       })
       .catch((error) => {

@@ -25,8 +25,8 @@
 <script setup>
   import { ref } from 'vue';
   import { fileApi } from '/@/api/support/file-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
 
   const imgFileType = ['jpg', 'jpeg', 'png', 'gif'];
   const previewUrl = ref();
@@ -34,15 +34,15 @@
   function showPreview(fileItem) {
     if (!fileItem.fileUrl) {
       (async () => {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           let res = await fileApi.getUrl(fileItem.fileKey);
           fileItem.fileUrl = res.data;
           showFile(fileItem);
         } catch (e) {
-          smartSentry.captureError(e);
+          nexoraSentry.captureError(e);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       })();
     } else {

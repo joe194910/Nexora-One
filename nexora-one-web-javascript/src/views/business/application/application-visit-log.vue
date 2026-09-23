@@ -34,7 +34,7 @@
           </template>
         </template>
       </a-table>
-      <div class="smart-query-table-page">
+      <div class="nexora-query-table-page">
         <a-pagination v-model:current="queryForm.pageNum" v-model:page-size="queryForm.pageSize" :total="total" show-size-changer @change="queryData" />
       </div>
     </section>
@@ -45,7 +45,7 @@
   import { onMounted, reactive, ref } from 'vue';
   import { ReloadOutlined, SearchOutlined } from '@ant-design/icons-vue';
   import { applicationApi } from '/@/api/business/application/application-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import './application.less';
 
   const loading = ref(false);
@@ -70,7 +70,7 @@
       records.value = response.data.list || [];
       total.value = response.data.total || 0;
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loading.value = false;
     }

@@ -69,7 +69,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { PlusOutlined, FileTextOutlined, ReloadOutlined, DownOutlined } from '@ant-design/icons-vue';
 import { message, Modal } from 'ant-design-vue';
 import { aiPlatformApi as api } from '/@/api/business/ai/ai-platform-api';
-import { smartSentry } from '/@/lib/smart-sentry';
+import { nexoraSentry } from '/@/lib/nexora-sentry';
 import './ai-platform.less';
 
 const plans = ref([]), services = ref([]), loading = ref(false), saving = ref(false), drawer = ref(false);
@@ -84,21 +84,21 @@ const options = type => services.value.filter(s=>s.serviceType===type && s.enabl
 const serviceName = id => services.value.find(s=>s.parseServiceId===id)?.serviceName || '未配置';
 
 /** 加载真实解析方案及服务选项。 */
-async function load() { loading.value=true; try { const [p,s]=await Promise.all([api.parsePlans(),api.parseServices()]); plans.value=p.data||[];services.value=s.data||[]; } catch(e) {smartSentry.captureError(e);} finally {loading.value=false;} }
+async function load() { loading.value=true; try { const [p,s]=await Promise.all([api.parsePlans(),api.parseServices()]); plans.value=p.data||[];services.value=s.data||[]; } catch(e) {nexoraSentry.captureError(e);} finally {loading.value=false;} }
 /** 将实体转换为保存表单，避免传入格式字符串。 */
 function payload(record) { return {...record,supportedFormats:typeof record.supportedFormats==='string' ? record.supportedFormats.split(',').filter(Boolean) : record.supportedFormats}; }
 /** 打开方案编辑抽屉。 */
 function edit(record) { Object.keys(form).forEach(key=>delete form[key]);Object.assign(form,record?payload(record):{...defaults,supportedFormats:[...defaults.supportedFormats],parserServiceId:options('TIKA')[0]?.parseServiceId});drawer.value=true; }
 /** 保存并刷新方案列表。 */
-async function save() { if(!form.planName?.trim() || !form.supportedFormats?.length || !form.parserServiceId)return message.warning('请填写名称、格式和解析服务');saving.value=true;try {await api.saveParsePlan(payload(form));message.success('方案已保存');drawer.value=false;await load();} catch(e){smartSentry.captureError(e);} finally{saving.value=false;} }
+async function save() { if(!form.planName?.trim() || !form.supportedFormats?.length || !form.parserServiceId)return message.warning('请填写名称、格式和解析服务');saving.value=true;try {await api.saveParsePlan(payload(form));message.success('方案已保存');drawer.value=false;await load();} catch(e){nexoraSentry.captureError(e);} finally{saving.value=false;} }
 /** 测试方案对真实上传文件的解析效果。 */
-function test(id,file) {const body=new FormData();body.append('file',file);api.testParsePlan(id,body).then(r=>{preview.data=r.data||{};preview.open=true;}).catch(smartSentry.captureError);return false;}
+function test(id,file) {const body=new FormData();body.append('file',file);api.testParsePlan(id,body).then(r=>{preview.data=r.data||{};preview.open=true;}).catch(nexoraSentry.captureError);return false;}
 /** 复制方案并刷新列表。 */
-async function copy(id){try{await api.copyParsePlan(id);message.success('已复制');await load();}catch(e){smartSentry.captureError(e);}}
+async function copy(id){try{await api.copyParsePlan(id);message.success('已复制');await load();}catch(e){nexoraSentry.captureError(e);}}
 /** 根据关联约束切换启停。 */
-async function toggle(record){try{await api.saveParsePlan({...payload(record),enabledFlag:!record.enabledFlag});await load();}catch(e){smartSentry.captureError(e);}}
+async function toggle(record){try{await api.saveParsePlan({...payload(record),enabledFlag:!record.enabledFlag});await load();}catch(e){nexoraSentry.captureError(e);}}
 /** 将方案设为默认。 */
-async function makeDefault(record){try{await api.saveParsePlan({...payload(record),enabledFlag:true,defaultFlag:true});await load();}catch(e){smartSentry.captureError(e);}}
+async function makeDefault(record){try{await api.saveParsePlan({...payload(record),enabledFlag:true,defaultFlag:true});await load();}catch(e){nexoraSentry.captureError(e);}}
 /** 删除未被使用的方案。 */
 function remove(record){Modal.confirm({title:`删除 ${record.planName}？`,onOk:async()=>{await api.deleteParsePlan(record.configId);await load();}});}
 onMounted(load);

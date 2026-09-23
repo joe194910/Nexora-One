@@ -45,7 +45,7 @@
   import * as echarts from 'echarts';
   import { CheckCircleOutlined, DatabaseOutlined, DollarOutlined, SearchOutlined, ThunderboltOutlined } from '@ant-design/icons-vue';
   import { aiPlatformApi } from '/@/api/business/ai/ai-platform-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import './ai-platform.less';
 
   const loading = ref(false);
@@ -91,7 +91,7 @@
       });
       Object.assign(data, response.data || {});
       await nextTick(); renderCharts();
-    } catch (error) { smartSentry.captureError(error); } finally { loading.value = false; }
+    } catch (error) { nexoraSentry.captureError(error); } finally { loading.value = false; }
   }
   /**
    * 渲染调用趋势和模型分布图表。
@@ -116,7 +116,7 @@
   }
   function resize() { trendChart?.resize(); pieChart?.resize(); }
   onMounted(async () => {
-    try { services.value = (await aiPlatformApi.serviceOptions()).data || []; } catch (error) { smartSentry.captureError(error); }
+    try { services.value = (await aiPlatformApi.serviceOptions()).data || []; } catch (error) { nexoraSentry.captureError(error); }
     window.addEventListener('resize', resize); load();
   });
   onBeforeUnmount(() => { window.removeEventListener('resize', resize); trendChart?.dispose(); pieChart?.dispose(); });

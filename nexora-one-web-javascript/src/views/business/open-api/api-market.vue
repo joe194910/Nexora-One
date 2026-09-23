@@ -89,7 +89,7 @@
   import { ApiOutlined, CheckCircleFilled, ReloadOutlined } from '@ant-design/icons-vue';
   import { message } from 'ant-design-vue';
   import { openApiApi } from '/@/api/business/open-api/open-api-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import './open-api.less';
 
   const router = useRouter();
@@ -121,7 +121,7 @@
       list.value = response.data.list || [];
       total.value = response.data.total || 0;
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loading.value = false;
     }

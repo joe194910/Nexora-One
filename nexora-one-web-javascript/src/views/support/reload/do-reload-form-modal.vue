@@ -26,8 +26,8 @@
   import { message } from 'ant-design-vue';
   import { reactive, ref } from 'vue';
   import { reloadApi } from '/@/api/support/reload-api';
-import { smartSentry } from '/@/lib/smart-sentry';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+import { nexoraSentry } from '/@/lib/nexora-sentry';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
 
   // emit
   const emit = defineEmits(['refresh']);
@@ -70,16 +70,16 @@ import { smartSentry } from '/@/lib/smart-sentry';
     formRef.value
       .validate()
       .then(async () => {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           await reloadApi.reload(form);
           message.success('reload成功');
           emit('refresh');
           onClose();
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       })
       .catch((error) => {

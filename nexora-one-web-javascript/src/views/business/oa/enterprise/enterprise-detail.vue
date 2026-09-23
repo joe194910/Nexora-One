@@ -8,7 +8,7 @@
   * @Copyright  NexoraOne （ # ），Since 2012 
 -->
 <template>
-  <div class="smart-detail-header">
+  <div class="nexora-detail-header">
     <a-page-header :title="detail.enterpriseName" :avatar="{ src: logo }">
       <template #extra>
         <a-button @click="showUpdate" type="primary">编辑</a-button>
@@ -31,7 +31,7 @@
     </a-page-header>
   </div>
   <a-card
-    class="smart-margin-top10"
+    class="nexora-margin-top10"
     size="small"
     v-if="$privilege('oa:enterprise:queryEmployee') || $privilege('oa:bank:query') || $privilege('oa:invoice:query')"
   >
@@ -62,11 +62,11 @@
   import InvoiceList from './components/enterprise-invoice-list.vue';
   import EnterpriseOperate from './components/enterprise-operate-modal.vue';
   import { enterpriseApi } from '/@/api/business/oa/enterprise-api';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import DataTracer from '/@/components/support/data-tracer/index.vue';
   import FilePreview from '/@/components/support/file-preview/index.vue';
   import { DATA_TRACER_TYPE_ENUM } from '/@/constants/support/data-tracer-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const route = useRoute();
   let enterpriseId = ref();
@@ -91,9 +91,9 @@
       let result = await enterpriseApi.detail(enterpriseId.value);
       detail.value = result.data;
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 

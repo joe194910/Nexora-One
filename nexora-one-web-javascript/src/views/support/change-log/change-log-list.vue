@@ -7,21 +7,21 @@
 -->
 <template>
   <!---------- 查询表单form begin ----------->
-  <a-form class="smart-query-form" v-privilege="'support:changeLog:query'">
-    <a-row class="smart-query-form-row">
-      <a-form-item label="更新类型" class="smart-query-form-item">
-        <SmartEnumSelect width="200px" v-model:value="queryForm.type" enumName="CHANGE_LOG_TYPE_ENUM" placeholder="更新类型" />
+  <a-form class="nexora-query-form" v-privilege="'support:changeLog:query'">
+    <a-row class="nexora-query-form-row">
+      <a-form-item label="更新类型" class="nexora-query-form-item">
+        <NexoraEnumSelect width="200px" v-model:value="queryForm.type" enumName="CHANGE_LOG_TYPE_ENUM" placeholder="更新类型" />
       </a-form-item>
-      <a-form-item label="关键字" class="smart-query-form-item">
+      <a-form-item label="关键字" class="nexora-query-form-item">
         <a-input style="width: 200px" v-model:value="queryForm.keyword" placeholder="关键字" />
       </a-form-item>
-      <a-form-item label="发布日期" class="smart-query-form-item">
+      <a-form-item label="发布日期" class="nexora-query-form-item">
         <a-range-picker v-model:value="queryForm.publicDate" :presets="defaultTimeRanges" style="width: 240px" @change="onChangePublicDate" />
       </a-form-item>
-      <a-form-item label="创建时间" class="smart-query-form-item">
+      <a-form-item label="创建时间" class="nexora-query-form-item">
         <a-date-picker valueFormat="YYYY-MM-DD" v-model:value="queryForm.createTime" style="width: 150px" />
       </a-form-item>
-      <a-form-item class="smart-query-form-item">
+      <a-form-item class="nexora-query-form-item">
         <a-button-group>
           <a-button type="primary" @click="onSearch">
             <template #icon>
@@ -29,7 +29,7 @@
             </template>
             查询
           </a-button>
-          <a-button @click="resetQuery" class="smart-margin-left10">
+          <a-button @click="resetQuery" class="nexora-margin-left10">
             <template #icon>
               <ReloadOutlined />
             </template>
@@ -43,8 +43,8 @@
 
   <a-card size="small" :bordered="false" :hoverable="true">
     <!---------- 表格操作行 begin ----------->
-    <a-row class="smart-table-btn-block">
-      <div class="smart-table-operate-block">
+    <a-row class="nexora-table-btn-block">
+      <div class="nexora-table-operate-block">
         <a-button @click="showForm" type="primary" v-privilege="'support:changeLog:add'">
           <template #icon>
             <PlusOutlined />
@@ -58,7 +58,7 @@
           批量删除
         </a-button>
       </div>
-      <div class="smart-table-setting-block">
+      <div class="nexora-table-setting-block">
         <TableOperator v-model="columns" :tableId="null" :refresh="queryData" />
       </div>
     </a-row>
@@ -83,11 +83,11 @@
             <template #icon>
               <check-circle-outlined />
             </template>
-            {{ $smartEnumPlugin.getDescByValue('CHANGE_LOG_TYPE_ENUM', text) }}
+            {{ $nexoraEnumPlugin.getDescByValue('CHANGE_LOG_TYPE_ENUM', text) }}
           </a-tag>
         </template>
         <template v-if="column.dataIndex === 'action'">
-          <div class="smart-table-operate">
+          <div class="nexora-table-operate">
             <a-button @click="showForm(record)" type="link" v-privilege="'support:changeLog:update'">编辑</a-button>
             <a-button @click="onDelete(record)" danger type="link" v-privilege="'support:changeLog:delete'">删除</a-button>
           </div>
@@ -96,7 +96,7 @@
     </a-table>
     <!---------- 表格 end ----------->
 
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -119,13 +119,13 @@
 <script setup>
   import { reactive, ref, onMounted } from 'vue';
   import { message, Modal } from 'ant-design-vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { changeLogApi } from '/@/api/support/change-log-api';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import DictSelect from '/@/components/support/dict-select/index.vue';
-  import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
+  import NexoraEnumSelect from '/@/components/framework/nexora-enum-select/index.vue';
   import { defaultTimeRanges } from '/@/lib/default-time-ranges';
   import ChangeLogModal from './change-log-modal.vue';
   import ChangeLogForm from './change-log-form.vue';
@@ -224,7 +224,7 @@
       tableData.value = queryResult.data.list;
       total.value = queryResult.data.total;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }
@@ -269,15 +269,15 @@
 
   //请求删除
   async function requestDelete(data) {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       await changeLogApi.delete(data.changeLogId);
       message.success('删除成功');
       queryData();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -308,14 +308,14 @@
   //请求批量删除
   async function requestBatchDelete() {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       await changeLogApi.batchDelete(selectedRowKeyList.value);
       message.success('删除成功');
       queryData();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 </script>

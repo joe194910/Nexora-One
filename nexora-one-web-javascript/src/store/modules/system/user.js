@@ -13,7 +13,7 @@ import localKey from '/@/constants/local-storage-key-const';
 import { HOME_PAGE_NAME } from '/@/constants/system/home-const';
 import { MENU_TYPE_ENUM } from '/@/constants/system/menu-const';
 import { messageApi } from '/@/api/support/message-api';
-import { smartSentry } from '/@/lib/smart-sentry';
+import { nexoraSentry } from '/@/lib/nexora-sentry';
 import { localRead, localSave, localRemove } from '/@/utils/local-util';
 
 
@@ -135,7 +135,7 @@ export const useUserStore = defineStore({
         let result = await messageApi.queryUnreadCount();
         this.unreadMessageCount = result.data;
       } catch (e) {
-        smartSentry.captureError(e);
+        nexoraSentry.captureError(e);
       }
     },
     async queryToBeDoneList() {
@@ -145,7 +145,7 @@ export const useUserStore = defineStore({
           this.toBeDoneCount = JSON.parse(localToBeDoneList).filter((e) => !e.doneFlag).length;
         }
       } catch (err) {
-        smartSentry.captureError(err);
+        nexoraSentry.captureError(err);
       }
     },
     //设置登录信息

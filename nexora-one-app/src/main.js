@@ -6,14 +6,14 @@ import { store } from './store/index';
 import './theme/index.scss';
 
 // 枚举管理
-import smartEnumPlugin from '@/plugins/smart-enums-plugin';
+import nexoraEnumPlugin from '@/plugins/nexora-enums-plugin';
 import constantsInfo from '@/constants/index';
 import lodash from 'lodash';
 
 export function createApp() {
   const app = createSSRApp(App);
   app.use(store);
-  app.use(smartEnumPlugin, constantsInfo);
+  app.use(nexoraEnumPlugin, constantsInfo);
   app.config.globalProperties.$lodash = lodash;
   return {
     app,

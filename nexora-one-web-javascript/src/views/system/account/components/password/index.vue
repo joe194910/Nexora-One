@@ -20,9 +20,9 @@
 <script setup>
   import { computed, onMounted, reactive, ref } from 'vue';
   import { message } from 'ant-design-vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading/index';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading/index';
   import { employeeApi } from '/@/api/system/employee-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const emits = defineEmits(['onSuccess']);
 
@@ -38,14 +38,14 @@
 
   async function getPasswordComplexityEnabled() {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       let res = await employeeApi.getPasswordComplexityEnabled();
       passwordComplexityEnabledFlag.value = res.data;
       tips.value = passwordComplexityEnabledFlag.value ? passwordComplexityEnabledTips : passwordTips;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
   onMounted(getPasswordComplexityEnabled);
@@ -87,7 +87,7 @@
           message.error('新密码与确认密码不一致');
           return;
         }
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           await employeeApi.updateEmployeePassword(form);
           message.success('修改成功');
@@ -98,9 +98,9 @@
 
           emits('onSuccess');
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       })
       .catch((error) => {

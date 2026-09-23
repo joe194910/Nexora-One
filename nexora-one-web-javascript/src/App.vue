@@ -50,7 +50,7 @@
   import { useSpinStore } from '/@/store/modules/system/spin';
   import { Popover, theme } from 'ant-design-vue';
   import { themeColors } from '/@/theme/color';
-  import SmartCopyIcon from '/@/components/framework/smart-copy-icon/index.vue';
+  import NexoraCopyIcon from '/@/components/framework/nexora-copy-icon/index.vue';
 
   const antdLocale = computed(() => messages[useAppConfigStore().language].antdLocale);
   const dayjsLocale = computed(() => messages[useAppConfigStore().language].dayjsLocale);
@@ -95,7 +95,7 @@
           content: () =>
             h('div', { style: { display: 'flex' } }, [
               h('div', text),
-              h(SmartCopyIcon, { value: document.getElementById(`${column.dataIndex}${index}`).innerText }),
+              h(NexoraCopyIcon, { value: document.getElementById(`${column.dataIndex}${index}`).innerText }),
             ]),
         }
       );
@@ -114,13 +114,13 @@
     align-items: flex-start !important;
   }
 
-  .smart-query-form {
+  .nexora-query-form {
     background-color: @color-bg-container;
     padding: 5px 10px;
     margin-bottom: 10px;
   }
 
-  .smart-detail-header {
+  .nexora-detail-header {
     background-color: @color-bg-container;
     padding: 10px;
   }

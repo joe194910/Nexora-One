@@ -38,7 +38,7 @@ import { FileTextOutlined, ReloadOutlined, DownloadOutlined } from '@ant-design/
 import { message } from 'ant-design-vue';
 import { aiPlatformApi as api } from '/@/api/business/ai/ai-platform-api';
 import { request } from '/@/lib/axios';
-import { smartSentry } from '/@/lib/smart-sentry';
+import { nexoraSentry } from '/@/lib/nexora-sentry';
 import './ai-platform.less';
 const statuses={QUEUED:'排队中',RUNNING:'处理中',SUCCESS:'成功',FAILED:'失败',CANCELLED:'已取消'};
 const stages={UPLOAD:'文件上传',PARSE:'内容解析',CHUNK:'文本切片',INDEX:'向量化入库'},stageOrder=Object.keys(stages);
@@ -48,7 +48,7 @@ const pagination=computed(()=>({current:query.pageNum,pageSize:query.pageSize,to
 const summary=computed(()=>[{label:'本页任务',value:tasks.value.length},{label:'本页排队 / 处理',value:tasks.value.filter(t=>['QUEUED','RUNNING'].includes(t.status)).length},{label:'本页成功',value:tasks.value.filter(t=>t.status==='SUCCESS').length},{label:'本页失败',value:tasks.value.filter(t=>t.status==='FAILED').length}]);
 let timer;
 /** 加载分页任务数据及其关联知识库、解析方案。 */
-async function load(){loading.value=true;try{const [t,b,p]=await Promise.all([api.parseTasks(query),api.knowledgeBases(),api.parsePlans()]);tasks.value=t.data?.list||[];total.value=t.data?.total||0;bases.value=b.data||[];plans.value=p.data||[];}catch(e){smartSentry.captureError(e);}finally{loading.value=false;}}
+async function load(){loading.value=true;try{const [t,b,p]=await Promise.all([api.parseTasks(query),api.knowledgeBases(),api.parsePlans()]);tasks.value=t.data?.list||[];total.value=t.data?.total||0;bases.value=b.data||[];plans.value=p.data||[];}catch(e){nexoraSentry.captureError(e);}finally{loading.value=false;}}
 /** 重置页码后执行筛选。 */
 function search(){query.pageNum=1;load();}
 /** 重置任务筛选条件。 */
@@ -58,15 +58,15 @@ function pageChange(page){query.pageNum=page.current;query.pageSize=page.pageSiz
 /** 显示选中任务的四阶段历史结果。 */
 function detail(record){selected.value=record;steps.value=[];drawer.value=true;refreshDetail();stopPolling();timer=setInterval(()=>{if(selected.value && ['QUEUED','RUNNING'].includes(selected.value.status))refreshDetail();else stopPolling();},2500);}
 /** 获取最新阶段记录。 */
-async function refreshDetail(){if(!selected.value)return;try{const result=(await api.parseTaskDetail(selected.value.taskId)).data;selected.value=result.task;steps.value=result.steps||[];if(!['QUEUED','RUNNING'].includes(result.task.status)){stopPolling();load();}}catch(e){smartSentry.captureError(e);stopPolling();}}
+async function refreshDetail(){if(!selected.value)return;try{const result=(await api.parseTaskDetail(selected.value.taskId)).data;selected.value=result.task;steps.value=result.steps||[];if(!['QUEUED','RUNNING'].includes(result.task.status)){stopPolling();load();}}catch(e){nexoraSentry.captureError(e);stopPolling();}}
 /** 按阶段获取各次执行记录，保留重试历史。 */
 const stageLogs=key=>steps.value.filter(step=>step.stage===key);
 /** 取消或重试任务，并刷新详情及列表。 */
-async function operate(record,action){try{await (action==='cancel'?api.cancelParseTask(record.taskId):api.retryParseTask(record.taskId));message.success(action==='cancel'?'已取消':'已重新排队');await load();if(drawer.value)await refreshDetail();}catch(e){smartSentry.captureError(e);}}
+async function operate(record,action){try{await (action==='cancel'?api.cancelParseTask(record.taskId):api.retryParseTask(record.taskId));message.success(action==='cancel'?'已取消':'已重新排队');await load();if(drawer.value)await refreshDetail();}catch(e){nexoraSentry.captureError(e);}}
 /** 停止详情轮询。 */
 function stopPolling(){if(timer){clearInterval(timer);timer=undefined;}}
 /** 带身份凭证下载该任务的真实源文件。 */
-async function download(){if(!selected.value)return;try{const response=await request({url:`/ai/document/tasks/${selected.value.taskId}/download`,method:'get',responseType:'blob'});const blob=response.data;const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=selected.value.fileName;link.click();URL.revokeObjectURL(url);}catch(e){smartSentry.captureError(e);}}
+async function download(){if(!selected.value)return;try{const response=await request({url:`/ai/document/tasks/${selected.value.taskId}/download`,method:'get',responseType:'blob'});const blob=response.data;const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=selected.value.fileName;link.click();URL.revokeObjectURL(url);}catch(e){nexoraSentry.captureError(e);}}
 onMounted(load);onBeforeUnmount(stopPolling);
 </script>
 <style scoped>

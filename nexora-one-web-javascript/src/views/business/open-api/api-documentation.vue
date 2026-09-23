@@ -120,7 +120,7 @@
   import { ApiOutlined, CodeOutlined, CopyOutlined } from '@ant-design/icons-vue';
   import { Empty, message } from 'ant-design-vue';
   import { openApiApi } from '/@/api/business/open-api/open-api-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import './open-api.less';
 
   const route = useRoute();
@@ -391,7 +391,7 @@ console.log(await response.json());`;
       }
       message.success('代码已复制');
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
       message.error('复制失败，请手动选择代码复制');
     }
   }
@@ -408,7 +408,7 @@ console.log(await response.json());`;
       examples.value = response.data.examples || [];
       errorCodes.value = response.data.errorCodes || [];
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loading.value = false;
     }

@@ -73,7 +73,7 @@
         />
       </a-form-item>
       <a-form-item label="公告内容" name="contentHtml">
-        <SmartWangeditor ref="contentRef" :modelValue="formData.contentHtml" :height="300" />
+        <NexoraWangeditor ref="contentRef" :modelValue="formData.contentHtml" :height="300" />
       </a-form-item>
       <a-form-item label="附件">
         <Upload
@@ -105,13 +105,13 @@
   import { message, Modal } from 'ant-design-vue';
   import _ from 'lodash';
   import dayjs, { Dayjs } from 'dayjs';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { FILE_FOLDER_TYPE_ENUM } from '/@/constants/support/file-const';
   import { noticeApi } from '/@/api/business/oa/notice-api';
-  import SmartWangeditor from '/@/components/framework/wangeditor/index.vue';
+  import NexoraWangeditor from '/@/components/framework/wangeditor/index.vue';
   import Upload from '/@/components/support/file-upload/index.vue';
   import NoticeFormVisibleModal from './notice-form-visible-modal.vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const emits = defineEmits(['reloadList']);
 
@@ -175,7 +175,7 @@
   // 查询详情
   async function getNoticeUpdate(noticeId) {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       const result = await noticeApi.getUpdateNoticeInfo(noticeId);
       const attachment = result.data.attachment;
       if (!_.isEmpty(attachment)) {
@@ -189,9 +189,9 @@
       releaseTime.value = dayjs(result.data.publishTime);
       visibleFlag.value = true;
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -210,7 +210,7 @@
   // 新建、编辑API
   async function save() {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       if (formData.allVisibleFlag) {
         formData.visibleRangeList = [];
       }
@@ -226,9 +226,9 @@
       emits('reloadList');
       onClose();
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -244,7 +244,7 @@
         formData.noticeTypeId = noticeTypeList.value[0].noticeTypeId;
       }
     } catch (err) {
-      smartSentry.captureError(err);
+      nexoraSentry.captureError(err);
     }
   }
 

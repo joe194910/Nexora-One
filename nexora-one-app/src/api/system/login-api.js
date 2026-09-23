@@ -7,7 +7,7 @@
  * @Email:     NexoraOne
  * @Copyright  NexoraOne （ # ），Since 2012
  */
-import { getRequest, postRequest } from '@/lib/smart-request';
+import { getRequest, postRequest } from '@/lib/nexora-request';
 
 export const loginApi = {
   /**

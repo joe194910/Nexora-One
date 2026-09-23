@@ -24,7 +24,7 @@
     <a-card size="small" :bordered="false" :hoverable="false">
       <a-row justify="end">
         <TableOperator
-          class="smart-margin-bottom5"
+          class="nexora-margin-bottom5"
           v-model="columns"
           :tableId="TABLE_ID_CONST.BUSINESS.OA.ENTERPRISE_EMPLOYEE"
           :refresh="queryEmployee"
@@ -45,14 +45,14 @@
             <a-tag :color="text ? 'error' : 'processing'">{{ text ? '禁用' : '启用' }}</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'gender'">
-            <span>{{ $smartEnumPlugin.getDescByValue('GENDER_ENUM', text) }}</span>
+            <span>{{ $nexoraEnumPlugin.getDescByValue('GENDER_ENUM', text) }}</span>
           </template>
           <template v-if="column.dataIndex === 'operate'">
             <a-button type="link" @click="deleteEmployee(record.employeeId)" v-privilege="'oa:enterprise:deleteEmployee'">移除</a-button>
           </template>
         </template>
       </a-table>
-      <div class="smart-query-table-page">
+      <div class="nexora-query-table-page">
         <a-pagination
           showSizeChanger
           showQuickJumper
@@ -77,9 +77,9 @@
   import _ from 'lodash';
   import { computed, reactive, ref, watch } from 'vue';
   import { enterpriseApi } from '/@/api/business/oa/enterprise-api';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { PAGE_SIZE, PAGE_SIZE_OPTIONS, showTableTotal } from '/@/constants/common-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
 
@@ -159,7 +159,7 @@
       tableData.value = res.data.list;
       total.value = res.data.total;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }
@@ -170,7 +170,7 @@
       message.warning('请选择员工');
       return;
     }
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       let params = {
         employeeIdList: list,
@@ -180,9 +180,9 @@
       message.success('添加成功');
       await queryEmployee();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -206,7 +206,7 @@
       okText: '确定',
       okType: 'danger',
       async onOk() {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           let param = {
             employeeIdList: [employeeId],
@@ -216,9 +216,9 @@
           message.success('移除成功');
           await queryEmployee();
         } catch (e) {
-          smartSentry.captureError(e);
+          nexoraSentry.captureError(e);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       },
       cancelText: '取消',
@@ -245,7 +245,7 @@
       okText: '确定',
       okType: 'danger',
       async onOk() {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           let params = {
             employeeIdList: selectedRowKeyList.value,
@@ -256,9 +256,9 @@
           selectedRowKeyList.value = [];
           await queryEmployee();
         } catch (e) {
-          smartSentry.captureError(e);
+          nexoraSentry.captureError(e);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       },
       cancelText: '取消',

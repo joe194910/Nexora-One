@@ -25,10 +25,10 @@ Caffeine ：
       </template>
     </a-alert>
 
-    <a-table size="small" bordered class="smart-margin-top10" :dataSource="tableData" :columns="columns" rowKey="tag" :pagination="false" >
+    <a-table size="small" bordered class="nexora-margin-top10" :dataSource="tableData" :columns="columns" rowKey="tag" :pagination="false" >
       <template #bodyCell="{ record, column }">
         <template v-if="column.dataIndex === 'action'">
-          <div class="smart-table-operate">
+          <div class="nexora-table-operate">
             <a-button @click="remove(record.key)" v-privilege="'support:cache:delete'" type="link">清除</a-button>
             <a-button @click="getAllKeys(record.key)" v-privilege="'support:cache:keys'" type="link">获取所有key</a-button>
           </div>
@@ -41,10 +41,10 @@ Caffeine ：
   import { message } from 'ant-design-vue';
   import { onMounted, reactive, ref, h } from 'vue';
   import { cacheApi } from '/@/api/support/cache-api';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { Modal } from 'ant-design-vue';
   import _ from 'lodash';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   //------------------------ 删除 ---------------------
 
@@ -54,16 +54,16 @@ Caffeine ：
       message.success('删除成功');
       ajaxQuery();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     }
   }
 
   //------------------------ 获取所有key ---------------------
   async function getAllKeys(cacheName) {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       let res = await cacheApi.getKeys(cacheName);
-      SmartLoading.hide();
+      NexoraLoading.hide();
       Modal.info({
         title: '所有Key:' + cacheName,
         content: h('div', {}, [h('p', _.join(res.data, ' , '))]),
@@ -72,9 +72,9 @@ Caffeine ：
         },
       });
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -102,7 +102,7 @@ Caffeine ：
       let res = await cacheApi.getAllCacheNames();
       tableData.value = res.data.map((e) => Object.assign({}, { key: e }));
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }

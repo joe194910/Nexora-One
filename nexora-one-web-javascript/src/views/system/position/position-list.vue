@@ -7,19 +7,19 @@
 -->
 <template>
   <!---------- 查询表单form begin ----------->
-  <a-form class="smart-query-form">
-    <a-row class="smart-query-form-row">
-      <a-form-item label="关键字查询" class="smart-query-form-item">
+  <a-form class="nexora-query-form">
+    <a-row class="nexora-query-form-row">
+      <a-form-item label="关键字查询" class="nexora-query-form-item">
         <a-input style="width: 200px" v-model:value="queryForm.keywords" placeholder="关键字查询" />
       </a-form-item>
-      <a-form-item class="smart-query-form-item">
+      <a-form-item class="nexora-query-form-item">
         <a-button type="primary" @click="queryData">
           <template #icon>
             <SearchOutlined />
           </template>
           查询
         </a-button>
-        <a-button @click="resetQuery" class="smart-margin-left10">
+        <a-button @click="resetQuery" class="nexora-margin-left10">
           <template #icon>
             <ReloadOutlined />
           </template>
@@ -32,8 +32,8 @@
 
   <a-card size="small" :bordered="false" :hoverable="true">
     <!---------- 表格操作行 begin ----------->
-    <a-row class="smart-table-btn-block">
-      <div class="smart-table-operate-block">
+    <a-row class="nexora-table-btn-block">
+      <div class="nexora-table-operate-block">
         <a-button @click="showForm" type="primary">
           <template #icon>
             <PlusOutlined />
@@ -47,7 +47,7 @@
           批量删除
         </a-button>
       </div>
-      <div class="smart-table-setting-block">
+      <div class="nexora-table-setting-block">
         <TableOperator v-model="columns" :tableId="TABLE_ID_CONST.SYSTEM.EMPLOYEE" :refresh="queryData" />
       </div>
     </a-row>
@@ -66,7 +66,7 @@
     >
       <template #bodyCell="{ text, record, column }">
         <template v-if="column.dataIndex === 'action'">
-          <div class="smart-table-operate">
+          <div class="nexora-table-operate">
             <a-button @click="showForm(record)" type="link">编辑</a-button>
             <a-button @click="onDelete(record)" danger type="link">删除</a-button>
           </div>
@@ -75,7 +75,7 @@
     </a-table>
     <!---------- 表格 end ----------->
 
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -96,10 +96,10 @@
 <script setup>
   import { reactive, ref, onMounted } from 'vue';
   import { message, Modal } from 'ant-design-vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { positionApi } from '/@/api/system/position-api';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import TableOperator from '/@/components/support/table-operator/index.vue';
   import PositionForm from './position-form.vue';
   import _ from 'lodash';
@@ -172,7 +172,7 @@
       tableData.value = queryResult.data.list;
       total.value = queryResult.data.total;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }
@@ -205,15 +205,15 @@
 
   //请求删除
   async function requestDelete(data) {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       await positionApi.delete(data.positionId);
       message.success('删除成功');
       queryData();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -248,14 +248,14 @@
   //请求批量删除
   async function requestBatchDelete() {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       await positionApi.batchDelete(selectedRowKeyList.value);
       message.success('删除成功');
       queryData();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 </script>

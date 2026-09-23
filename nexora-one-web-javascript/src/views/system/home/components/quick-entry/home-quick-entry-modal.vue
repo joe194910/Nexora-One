@@ -5,7 +5,7 @@
         <IconSelect @updateIcon="selectIcon">
           <template #iconSelect>
             <a-input v-model:value="form.icon" placeholder="请输入菜单图标" style="width: 200px" />
-            <component :is="$antIcons[form.icon]" class="smart-margin-left15" style="font-size: 20px" />
+            <component :is="$antIcons[form.icon]" class="nexora-margin-left15" style="font-size: 20px" />
           </template>
         </IconSelect>
       </a-form-item>

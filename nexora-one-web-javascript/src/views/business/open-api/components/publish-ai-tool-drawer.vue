@@ -86,7 +86,7 @@
   import { reactive, ref, watch } from 'vue';
   import { message } from 'ant-design-vue';
   import { mcpToolApi } from '/@/api/business/open-api/mcp-tool-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const props = defineProps({
     open: Boolean,
@@ -154,7 +154,7 @@
       const response = await mcpToolApi.platformPreview(props.api.openApiId);
       Object.assign(schemaPreview, response.data || {});
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       previewLoading.value = false;
     }
@@ -191,7 +191,7 @@
       emit('update:open', false);
       emit('published', response.data);
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       submitting.value = false;
     }

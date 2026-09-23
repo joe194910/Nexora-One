@@ -7,7 +7,7 @@
  * @Email:     NexoraOne
  * @Copyright  NexoraOne （ # ），Since 2012
  */
-import { postRequest, getRequest } from '@/lib/smart-request';
+import { postRequest, getRequest } from '@/lib/nexora-request';
 
 export const dictApi = {
   // 分页查询数据字典KEY - @author 卓大

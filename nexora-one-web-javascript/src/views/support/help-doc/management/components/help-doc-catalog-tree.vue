@@ -74,9 +74,9 @@
   import { createVNode, onMounted } from 'vue';
   import HelpDocCatalogFormModal from './help-doc-catalog-form-modal.vue';
   import { helpDocCatalogApi } from '/@/api/support/help-doc-catalog-api';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import helpDocCatalogEmitter from '../help-doc-mitt';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const HELP_DOC_CATALOG_PARENT_ID = 0;
 
@@ -283,7 +283,7 @@
       okText: '删除',
       okType: 'danger',
       async onOk() {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           // 若删除的是当前的目录 先找到上级目录
           let selectedKey = null;
@@ -303,9 +303,9 @@
             selectTree(selectedKey);
           }
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       },
       cancelText: '取消',

@@ -1,7 +1,7 @@
 <template>
   <view class="container">
-    <smart-detail-tabs :tabsList="tabsList" v-model="active" :fixed="true" @change="scrollTo" />
-    <view class="smart-detail">
+    <nexora-detail-tabs :tabsList="tabsList" v-model="active" :fixed="true" @change="scrollTo" />
+    <view class="nexora-detail">
       <OrderDetailBaseInfo id="detail0" />
       <DetailModelPath id="detail1" />
       <OrderDetailSettle id="detail2" />
@@ -11,7 +11,7 @@
 
 <script setup>
   import { ref } from 'vue';
-  import SmartDetailTabs from '@/components/smart-detail-tabs/index.vue';
+  import NexoraDetailTabs from '@/components/nexora-detail-tabs/index.vue';
   import OrderDetailBaseInfo from './components/order-detail-base-info.vue';
   import DetailModelPath from './components/detail-model-path.vue';
   import OrderDetailSettle from './components/order-detail-settle.vue';

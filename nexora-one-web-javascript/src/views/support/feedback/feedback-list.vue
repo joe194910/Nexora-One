@@ -8,12 +8,12 @@
   * @Copyright  NexoraOne （ # ），Since 2012 
 -->
 <template>
-  <a-form class="smart-query-form">
-    <a-row class="smart-query-form-row">
-      <a-form-item label="关键字" class="smart-query-form-item" style="margin-right: 20px">
+  <a-form class="nexora-query-form">
+    <a-row class="nexora-query-form-row">
+      <a-form-item label="关键字" class="nexora-query-form-item" style="margin-right: 20px">
         <a-input style="width: 240px" v-model:value.trim="queryForm.searchWord" placeholder="反馈内容/创建人" />
       </a-form-item>
-      <a-form-item label="创建日期" class="smart-query-form-item" style="margin-right: 20px">
+      <a-form-item label="创建日期" class="nexora-query-form-item" style="margin-right: 20px">
         <a-range-picker
           v-model:value="chooseTimeRange"
           @change="changeCreateDate"
@@ -22,7 +22,7 @@
           style="width: 240px"
         />
       </a-form-item>
-      <a-form-item class="smart-query-form-item">
+      <a-form-item class="nexora-query-form-item">
         <a-button-group v-privilege="'feedback:query'">
           <a-button type="primary" @click="onSearch">
             <template #icon>
@@ -48,12 +48,12 @@
           <FilePreview :fileList="text" type="picture" />
         </template>
         <template v-if="column.dataIndex === 'userType'">
-          <span>{{ $smartEnumPlugin.getDescByValue('USER_TYPE_ENUM', text) }}</span>
+          <span>{{ $nexoraEnumPlugin.getDescByValue('USER_TYPE_ENUM', text) }}</span>
         </template>
       </template>
     </a-table>
 
-    <div class="smart-query-table-page">
+    <div class="nexora-query-table-page">
       <a-pagination
         showSizeChanger
         showQuickJumper
@@ -76,7 +76,7 @@
   import { defaultTimeRanges } from '/@/lib/default-time-ranges';
   import { feedbackApi } from '/@/api/support/feedback-api';
   import FilePreview from '/@/components/support/file-preview/index.vue';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   // ----------------------- 表格列 --------------------------------------
   const tableColumns = reactive([
@@ -134,7 +134,7 @@
       tableData.value = result.data.list;
       total.value = result.data.total;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }

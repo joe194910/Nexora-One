@@ -34,9 +34,9 @@
 <script setup>
   import { ref, reactive } from 'vue';
   import { message } from 'ant-design-vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { invoiceApi } from '/@/api/business/oa/invoice-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const props = defineProps({
     enterpriseId: {
@@ -99,7 +99,7 @@
     formRef.value
       .validate()
       .then(async () => {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           if (form.invoiceId) {
             await invoiceApi.update(form);
@@ -110,9 +110,9 @@
           emit('reloadList');
           onClose();
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       })
       .catch((error) => {

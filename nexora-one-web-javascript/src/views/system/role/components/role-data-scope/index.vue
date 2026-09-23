@@ -47,7 +47,7 @@
   import _ from 'lodash';
   import { inject, onMounted, ref, watch } from 'vue';
   import { roleApi } from '/@/api/system/role-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const props = defineProps({
     value: Number,
@@ -111,7 +111,7 @@
       message.success('保存成功');
       getDataScope();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     }
   }
 </script>

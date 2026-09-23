@@ -38,7 +38,7 @@
             <a-range-picker v-model:value="createDateRange" picker="month" @change="changeCreateDate" />
           </template>
           <template v-else-if="column.filterOptions.type === 'submit'">
-            <div class="smart-table-operate"><a-button :type="column.filterOptions.btnType" @click="submit">查询</a-button></div>
+            <div class="nexora-table-operate"><a-button :type="column.filterOptions.btnType" @click="submit">查询</a-button></div>
           </template>
           <template v-else>
             <component
@@ -78,7 +78,7 @@
   });
 
   const components = {
-    'enum-select': defineAsyncComponent(() => import('/src/components/framework/smart-enum-select/index.vue')),
+    'enum-select': defineAsyncComponent(() => import('/src/components/framework/nexora-enum-select/index.vue')),
     'dict-select': defineAsyncComponent(() => import('/src/components/support/dict-select/index.vue')),
     'employee-select': defineAsyncComponent(() => import('/src/components/system/employee-select/index.vue')),
     'enterprise-select': defineAsyncComponent(() => import('/src/components/business/oa/enterprise-select/index.vue')),

@@ -86,8 +86,8 @@
 
 <script setup>
   import { reactive, ref, provide, nextTick } from 'vue';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import CodeGeneratorTableConfigFormBasic from './code-generator-table-config-form-basic.vue';
   import { codeGeneratorApi } from '/@/api/support/code-generator-api';
   import CodeGeneratorTableConfigFormField from './code-generator-table-config-form-field.vue';
@@ -131,7 +131,7 @@
   // 查询表的列
   async function getTableColumns() {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       let columnResult = await codeGeneratorApi.getTableColumns(tableInfo.tableName);
       tableColumns.value = columnResult.data;
 
@@ -151,9 +151,9 @@
       //表格列表
       tableFieldRef.value.setData(tableColumns.value, tableConfig.value);
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -171,7 +171,7 @@
   // ------------------ 提交表单 ------------------
   const emits = defineEmits(['reloadList']);
   async function save() {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       let basicValidated = await basicRef.value.validateForm();
       let insertAndUpdateValidated = await insertAndUpdateRef.value.validateForm();
@@ -202,9 +202,9 @@
       emits('reloadList');
       onClose();
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 

@@ -14,9 +14,9 @@
   import { inject, reactive } from 'vue';
   import { changeLogApi } from '@/api/support/change-log-api';
   import { onLoad } from '@dcloudio/uni-app';
-  import { smartSentry } from '@/lib/smart-sentry';
+  import { nexoraSentry } from '@/lib/nexora-sentry';
 
-  const smartEnumPlugin = inject('smartEnumPlugin');
+  const nexoraEnumPlugin = inject('nexoraEnumPlugin');
 
   const detail = reactive({
     title: '',
@@ -28,7 +28,7 @@
     try {
       uni.showLoading({ title: '加载中' });
       let res = await changeLogApi.getDetail(changeLogId);
-      detail.title = res.data.version + '版本' + smartEnumPlugin.getDescByValue('CHANGE_LOG_TYPE_ENUM', res.data.type);
+      detail.title = res.data.version + '版本' + nexoraEnumPlugin.getDescByValue('CHANGE_LOG_TYPE_ENUM', res.data.type);
       detail.content =
         '<pre style="' +
         'line-height: 18px;\n' +
@@ -49,7 +49,7 @@
       }
       detail.subTitle = subTitleArray.join(' | ');
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       uni.hideLoading();
     }

@@ -7,14 +7,14 @@
           <view class="header-left">
             <image src="/src/static/images/message/message.png" mode=""></image>
             <view>
-              {{ $smartEnumPlugin.getDescByValue('MESSAGE_TYPE_ENUM', item.messageType) }}
+              {{ $nexoraEnumPlugin.getDescByValue('MESSAGE_TYPE_ENUM', item.messageType) }}
             </view>
           </view>
           <view class="header-time"> {{item.createTime}} </view>
         </view>
         <view class="content">
           <view class="message-title">
-            <uni-icons v-if="!item.readFlag" color="red" class="smart-margin-right10" type="info-filled" :size="14"></uni-icons>
+            <uni-icons v-if="!item.readFlag" color="red" class="nexora-margin-right10" type="info-filled" :size="14"></uni-icons>
             {{ item.title }}
           </view>
           <view class="message-body"> {{item.content}} </view>
@@ -28,7 +28,7 @@
   import { reactive, ref } from 'vue';
   import { onPageScroll, onReachBottom } from '@dcloudio/uni-app';
   import useMescroll from '@/uni_modules/uni-mescroll/hooks/useMescroll';
-  import { smartSentry } from '@/lib/smart-sentry';
+  import { nexoraSentry } from '@/lib/nexora-sentry';
   import { messageApi } from '@/api/support/message-api';
 
   // --------------------------- 查询 ---------------------------------
@@ -68,7 +68,7 @@
       }
       mescroll.endSuccess(res.data.list.length, res.data.pages > res.data.pageNum);
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
       //联网失败, 结束加载
       mescroll.endErr();
     }

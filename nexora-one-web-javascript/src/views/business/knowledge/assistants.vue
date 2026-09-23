@@ -308,7 +308,7 @@
   import { message } from 'ant-design-vue';
   import { knowledgeApi as api } from '/@/api/business/knowledge/knowledge-api';
   import { mcpToolApi } from '/@/api/business/open-api/mcp-tool-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import MarkdownContent from './components/markdown-content.vue';
   import './knowledge.less';
 
@@ -375,7 +375,7 @@
       models.value = options.data.chatModels || [];
       availableTools.value = tools.data || [];
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       loading.value = false;
     }
@@ -427,7 +427,7 @@
       message.success('助手已保存');
       await load();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       saving.value = false;
     }
@@ -491,7 +491,7 @@
           const response = await mcpToolApi.callResult(call.requestId);
           updateToolCall(entry, call.requestId, response.data);
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         }
       })
     );
@@ -538,7 +538,7 @@
     } catch (error) {
       messages.value.pop();
       question.value = text;
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       sending.value = false;
     }
@@ -554,7 +554,7 @@
       message.success(approved ? '工具已执行' : '已拒绝本次工具调用');
       scrollBottom();
     } catch (error) {
-      smartSentry.captureError(error);
+      nexoraSentry.captureError(error);
     } finally {
       confirmingRequestId.value = '';
     }

@@ -18,7 +18,7 @@
     :maskClosable="false"
     :destroyOnClose="true"
   >
-    <a-row justify="space-between" class="smart-margin-bottom10">
+    <a-row justify="space-between" class="nexora-margin-bottom10">
       <a-radio-group v-model:value="languageType" button-style="solid" @change="onChangeLanguageType">
         <a-radio-button :value="LANGUAGE_LIST[0]">JavaScript代码</a-radio-button>
         <a-radio-button :value="LANGUAGE_LIST[1]">TypeScript代码</a-radio-button>
@@ -40,7 +40,7 @@
   import { computed, nextTick, ref } from 'vue';
   import { codeGeneratorApi } from '/@/api/support/code-generator-api';
   import { JAVA_FILE_LIST, LANGUAGE_LIST, JS_FILE_LIST, TS_FILE_LIST } from '../../code-generator-util';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   import { lineNumbersBlock } from '/@/lib/highlight-line-number';
   import hljs from 'highlight.js';
   import 'highlight.js/styles/github-dark.css';
@@ -156,7 +156,7 @@
         });
       });
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     }
   }
 

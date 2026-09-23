@@ -30,7 +30,7 @@
     <div v-if="helpDocDetail.attachment && helpDocDetail.attachment.length > 0">附件：<FilePreview :fileList="helpDocDetail.attachment" /></div>
   </a-card>
 
-  <a-card title="阅读记录" size="small" class="smart-margin-top10" :bordered="false">
+  <a-card title="阅读记录" size="small" class="nexora-margin-top10" :bordered="false">
     <HelpDocViewRecordList ref="helpDocViewRecordListRef" :helpDocId="route.query.helpDocId" />
   </a-card>
 
@@ -43,9 +43,9 @@ import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import HelpDocViewRecordList from './components/help-doc-view-record-list.vue';
 import { helpDocApi } from '/@/api/support/help-doc-api';
-import { SmartLoading } from '/@/components/framework/smart-loading';
+import { NexoraLoading } from '/@/components/framework/nexora-loading';
 import FilePreview from '/@/components/support/file-preview/index.vue';
-import { smartSentry } from '/@/lib/smart-sentry';
+import { nexoraSentry } from '/@/lib/nexora-sentry';
 
 const route = useRoute();
 
@@ -64,15 +64,15 @@ const helpDocViewRecordListRef = ref();
 // 查询详情
 async function queryHelpDocDetail() {
   try {
-    SmartLoading.show();
+    NexoraLoading.show();
     const result = await helpDocApi.view(route.query.helpDocId);
     helpDocDetail.value = result.data;
 
     helpDocViewRecordListRef.value.onSearch();
   } catch (err) {
-    smartSentry.captureError(err);
+    nexoraSentry.captureError(err);
   } finally {
-    SmartLoading.hide();
+    NexoraLoading.hide();
   }
 }
 

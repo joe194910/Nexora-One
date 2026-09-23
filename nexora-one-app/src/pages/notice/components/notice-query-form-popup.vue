@@ -1,34 +1,34 @@
 <template>
   <uni-popup ref="popupRef" background-color="#fff" type="bottom" :is-mask-click="false">
     <view class="query-form-pop">
-      <view class="smart-form">
+      <view class="nexora-form">
         <uni-forms :label-width="100" :modelValue="form" label-position="left">
-          <view class="smart-form-group">
-            <view class="smart-form-group-title"> 分类 </view>
-            <view class="smart-form-group-content">
-              <uni-forms-item class="smart-form-item" label="类型：">
+          <view class="nexora-form-group">
+            <view class="nexora-form-group-title"> 分类 </view>
+            <view class="nexora-form-group-content">
+              <uni-forms-item class="nexora-form-item" label="类型：">
                 <uni-data-select v-model="form.noticeTypeId" :localdata="noticeTypeList" @change="changeNoticeType" :clear="true" />
               </uni-forms-item>
             </view>
           </view>
 
-          <view class="smart-form-group">
-            <view class="smart-form-group-title"> 发布日期 </view>
-            <view class="smart-form-group-content">
-              <uni-forms-item class="smart-form-item" label="开始日期">
+          <view class="nexora-form-group">
+            <view class="nexora-form-group-title"> 发布日期 </view>
+            <view class="nexora-form-group-content">
+              <uni-forms-item class="nexora-form-item" label="开始日期">
                 <uni-datetime-picker type="date" clear-icon v-model="form.publishTimeBegin" />
               </uni-forms-item>
-              <uni-forms-item class="smart-form-item" label="截止日期">
+              <uni-forms-item class="nexora-form-item" label="截止日期">
                 <uni-datetime-picker type="date" clear-icon v-model="form.publishTimeEnd" />
               </uni-forms-item>
             </view>
           </view>
         </uni-forms>
 
-        <view class="smart-form-submit smart-margin-top20">
-          <button class="smart-form-submit-btn smart-margin-right20" type="default" @click="cancel">取消</button>
-          <button class="smart-form-submit-btn" type="warn" @click="reset">重置</button>
-          <button class="smart-form-submit-btn" type="primary" @click="ok">确定</button>
+        <view class="nexora-form-submit nexora-margin-top20">
+          <button class="nexora-form-submit-btn nexora-margin-right20" type="default" @click="cancel">取消</button>
+          <button class="nexora-form-submit-btn" type="warn" @click="reset">重置</button>
+          <button class="nexora-form-submit-btn" type="primary" @click="ok">确定</button>
         </view>
       </view>
     </view>

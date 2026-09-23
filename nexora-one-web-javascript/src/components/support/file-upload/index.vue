@@ -48,9 +48,9 @@
   import { Modal } from 'ant-design-vue';
   import { fileApi } from '/@/api/support/file-api';
   import { useUserStore } from '/@/store/modules/system/user';
-  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { NexoraLoading } from '/@/components/framework/nexora-loading';
   import { FILE_FOLDER_TYPE_ENUM } from '/@/constants/support/file-const';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
   const props = defineProps({
     value: String,
     buttonText: {
@@ -133,7 +133,7 @@
 
   const emit = defineEmits(['update:value', 'change']);
   const customRequest = async (options) => {
-    SmartLoading.show();
+    NexoraLoading.show();
     try {
       console.log(options);
       const formData = new FormData();
@@ -145,9 +145,9 @@
       fileList.value.push(file);
       emit('change', fileList.value);
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   };
 

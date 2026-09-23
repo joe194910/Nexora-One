@@ -1,14 +1,14 @@
 <template>
   <view class="container">
-    <view class="smart-form">
+    <view class="nexora-form">
       <uni-forms ref="formRef" :label-width="100" :modelValue="form" label-position="left" :rules="rules">
-        <view class="smart-form-group">
-          <view class="smart-form-group-title"> 反馈内容 </view>
-          <view class="smart-form-group-content">
-            <uni-forms-item class="smart-form-item" label="意见反馈：" name="feedbackContent" required>
+        <view class="nexora-form-group">
+          <view class="nexora-form-group-title"> 反馈内容 </view>
+          <view class="nexora-form-group-content">
+            <uni-forms-item class="nexora-form-item" label="意见反馈：" name="feedbackContent" required>
               <uni-easyinput type="textarea" trim="all" v-model="form.feedbackContent" placeholder="请输入 宝贵的意见和建议" />
             </uni-forms-item>
-            <uni-forms-item class="smart-form-item" label="相关图片：" name="unifiedSocialCreditCode">
+            <uni-forms-item class="nexora-form-item" label="相关图片：" name="unifiedSocialCreditCode">
               <uni-file-picker
                 limit="9"
                 title="最多选择9个图片"
@@ -21,9 +21,9 @@
         </view>
       </uni-forms>
 
-      <view class="smart-form-submit smart-margin-top20 bottom-button">
-        <button class="smart-form-submit-btn smart-margin-right20" type="default" @click="cancel">取消</button>
-        <button class="smart-form-submit-btn" type="primary" @click="submit">保存</button>
+      <view class="nexora-form-submit nexora-margin-top20 bottom-button">
+        <button class="nexora-form-submit-btn nexora-margin-right20" type="default" @click="cancel">取消</button>
+        <button class="nexora-form-submit-btn" type="primary" @click="submit">保存</button>
       </view>
     </view>
   </view>
@@ -32,8 +32,8 @@
 <script setup>
   import { reactive, ref } from 'vue';
   import { enterpriseApi } from '@/api/business/oa/enterprise-api';
-  import { smartSentry } from '@/lib/smart-sentry';
-  import { SmartLoading, SmartToast } from '@/lib/smart-support';
+  import { nexoraSentry } from '@/lib/nexora-sentry';
+  import { NexoraLoading, NexoraToast } from '@/lib/nexora-support';
   import { onLoad, onReady } from '@dcloudio/uni-app';
   import { fileApi } from '@/api/support/file-api';
   import { FILE_FOLDER_TYPE_ENUM } from '@/constants/support/file-const';
@@ -68,14 +68,14 @@
 
   async function upload(tempFilePath) {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       let res = await fileApi.upload(tempFilePath, FILE_FOLDER_TYPE_ENUM.FEEDBACK.value);
       res.data.tempFilePath = tempFilePath;
       form.feedbackAttachment.push(res.data);
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -105,7 +105,7 @@
 
   async function getDetail(id) {
     try {
-      SmartLoading.show();
+      NexoraLoading.show();
       let res = await enterpriseApi.detail(id);
       form.enterpriseId = res.data.enterpriseId;
       form.enterpriseName = res.data.enterpriseName;
@@ -116,9 +116,9 @@
       form.email = res.data.email;
       form.address = res.data.address;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
-      SmartLoading.hide();
+      NexoraLoading.hide();
     }
   }
 
@@ -137,20 +137,20 @@
     formRef.value
       .validate()
       .then(async () => {
-        SmartLoading.show();
+        NexoraLoading.show();
         try {
           await feedbackApi.addFeedback(form);
-          SmartToast.success('提交反馈成功');
+          NexoraToast.success('提交反馈成功');
           uni.navigateBack();
         } catch (error) {
-          smartSentry.captureError(error);
+          nexoraSentry.captureError(error);
         } finally {
-          SmartLoading.hide();
+          NexoraLoading.hide();
         }
       })
       .catch((error) => {
         console.log('error', error);
-        SmartToast.toast('参数验证错误，请仔细填写表单数据!');
+        NexoraToast.toast('参数验证错误，请仔细填写表单数据!');
       });
   }
 </script>

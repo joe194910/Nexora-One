@@ -8,7 +8,7 @@
   * @Copyright  NexoraOne （ # ），Since 2012 
 -->
 <template>
-  <a-row class="smart-margin-top10">
+  <a-row class="nexora-margin-top10">
     <a-col flex="350px">
       <a-form ref="formRef" :model="formData" style="width: 350px" :rules="formRules" :label-col="{ span: 5 }" :wrapper-col="{ span: 16 }">
         <a-form-item label="是否支持" name="isSupportInsertAndUpdate">
@@ -43,12 +43,12 @@
             <div class="gutter-box">字段</div>
           </a-col>
         </a-row>
-        <a-row :gutter="20" class="smart-margin-top10" justify="space-around">
+        <a-row :gutter="20" class="nexora-margin-top10" justify="space-around">
           <a-col class="form-item" :span="spanPerLine" v-for="i of formData.countPerLine" :key="i">
             <div class="gutter-box">字段</div>
           </a-col>
         </a-row>
-        <a-row :gutter="20" class="smart-margin-top10" justify="space-around">
+        <a-row :gutter="20" class="nexora-margin-top10" justify="space-around">
           <a-col class="form-item" :span="spanPerLine" v-for="i of formData.countPerLine" :key="i">
             <div class="gutter-box">字段</div>
           </a-col>
@@ -61,7 +61,7 @@
     size="small"
     :scroll="{ x: 1000 }"
     bordered
-    class="smart-margin-top10"
+    class="nexora-margin-top10"
     :dataSource="tableData"
     :columns="columns"
     rowKey="columnName"
@@ -103,7 +103,7 @@
       </template>
 
       <template v-if="column.dataIndex === 'frontComponent'">
-        <SmartEnumSelect width="100%" enum-name="CODE_FRONT_COMPONENT_ENUM" v-model:value="record.frontComponent" />
+        <NexoraEnumSelect width="100%" enum-name="CODE_FRONT_COMPONENT_ENUM" v-model:value="record.frontComponent" />
       </template>
     </template>
   </a-table>
@@ -113,7 +113,7 @@
   import { computed, inject, reactive, ref } from 'vue';
   import { checkExistEnum, getFrontComponent } from '../../code-generator-util';
   import { CODE_FRONT_COMPONENT_ENUM, CODE_INSERT_AND_UPDATE_PAGE_ENUM } from '/@/constants/support/code-generator-const';
-  import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
+  import NexoraEnumSelect from '/@/components/framework/nexora-enum-select/index.vue';
   import { message } from 'ant-design-vue';
 
   //------------------------ 全局数据 ---------------------

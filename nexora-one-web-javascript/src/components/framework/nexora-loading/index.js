@@ -9,7 +9,7 @@
  */
 import { useSpinStore } from "/@/store/modules/system/spin";
 
-export const SmartLoading = {
+export const NexoraLoading = {
   show: () => {
     useSpinStore().show();
   },

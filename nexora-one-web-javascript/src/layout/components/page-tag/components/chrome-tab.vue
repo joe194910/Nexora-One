@@ -11,15 +11,15 @@
   <!-- 标签页，共两部分：1、标签 ；2、标签操作区 -->
   <a-row style="position: relative" v-show="pageTagFlag">
     <a-dropdown :trigger="['contextmenu']">
-      <div class="smart-page-tag">
+      <div class="nexora-page-tag">
         <a-tabs style="width: 100%" :tab-position="mode" v-model:activeKey="selectedKey" size="small" @tabClick="selectTab">
           <a-tab-pane v-for="item in tagNav" :key="item.menuName">
             <template #tab>
-              <span class="smart-page-tag-content">
-                <home-outlined style="font-size: 12px" v-if="item.menuName === HOME_PAGE_NAME" class="smart-page-tag-close" />
-                <component class="smart-page-tag-icon" v-else :is="$antIcons[item.menuIcon]" />
+              <span class="nexora-page-tag-content">
+                <home-outlined style="font-size: 12px" v-if="item.menuName === HOME_PAGE_NAME" class="nexora-page-tag-close" />
+                <component class="nexora-page-tag-icon" v-else :is="$antIcons[item.menuIcon]" />
                 {{ item.menuTitle }}
-                <close-outlined @click.stop="closeTag(item, false)" v-if="item.menuName !== HOME_PAGE_NAME" class="smart-page-tag-close" />
+                <close-outlined @click.stop="closeTag(item, false)" v-if="item.menuName !== HOME_PAGE_NAME" class="nexora-page-tag-close" />
               </span>
             </template>
           </a-tab-pane>
@@ -35,8 +35,8 @@
 
     <a-dropdown>
       <!--标签页操作区-->
-      <div class="smart-page-tag-operate">
-        <div class="smart-page-tag-operate-icon">
+      <div class="nexora-page-tag-operate">
+        <div class="nexora-page-tag-operate-icon">
           <AppstoreOutlined />
         </div>
       </div>
@@ -136,39 +136,39 @@
 </script>
 
 <style scoped lang="less">
-  @smart-page-tag-operate-width: 40px;
+  @nexora-page-tag-operate-width: 40px;
   @color-primary: v-bind('token.colorPrimary');
   @color-primary-bg: v-bind('token.colorPrimaryBg');
 
-  .smart-page-tag-operate {
-    width: @smart-page-tag-operate-width;
-    height: @smart-page-tag-operate-width;
+  .nexora-page-tag-operate {
+    width: @nexora-page-tag-operate-width;
+    height: @nexora-page-tag-operate-width;
     font-size: 17px;
     text-align: center;
     vertical-align: middle;
-    line-height: @smart-page-tag-operate-width;
+    line-height: @nexora-page-tag-operate-width;
     padding-right: 10px;
     cursor: pointer;
 
-    .smart-page-tag-operate-icon {
+    .nexora-page-tag-operate-icon {
       width: 20px;
       height: 20px;
       transition: all 1s;
       transform-origin: 10px 20px;
     }
 
-    .smart-page-tag-operate-icon:hover {
+    .nexora-page-tag-operate-icon:hover {
       width: 20px;
       height: 20px;
       transform: rotate(360deg);
     }
   }
 
-  .smart-page-tag-operate:hover {
+  .nexora-page-tag-operate:hover {
     color: @color-primary;
   }
 
-  .smart-page-tag {
+  .nexora-page-tag {
     position: relative;
     box-sizing: border-box;
     display: flex;
@@ -179,9 +179,9 @@
     padding-right: 20px;
     padding-left: 20px;
     user-select: none;
-    width: calc(100% - @smart-page-tag-operate-width);
+    width: calc(100% - @nexora-page-tag-operate-width);
 
-    .smart-page-tag-close {
+    .nexora-page-tag-close {
       margin-left: 5px;
       font-size: 12px;
       color: #666666;
@@ -214,7 +214,7 @@
       }
     }
 
-    .smart-page-tag-content {
+    .nexora-page-tag-content {
       display: inline-block;
       min-width: 100px;
 
@@ -230,7 +230,7 @@
         background: #eeeeee;
       }
 
-      .smart-page-tag-icon {
+      .nexora-page-tag-icon {
         margin-right: 5px;
       }
     }
@@ -270,7 +270,7 @@
         bottom: 0;
       }
 
-      .smart-page-tag-content {
+      .nexora-page-tag-content {
         &::before {
           content: '';
           position: absolute;
@@ -290,7 +290,7 @@
         }
       }
 
-      .smart-page-tag-close {
+      .nexora-page-tag-close {
         color: @color-primary;
       }
     }
@@ -328,7 +328,7 @@
           bottom: 0;
         }
 
-        .smart-page-tag-content {
+        .nexora-page-tag-content {
           color: @color-primary;
 
           &::before {
@@ -351,7 +351,7 @@
         }
       }
 
-      .smart-page-tag-close {
+      .nexora-page-tag-close {
         color: @color-primary;
       }
     }

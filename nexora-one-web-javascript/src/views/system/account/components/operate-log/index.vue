@@ -8,13 +8,13 @@
   * @Copyright  NexoraOne （ # ），Since 2012
 -->
 <template>
-  <a-form class="smart-query-form">
-    <a-row class="smart-query-form-row">
-      <a-form-item label="请求时间" class="smart-query-form-item">
+  <a-form class="nexora-query-form">
+    <a-row class="nexora-query-form-row">
+      <a-form-item label="请求时间" class="nexora-query-form-item">
         <a-range-picker @change="changeCreateDate" v-model:value="createDateRange" :presets="defaultChooseTimeRange" style="width: 240px" />
       </a-form-item>
 
-      <a-form-item label="快速筛选" class="smart-query-form-item">
+      <a-form-item label="快速筛选" class="nexora-query-form-item">
         <a-radio-group v-model:value="queryForm.successFlag" @change="onSearch">
           <a-radio-button :value="undefined">全部</a-radio-button>
           <a-radio-button :value="true">成功</a-radio-button>
@@ -22,7 +22,7 @@
         </a-radio-group>
       </a-form-item>
 
-      <a-form-item class="smart-query-form-item smart-margin-left10">
+      <a-form-item class="nexora-query-form-item nexora-margin-left10">
         <a-button-group>
           <a-button type="primary" @click="ajaxQuery">
             <template #icon>
@@ -50,14 +50,14 @@
         <div>{{ record.browser }} / {{ record.os }} / {{ record.device }}</div>
       </template>
       <template v-if="column.dataIndex === 'action'">
-        <div class="smart-table-operate">
+        <div class="nexora-table-operate">
           <a-button @click="showDetail(record.operateLogId)" type="link">详情</a-button>
         </div>
       </template>
     </template>
   </a-table>
 
-  <div class="smart-query-table-page">
+  <div class="nexora-query-table-page">
     <a-pagination
       showSizeChanger
       showQuickJumper
@@ -81,7 +81,7 @@
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import { defaultTimeRanges } from '/@/lib/default-time-ranges';
   import uaparser from 'ua-parser-js';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const columns = ref([
     {
@@ -176,7 +176,7 @@
       total.value = responseModel.data.total;
       tableData.value = list;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     } finally {
       tableLoading.value = false;
     }

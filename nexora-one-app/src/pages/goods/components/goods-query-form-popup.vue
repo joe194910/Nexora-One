@@ -1,27 +1,27 @@
 <template>
   <uni-popup ref="popupRef" background-color="#fff" type="bottom" :is-mask-click="false">
     <view class="query-form-pop">
-      <view class="smart-form">
+      <view class="nexora-form">
         <uni-forms :label-width="100" :modelValue="form" label-position="left">
-          <view class="smart-form-group">
-            <view class="smart-form-group-title"> 产地 </view>
-            <view class="smart-form-group-content">
+          <view class="nexora-form-group">
+            <view class="nexora-form-group-title"> 产地 </view>
+            <view class="nexora-form-group-content">
               <DictSelect keyCode="GODOS_PLACE" v-model="form.place" @change="onPlaceChange" />
             </view>
           </view>
 
-          <view class="smart-form-group">
-            <view class="smart-form-group-title"> 状态 </view>
-            <view class="smart-form-group-content">
-              <SmartEnumSelect enumName="GOODS_STATUS_ENUM" @change="onGoodsStatusChange" v-model="form.goodsStatus" />
+          <view class="nexora-form-group">
+            <view class="nexora-form-group-title"> 状态 </view>
+            <view class="nexora-form-group-content">
+              <NexoraEnumSelect enumName="GOODS_STATUS_ENUM" @change="onGoodsStatusChange" v-model="form.goodsStatus" />
             </view>
           </view>
         </uni-forms>
 
-        <view class="smart-form-submit smart-margin-top20">
-          <button class="smart-form-submit-btn smart-margin-right20" type="default" @click="cancel">取消</button>
-          <button class="smart-form-submit-btn" type="warn" @click="reset">重置</button>
-          <button class="smart-form-submit-btn" type="primary" @click="ok">确定</button>
+        <view class="nexora-form-submit nexora-margin-top20">
+          <button class="nexora-form-submit-btn nexora-margin-right20" type="default" @click="cancel">取消</button>
+          <button class="nexora-form-submit-btn" type="warn" @click="reset">重置</button>
+          <button class="nexora-form-submit-btn" type="primary" @click="ok">确定</button>
         </view>
       </view>
     </view>
@@ -31,7 +31,7 @@
 <script setup>
   import { reactive, ref, toRaw } from 'vue';
   import DictSelect from '@/components/dict-select/index.vue';
-  import SmartEnumSelect from '@/components/smart-enum-select/index.vue';
+  import NexoraEnumSelect from '@/components/nexora-enum-select/index.vue';
 
   const emits = defineEmits(['close']);
   defineExpose({ show });

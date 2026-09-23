@@ -24,7 +24,7 @@
 <script setup>
   import { ref, watch, onMounted } from 'vue';
   import { categoryApi } from '/@/api/business/category/category-api';
-  import { smartSentry } from '/@/lib/smart-sentry';
+  import { nexoraSentry } from '/@/lib/nexora-sentry';
 
   const props = defineProps({
     value: Number,
@@ -55,7 +55,7 @@
       let resp = await categoryApi.queryCategoryTree(param);
       categoryTreeData.value = resp.data;
     } catch (e) {
-      smartSentry.captureError(e);
+      nexoraSentry.captureError(e);
     }
   }
 
