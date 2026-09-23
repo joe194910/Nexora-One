@@ -11,13 +11,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.nio.file.Path;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -119,10 +119,10 @@ public class AiDocumentWorkflowController {
     /** 下载任务的源文档。 */
     @GetMapping("/tasks/{id}/download") @Operation(summary = "下载任务文档")
     @SaCheckPermission("ai:parse-task:query")
-    public ResponseEntity<FileSystemResource> download(@PathVariable Long id) {
-        Path path = workflow.taskFile(id);
-        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + path.getFileName() + "\"")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM).body(new FileSystemResource(path));
+    public ResponseEntity<byte[]> download(@PathVariable Long id) {
+        Map<String, Object> file = workflow.downloadTask(id);
+        String encoded = URLEncoder.encode(String.valueOf(file.get("fileName")), StandardCharsets.UTF_8).replace("+", "%20");
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM).body((byte[]) file.get("content"));
     }
 }

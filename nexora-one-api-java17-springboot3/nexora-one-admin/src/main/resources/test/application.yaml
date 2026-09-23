@@ -12,7 +12,7 @@ project:
 
 # 项目端口和url根路径
 server:
-  port: 11024
+  port: 1024
   # 统一解析受信任反向代理转发的协议和客户端地址
   forward-headers-strategy: framework
   servlet:
@@ -23,12 +23,12 @@ spring:
   profiles:
     active: test
 
-# 知识库源文件使用独立 MinIO。
+# 知识库源文件与解析任务统一使用该 MinIO；按部署环境替换，或通过环境变量覆盖。
 knowledge:
   minio:
-    endpoint: http://192.168.13.35:9000
-    bucket: knowledge-docs
-    access-key: zFepnpaZwxWyhCsVCzbl
-    secret-key: M1gAloVl32yTxWiv5XCOQmfq0V0n4YsuhNdvNpLK
-    region: us-east-1
-    path-style-access: true
+    endpoint: ${KNOWLEDGE_MINIO_ENDPOINT:http://192.168.13.35:9000}
+    bucket: ${KNOWLEDGE_MINIO_BUCKET:knowledge-docs}
+    access-key: ${KNOWLEDGE_MINIO_ACCESS_KEY:zFepnpaZwxWyhCsVCzbl}
+    secret-key: ${KNOWLEDGE_MINIO_SECRET_KEY:M1gAloVl32yTxWiv5XCOQmfq0V0n4YsuhNdvNpLK}
+    region: ${KNOWLEDGE_MINIO_REGION:us-east-1}
+    path-style-access: ${KNOWLEDGE_MINIO_PATH_STYLE_ACCESS:true}

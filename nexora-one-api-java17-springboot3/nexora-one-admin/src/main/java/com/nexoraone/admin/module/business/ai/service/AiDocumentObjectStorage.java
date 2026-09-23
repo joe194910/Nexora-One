@@ -1,4 +1,4 @@
-package com.nexoraone.admin.module.business.knowledge.service;
+package com.nexoraone.admin.module.business.ai.service;
 
 import cn.hutool.core.util.StrUtil;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,9 +12,12 @@ import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.*;
 import java.net.URI;
 
-/** 独立的 MinIO 文件服务，不改变系统原有文件存储模式。 */
+/**
+ * 解析任务与知识库文档共用的 MinIO 对象存储，配置沿用 knowledge.minio。
+ * 源文件只保存在对象存储中，本地不再产生任何业务目录或工作副本。
+ */
 @Service
-public class KnowledgeMinioStorage {
+public class AiDocumentObjectStorage {
     @Value("${knowledge.minio.endpoint:${KNOWLEDGE_MINIO_ENDPOINT:}}") private String endpoint;
     @Value("${knowledge.minio.bucket:${KNOWLEDGE_MINIO_BUCKET:nexora-knowledge}}") private String bucket;
     @Value("${knowledge.minio.access-key:${KNOWLEDGE_MINIO_ACCESS_KEY:}}") private String accessKey;
@@ -23,7 +26,7 @@ public class KnowledgeMinioStorage {
     @Value("${knowledge.minio.path-style-access:${KNOWLEDGE_MINIO_PATH_STYLE_ACCESS:true}}")
     private boolean pathStyleAccess;
 
-    /** 上传文档对象，首次使用时检测存储桶是否已创建。 */
+    /** 写入对象，首次使用时检测存储桶是否已创建。 */
     public void put(String key, byte[] bytes, String contentType) {
         try (S3Client client = client()) {
             try {
@@ -38,14 +41,14 @@ public class KnowledgeMinioStorage {
         }
     }
 
-    /** 下载源文件，供所有者下载或恢复失效的本地解析工作文件。 */
+    /** 读取对象字节，供解析任务、下载接口使用。 */
     public byte[] get(String key) {
         try (S3Client client = client()) {
             return client.getObjectAsBytes(GetObjectRequest.builder().bucket(bucket).key(key).build()).asByteArray();
         }
     }
 
-    /** 仅在没有知识库引用时删除对象。 */
+    /** 删除对象。 */
     public void delete(String key) {
         try (S3Client client = client()) {
             client.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(key).build());

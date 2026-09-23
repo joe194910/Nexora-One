@@ -15,19 +15,17 @@ import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.Test;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.apache.ibatis.session.Configuration;
-import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,13 +45,14 @@ class AiDocumentWorkflowServiceTest {
     @Mock private AiVectorDatabaseDao vectorDao;
     @Mock private AiModelDao modelDao;
     @Mock private AiModelServiceDao modelServiceDao;
+    @Mock private AiDocumentObjectStorage storage;
+    @Mock private ObjectProvider<AiParseTaskFileLocator> taskFileLocators;
+    @Mock private AiParseTaskFileLocator taskFileLocator;
     @InjectMocks private AiDocumentWorkflowService workflow;
-    @TempDir private Path storage;
 
-    /** 文件上传必须真实落盘，同时创建可追踪的任务和阶段结果。 */
+    /** 文件上传必须写入对象存储，同时创建可追踪的任务和阶段结果。 */
     @Test
     void uploadPersistsFileAndCreatesTask() throws Exception {
-        ReflectionTestUtils.setField(workflow, "documentDir", storage.toString());
         AiKnowledgeBaseEntity base = new AiKnowledgeBaseEntity();
         base.setKnowledgeBaseId(10L);
         base.setParsePlanId(20L);
@@ -78,11 +77,47 @@ class AiDocumentWorkflowServiceTest {
         assertNotNull(result.getData());
         assertEquals(30L, result.getData().getTaskId());
         assertEquals("QUEUED", result.getData().getStatus());
-        assertArrayEquals(file.getBytes(), Files.readAllBytes(Path.of(result.getData().getFilePath())));
+        assertTrue(result.getData().getFilePath().startsWith("documents/10/"));
+        ArgumentCaptor<byte[]> storedBytes = ArgumentCaptor.forClass(byte[].class);
+        verify(storage).put(eq(result.getData().getFilePath()), storedBytes.capture(), eq("text/plain"));
+        assertArrayEquals(file.getBytes(), storedBytes.getValue());
         ArgumentCaptor<AiParseStepEntity> steps = ArgumentCaptor.forClass(AiParseStepEntity.class);
         verify(stepDao).insert(steps.capture());
         assertEquals("UPLOAD", steps.getValue().getStage());
         assertEquals("SUCCESS", steps.getValue().getStatus());
+    }
+
+    /** 历史任务的本地路径读不到时，回退到关联文档的对象键并回填任务表。 */
+    @Test
+    void legacyLocalPathFallsBackToObjectKey() {
+        TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new Configuration(), ""), AiParseTaskEntity.class);
+        AiParseTaskEntity task = new AiParseTaskEntity();
+        task.setTaskId(42L);
+        task.setFilePath("D:\\old\\work\\sample.txt");
+        when(taskFileLocators.getIfAvailable()).thenReturn(taskFileLocator);
+        when(taskFileLocator.locateObjectKey(42L)).thenReturn("users/7/sample.txt");
+        when(storage.get("users/7/sample.txt")).thenReturn("历史正文".getBytes(StandardCharsets.UTF_8));
+
+        byte[] bytes = ReflectionTestUtils.invokeMethod(workflow, "readTaskBytes", task);
+
+        assertArrayEquals("历史正文".getBytes(StandardCharsets.UTF_8), bytes);
+        verify(storage, never()).get("D:\\old\\work\\sample.txt");
+        verify(taskDao).update(isNull(), any());
+    }
+
+    /** 历史任务既无对象键、也无法按文档定位时，给出可重传的明确错误。 */
+    @Test
+    void legacyTaskWithoutLocatableObjectFails() {
+        AiParseTaskEntity task = new AiParseTaskEntity();
+        task.setTaskId(43L);
+        task.setFilePath("/var/lib/legacy/sample.txt");
+        when(taskFileLocators.getIfAvailable()).thenReturn(taskFileLocator);
+        when(taskFileLocator.locateObjectKey(43L)).thenReturn(null);
+
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+                () -> ReflectionTestUtils.invokeMethod(workflow, "readTaskBytes", task));
+
+        assertTrue(error.getMessage().contains("重新上传"));
     }
 
     /** HTTP 服务采用 multipart /parse 合约并真实读取返回的正文。 */

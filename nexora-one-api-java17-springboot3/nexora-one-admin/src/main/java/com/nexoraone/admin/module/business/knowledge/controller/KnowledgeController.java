@@ -81,7 +81,7 @@ public class KnowledgeController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM).body(documents.download(id));
     }
 
-    /** 从 MinIO 恢复解析工作文件，并重试已有任务。 */
+    /** 重试失败的解析任务；历史任务的文件指向会先修正为对象存储键。 */
     @PostMapping("/documents/{id}/retry") @Operation(summary = "重新处理文档")
     @SaCheckPermission("knowledge:document:write")
     public ResponseDTO<String> retry(@PathVariable Long id) {

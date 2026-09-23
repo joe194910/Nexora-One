@@ -23,7 +23,7 @@ spring:
   profiles:
     active: dev
 
-# 知识库源文件使用独立 MinIO。
+# 知识库源文件与解析任务统一使用该 MinIO；按部署环境替换，或通过环境变量覆盖。
 knowledge:
   minio:
     endpoint: http://127.0.0.1:9000

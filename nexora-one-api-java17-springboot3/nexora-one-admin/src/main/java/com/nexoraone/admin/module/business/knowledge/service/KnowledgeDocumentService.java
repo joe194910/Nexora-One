@@ -4,9 +4,10 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SecureUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.nexoraone.admin.module.business.ai.dao.*;
 import com.nexoraone.admin.module.business.ai.domain.entity.*;
-import com.nexoraone.admin.module.business.ai.service.AiDocumentWorkflowService;
+import com.nexoraone.admin.module.business.ai.service.*;
 import com.nexoraone.admin.module.business.knowledge.dao.KnowledgeMappers.*;
 import com.nexoraone.admin.module.business.knowledge.domain.*;
 import com.nexoraone.admin.util.AdminRequestUtil;
@@ -19,14 +20,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.*;
 
 /** 用户文档接入层；MinIO 保存源文件，原解析服务负责真实向量化。 */
 @Service
 @Slf4j
-public class KnowledgeDocumentService {
+public class KnowledgeDocumentService implements AiParseTaskFileLocator {
     @Resource private DocumentDao documents;
     @Resource private ContextDao contexts;
     @Resource private AiKnowledgeBaseDao ingestBases;
@@ -36,7 +36,7 @@ public class KnowledgeDocumentService {
     @Resource private AiParseTaskDao tasks;
     @Resource private AiParseStepDao steps;
     @Resource private AiDocumentWorkflowService workflow;
-    @Resource private KnowledgeMinioStorage storage;
+    @Resource private AiDocumentObjectStorage storage;
     @Resource private KnowledgeVectorSearch vectorSearch;
     @Resource private BaseDocumentDao links;
 
@@ -109,17 +109,15 @@ public class KnowledgeDocumentService {
         document.setUpdateTime(document.getCreateTime());
         // 唯一版本先入库，以免并发重复上传时生成两个解析任务。
         documents.insert(document);
-        boolean stored = false;
         try {
-            storage.put(key, bytes, file.getContentType());
-            stored = true;
-            ResponseDTO<AiParseTaskEntity> queued = workflow.upload(context.getIngestBaseId(), file, true);
+            // 解析任务与文档共用同一个对象键，只写入一次 MinIO。
+            ResponseDTO<AiParseTaskEntity> queued = workflow.upload(context.getIngestBaseId(), file, true, key);
             if (!Boolean.TRUE.equals(queued.getOk())) throw new IllegalStateException(queued.getMsg());
             document.setTaskId(queued.getData().getTaskId());
             documents.updateById(document);
             return document;
         } catch (RuntimeException exception) {
-            if (stored) storage.delete(key);
+            storage.delete(key);
             throw exception;
         }
     }
@@ -158,21 +156,17 @@ public class KnowledgeDocumentService {
         refresh(document);
     }
 
-    /** 失败任务从 MinIO 恢复工作文件后再调用现有重试逻辑。 */
+    /** 重试失败文档；历史任务的文件指向会先修正为 MinIO 对象键。 */
     public void retry(Long id) {
         KnowledgeDocument document = owned(id);
         refresh(document);
         if (!"FAILED".equals(document.getStatus())) throw new IllegalArgumentException("只有失败文档可以重试");
         AiParseTaskEntity task = tasks.selectById(document.getTaskId());
         if (task == null) throw new IllegalStateException("原解析任务已丢失");
-        try {
-            java.nio.file.Path workFile = workflow.taskFile(task.getTaskId());
-            if (!Files.exists(workFile)) {
-                Files.createDirectories(workFile.getParent());
-                Files.write(workFile, storage.get(document.getObjectKey()));
-            }
-        } catch (IOException exception) {
-            throw new IllegalStateException("从 MinIO 恢复解析文件失败", exception);
+        if (!Objects.equals(document.getObjectKey(), task.getFilePath())) {
+            tasks.update(null, new LambdaUpdateWrapper<AiParseTaskEntity>()
+                    .eq(AiParseTaskEntity::getTaskId, task.getTaskId())
+                    .set(AiParseTaskEntity::getFilePath, document.getObjectKey()));
         }
         ResponseDTO<String> result = workflow.retry(task.getTaskId());
         if (!Boolean.TRUE.equals(result.getOk())) throw new IllegalStateException(result.getMsg());
@@ -217,6 +211,14 @@ public class KnowledgeDocumentService {
         return document;
     }
 
+    /** 历史任务兼容：按任务主键找回该文档在 MinIO 中的对象键。 */
+    @Override
+    public String locateObjectKey(Long taskId) {
+        KnowledgeDocument document = documents.selectOne(new LambdaQueryWrapper<KnowledgeDocument>()
+                .eq(KnowledgeDocument::getTaskId, taskId).last("LIMIT 1"));
+        return document == null ? null : document.getObjectKey();
+    }
+
     /** 将底层任务的最终结果映射到用户业务文档。 */
     public void refresh(KnowledgeDocument document) {
         AiParseTaskEntity task = document.getTaskId() == null ? null : tasks.selectById(document.getTaskId());
@@ -233,14 +235,13 @@ public class KnowledgeDocumentService {
             document.setUpdateTime(LocalDateTime.now());
             documents.updateById(document);
         }
-        cleanupWorkFile(task);
     }
 
     /**
-     * MinIO is the source of truth for user documents. Local files are only parsing work copies.
+     * 定时把底层任务状态同步回用户文档；源文件与向量都由对象存储和 Qdrant 负责，不再维护本地副本。
      */
-    @Scheduled(fixedDelayString = "${knowledge.document.work-file-cleanup-delay-ms:30000}")
-    public void cleanupFinishedWorkFiles() {
+    @Scheduled(fixedDelayString = "${knowledge.document.status-sync-delay-ms:30000}")
+    public void syncFinishedDocuments() {
         List<KnowledgeDocument> storedDocuments = documents.selectList(
                 new LambdaQueryWrapper<KnowledgeDocument>().isNotNull(KnowledgeDocument::getTaskId));
         for (KnowledgeDocument document : storedDocuments) {
@@ -249,15 +250,6 @@ public class KnowledgeDocumentService {
             } catch (RuntimeException exception) {
                 log.warn("Failed to synchronize knowledge document task {}", document.getTaskId(), exception);
             }
-        }
-    }
-
-    private void cleanupWorkFile(AiParseTaskEntity task) {
-        if (!List.of("SUCCESS", "FAILED", "CANCELLED").contains(task.getStatus())) return;
-        try {
-            Files.deleteIfExists(workflow.taskFile(task.getTaskId()));
-        } catch (IOException | RuntimeException exception) {
-            log.warn("Failed to delete parsing work file for task {}", task.getTaskId(), exception);
         }
     }
 

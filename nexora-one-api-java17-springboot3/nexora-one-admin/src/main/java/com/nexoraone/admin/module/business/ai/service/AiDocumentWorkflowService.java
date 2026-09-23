@@ -23,14 +23,13 @@ import com.nexoraone.base.module.support.apiencrypt.service.ApiEncryptService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,6 +45,7 @@ public class AiDocumentWorkflowService {
     private static final String MASK = "******";
     private static final List<String> FORMATS = List.of("pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "md", "csv", "png", "jpg", "jpeg");
     private static final List<String> STAGES = List.of("UPLOAD", "PARSE", "CHUNK", "INDEX");
+    private static final String OBJECT_KEY_PREFIX = "documents/";
     @Resource private AiDocumentParseConfigDao planDao;
     @Resource private AiParseServiceDao serviceDao;
     @Resource private AiKnowledgeBaseDao baseDao;
@@ -55,8 +55,9 @@ public class AiDocumentWorkflowService {
     @Resource private AiModelServiceDao modelServiceDao;
     @Resource private AiVectorDatabaseDao vectorDao;
     @Resource private ApiEncryptService encryptService;
-    @Value("${nexora.ai.document-dir:./data/ai-documents}")
-    private String documentDir;
+    @Resource private AiDocumentObjectStorage storage;
+    /** 历史任务兼容定位器；延迟解析，避免与业务文档服务形成循环依赖。 */
+    @Autowired private ObjectProvider<AiParseTaskFileLocator> taskFileLocators;
 
     /** 查询方案，返回真实关联知识库数量。 */
     public ResponseDTO<List<Map<String, Object>>> plans() {
@@ -252,13 +253,18 @@ public class AiDocumentWorkflowService {
         return ResponseDTO.okMsg("知识库保存成功");
     }
 
-    /** 文档上传后安全持久化文件，并自动创建四阶段解析任务。 */
+    /** 文档上传后写入对象存储，并自动创建四阶段解析任务。 */
     public ResponseDTO<AiParseTaskEntity> upload(Long baseId, MultipartFile file) {
-        return upload(baseId, file, false);
+        return upload(baseId, file, false, null);
     }
 
     /** 用户文档删除后重建时允许保留旧任务审计记录，不沿用已清理的历史向量。 */
     public ResponseDTO<AiParseTaskEntity> upload(Long baseId, MultipartFile file, boolean rebuildDeletedDocument) {
+        return upload(baseId, file, rebuildDeletedDocument, null);
+    }
+
+    /** 统一写入对象存储；objectKey 由业务文档层传入时复用同一对象，避免重复写入。 */
+    public ResponseDTO<AiParseTaskEntity> upload(Long baseId, MultipartFile file, boolean rebuildDeletedDocument, String objectKey) {
         AiKnowledgeBaseEntity base = baseDao.selectById(baseId);
         if (base == null) return ResponseDTO.userErrorParam("知识库不存在");
         AiDocumentParseConfigEntity plan = planDao.selectById(base.getParsePlanId());
@@ -284,15 +290,14 @@ public class AiDocumentWorkflowService {
                     .eq(AiParseTaskEntity::getKnowledgeBaseId, baseId).eq(AiParseTaskEntity::getFileHash, hash)
                     .eq(AiParseTaskEntity::getStatus, "SUCCESS")) > 0)
                 return ResponseDTO.userErrorParam("相同文件已成功入库");
-            Path root = Path.of(documentDir).toAbsolutePath().normalize();
-            Files.createDirectories(root);
-            Path path = root.resolve(UUID.randomUUID() + "." + extension);
-            Files.write(path, bytes);
+            String key = StrUtil.isNotBlank(objectKey) ? objectKey
+                    : OBJECT_KEY_PREFIX + baseId + "/" + UUID.randomUUID() + "." + extension;
+            storage.put(key, bytes, file.getContentType());
             AiParseTaskEntity task = new AiParseTaskEntity();
             task.setKnowledgeBaseId(baseId);
             task.setParsePlanId(plan.getConfigId());
-            task.setFileName(StrUtil.maxLength(Path.of(filename).getFileName().toString(), 255));
-            task.setFilePath(path.toString());
+            task.setFileName(StrUtil.maxLength(FileUtil.getName(filename), 255));
+            task.setFilePath(key);
             task.setFileHash(hash);
             task.setFileSize(file.getSize());
             task.setStatus("QUEUED");
@@ -307,7 +312,7 @@ public class AiDocumentWorkflowService {
                         System.currentTimeMillis() - uploadStart);
                 return ResponseDTO.ok(task);
             } catch (Exception exception) {
-                Files.deleteIfExists(path);
+                storage.delete(key);
                 throw exception;
             }
         } catch (Exception exception) {
@@ -396,7 +401,7 @@ public class AiDocumentWorkflowService {
             AiDocumentParseConfigEntity plan = planDao.selectById(task.getParsePlanId());
             if (base == null || plan == null) throw new IllegalStateException("知识库或解析方案已删除");
             long deadline = System.currentTimeMillis() + plan.getTimeoutMinutes() * 60_000L;
-            byte[] bytes = Files.readAllBytes(Path.of(task.getFilePath()));
+            byte[] bytes = readTaskBytes(task);
             long begin = System.currentTimeMillis();
             stage(task.getTaskId(), "PARSE");
             String text;
@@ -731,14 +736,30 @@ public class AiDocumentWorkflowService {
         }
     }
 
-    /** 获取由任务记录指向的受控文件，供登录用户下载。 */
-    public Path taskFile(Long id) {
+    /** 读取由任务记录指向的对象存储源文件，供有权限的接口下载。 */
+    public Map<String, Object> downloadTask(Long id) {
         AiParseTaskEntity task = taskDao.selectById(id);
         if (task == null) throw new IllegalArgumentException("任务不存在");
-        Path root = Path.of(documentDir).toAbsolutePath().normalize();
-        Path path = Path.of(task.getFilePath()).toAbsolutePath().normalize();
-        if (!path.startsWith(root)) throw new IllegalStateException("文件路径不在文档存储目录内");
-        return path;
+        return Map.of("fileName", StrUtil.blankToDefault(task.getFileName(), "document"), "content", readTaskBytes(task));
+    }
+
+    /** 读取任务源文件：对象键直接读取，历史任务的本地路径回退到关联文档的对象键并回填。 */
+    private byte[] readTaskBytes(AiParseTaskEntity task) {
+        String key = task.getFilePath();
+        if (isObjectKey(key)) return storage.get(key);
+        AiParseTaskFileLocator locator = taskFileLocators.getIfAvailable();
+        String located = locator == null ? null : locator.locateObjectKey(task.getTaskId());
+        if (StrUtil.isBlank(located)) throw new IllegalStateException("源文件不在对象存储中，请重新上传该文档");
+        byte[] bytes = storage.get(located);
+        taskDao.update(null, new LambdaUpdateWrapper<AiParseTaskEntity>()
+                .eq(AiParseTaskEntity::getTaskId, task.getTaskId()).set(AiParseTaskEntity::getFilePath, located));
+        return bytes;
+    }
+
+    /** 判断任务文件字段是否为对象存储键，而非早期版本写入的本地绝对路径。 */
+    private boolean isObjectKey(String key) {
+        return StrUtil.isNotBlank(key) && !key.startsWith("/") && !key.startsWith(".")
+                && !key.contains("\\") && !key.contains(":");
     }
 
     /** 运行中任务被管理员取消时终止后续阶段。 */
