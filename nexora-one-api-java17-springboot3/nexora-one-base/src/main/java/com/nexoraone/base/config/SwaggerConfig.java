@@ -35,7 +35,7 @@ import java.util.Optional;
  * springdoc-openapi 配置
  * nginx配置前缀时如果需要访问【/swagger-ui/index.html】需添加额外nginx配置
  *  location /v3/api-docs/ {
- *          proxy_pass  http://127.0.0.1:1024/v3/api-docs/;
+ *          proxy_pass  http://127.0.0.1:1025/v3/api-docs/;
  * }
  * @Author NexoraOne-主任: 卓大
  * @Date 2020-03-25 22:54:46
