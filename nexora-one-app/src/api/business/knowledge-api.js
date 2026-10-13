@@ -51,6 +51,30 @@ export const getAssistantDetail = (assistantId) =>
   getRequest(`/knowledge/assistants/${assistantId}`).then((response) => response.data);
 
 /**
+ * 读取免登录分享的助手信息。
+ *
+ * @param {string} shareCode 分享编码
+ * @returns {Promise<Object>} 公开助手详情
+ */
+export const getPublicAssistantShare = (shareCode) =>
+  getRequest(`/knowledge/public/assistant-shares/${encodeURIComponent(shareCode)}`).then(
+    (response) => response.data,
+  );
+
+/**
+ * 通过免登录分享链接向助手提问。
+ *
+ * @param {string} shareCode 分享编码
+ * @param {Object} body 问题和浏览器本地历史
+ * @returns {Promise<Object>} 助手回复
+ */
+export const chatWithPublicAssistant = (shareCode, body) =>
+  postRequest(
+    `/knowledge/public/assistant-shares/${encodeURIComponent(shareCode)}/chat`,
+    body,
+  ).then((response) => response.data);
+
+/**
  * 向助手发送问题。
  *
  * @param {string|number} assistantId 助手编号

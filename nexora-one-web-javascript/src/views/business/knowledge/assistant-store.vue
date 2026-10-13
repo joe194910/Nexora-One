@@ -58,6 +58,12 @@
           </div>
 
           <div class="knowledge-store-card__actions">
+            <a-button @click="openShare(row, 'records')">
+              <HistoryOutlined />分享记录
+            </a-button>
+            <a-button @click="openShare(row, 'create')">
+              <ShareAltOutlined />分享
+            </a-button>
             <a-button
               v-if="!row.owned"
               :type="row.favorited ? 'default' : 'primary'"
@@ -76,6 +82,15 @@
       </div>
       <a-empty v-else description="暂无符合条件的已上架智能助手" />
     </a-spin>
+
+    <AssistantShareManager
+      v-if="shareAssistant"
+      v-model:open="shareOpen"
+      :assistant-id="shareAssistant.assistant.assistantId"
+      :assistant-name="shareAssistant.assistant.assistantName"
+      :initial-tab="shareInitialTab"
+      allow-create
+    />
   </div>
 </template>
 
@@ -88,11 +103,14 @@ import {
   ReloadOutlined,
   RobotOutlined,
   CloudOutlined,
+  HistoryOutlined,
+  ShareAltOutlined,
   StarFilled,
   StarOutlined,
 } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 import { knowledgeApi as api } from '/@/api/business/knowledge/knowledge-api';
+import AssistantShareManager from './components/assistant-share-manager.vue';
 import './knowledge.less';
 
 const router = useRouter();
@@ -100,6 +118,9 @@ const rows = ref([]);
 const keyword = ref('');
 const scope = ref('all');
 const loading = ref(false);
+const shareOpen = ref(false);
+const shareAssistant = ref(null);
+const shareInitialTab = ref('create');
 const scopeOptions = [
   { label: '全部', value: 'all' },
   { label: '已收藏', value: 'favorite' },
@@ -141,5 +162,18 @@ function useAssistant(row) {
   });
 }
 
+/** 从商店打开创建分享或分享记录弹窗。 */
+function openShare(row, tab) {
+  shareAssistant.value = row;
+  shareInitialTab.value = tab;
+  shareOpen.value = true;
+}
+
 onMounted(load);
 </script>
+
+<style scoped>
+.knowledge-store-card__actions {
+  flex-wrap: wrap;
+}
+</style>

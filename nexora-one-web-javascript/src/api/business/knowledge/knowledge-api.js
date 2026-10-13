@@ -31,6 +31,14 @@ export const knowledgeApi = {
   assistantStore: (params) => getRequest('/knowledge/assistant-store', params),
   favoriteAssistant: (id) => postRequest(`/knowledge/assistant-store/${id}/favorite`),
   unfavoriteAssistant: (id) => postRequest(`/knowledge/assistant-store/${id}/unfavorite`),
+  createAssistantShare: (id, data) => postRequest(`/knowledge/assistant-store/${id}/shares`, data),
+  assistantShareRecords: (id) => getRequest(`/knowledge/assistant-store/${id}/shares`),
+  disableAssistantShare: (id, shareId) =>
+    postRequest(`/knowledge/assistant-store/${id}/shares/${shareId}/disable`),
+  publicAssistantShare: (code) =>
+    getRequest(`/knowledge/public/assistant-shares/${encodeURIComponent(code)}`),
+  publicAssistantShareChat: (code, data) =>
+    postRequest(`/knowledge/public/assistant-shares/${encodeURIComponent(code)}/chat`, data),
   assistants: () => getRequest('/knowledge/assistants'),
   availableAssistants: () => getRequest('/knowledge/assistants/available'),
   assistant: (id) => getRequest(`/knowledge/assistants/${id}`),

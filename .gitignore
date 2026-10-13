@@ -27,3 +27,7 @@ target/
 .reasonix
 reasonix.toml
 
+.tmp-web-inspect
+.tmp-jar-inspect
+release
+

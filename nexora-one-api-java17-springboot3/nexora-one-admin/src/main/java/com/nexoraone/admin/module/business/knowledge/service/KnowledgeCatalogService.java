@@ -31,6 +31,7 @@ public class KnowledgeCatalogService {
     @Resource private EmployeeDao employees;
     @Resource private KnowledgeDocumentService documents;
     @Resource private AiToolService aiTools;
+    @Resource private KnowledgeAssistantShareLifecycleService assistantShareLifecycle;
 
     public List<Map<String, Object>> bases(String keyword) {
         return bases.selectList(new LambdaQueryWrapper<KnowledgeBase>()
@@ -201,6 +202,11 @@ public class KnowledgeCatalogService {
             assistant.setPublishedTime(null);
             assistants.updateById(assistant);
         }
+        if (!Boolean.TRUE.equals(assistant.getPublishedFlag())) {
+            assistantShareLifecycle.disableByAssistant(
+                    assistant.getAssistantId(),
+                    KnowledgeAssistantShareLifecycleService.ASSISTANT_UNAVAILABLE);
+        }
         // 兼容未升级的旧客户端：只有显式提交 toolIds 时才重建工具关系，避免编辑助手时误清空。
         if (form.getToolIds() != null) {
             AiToolForms.AssistantBind toolBinding = new AiToolForms.AssistantBind();
@@ -229,6 +235,9 @@ public class KnowledgeCatalogService {
         } else {
             assistant.setPublishedFlag(false);
             assistant.setPublishedTime(null);
+            assistantShareLifecycle.disableByAssistant(
+                    assistant.getAssistantId(),
+                    KnowledgeAssistantShareLifecycleService.ASSISTANT_UNPUBLISHED);
         }
         assistant.setUpdateTime(LocalDateTime.now());
         assistants.updateById(assistant);
@@ -263,7 +272,30 @@ public class KnowledgeCatalogService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteAssistant(Long id) {
         ownedAssistant(id);
+        assistantShareLifecycle.disableByAssistant(
+                id,
+                KnowledgeAssistantShareLifecycleService.ASSISTANT_DELETED);
         assistants.deleteById(id);
+    }
+
+    /** 按主键读取助手原始记录，供分享审计保留已下架状态。 */
+    public KnowledgeAssistant findAssistant(Long id) {
+        return assistants.selectById(id);
+    }
+
+    /** 校验助手仍满足智能助手商店上架条件。 */
+    public KnowledgeAssistant storeAssistant(Long id) {
+        return publicAssistant(id);
+    }
+
+    /** 查询助手当前关联且已启用的知识库。 */
+    public List<KnowledgeBase> enabledBases(Long assistantId) {
+        return enabledBasesForAssistant(assistantId);
+    }
+
+    /** 查询人员展示名称，人员不存在时返回统一占位文案。 */
+    public String employeeDisplayName(Long employeeId) {
+        return ownerName(employeeId);
     }
 
     public KnowledgeBase ownedBase(Long id) {
@@ -432,6 +464,9 @@ public class KnowledgeCatalogService {
                 assistant.setPublishedTime(null);
                 assistant.setUpdateTime(LocalDateTime.now());
                 assistants.updateById(assistant);
+                assistantShareLifecycle.disableByAssistant(
+                        assistantId,
+                        KnowledgeAssistantShareLifecycleService.ASSISTANT_UNAVAILABLE);
             }
         }
     }

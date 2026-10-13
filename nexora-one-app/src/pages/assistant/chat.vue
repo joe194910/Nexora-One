@@ -343,6 +343,7 @@
 
       <view class="composer">
         <wd-button
+          v-if="!publicMode"
           type="icon"
           icon="attach"
           aria-label="添加附件"
@@ -386,10 +387,12 @@
   import { onLoad } from '@dcloudio/uni-app';
   import AssistantAvatar from '@/components/assistant-avatar/assistant-avatar.vue';
   import {
+    chatWithPublicAssistant,
     chatWithAssistant,
     confirmToolCall,
     getAssistantDetail,
     getConversationMessages,
+    getPublicAssistantShare,
     getToolCallStatus,
   } from '@/api/business/knowledge-api';
   import { useAssistantStore } from '@/store/modules/business/assistant';
@@ -399,6 +402,7 @@
   const assistantStore = useAssistantStore();
   const themeStore = useThemeStore();
   const assistantId = ref('');
+  const shareCode = ref('');
   const conversationId = ref('');
   const assistantView = ref({ assistant: {}, baseNames: [], tools: [] });
   const messages = ref([]);
@@ -410,6 +414,7 @@
   const scrollTarget = ref('');
 
   const assistant = computed(() => assistantView.value.assistant || {});
+  const publicMode = computed(() => Boolean(shareCode.value));
   const navbarStyle = computed(
     () => `background:${themeStore.isDark ? '#08131c' : '#f7f9fc'};`,
   );
@@ -439,14 +444,18 @@
       '请给我一个常见问题示例',
     ];
   });
-  const actionItems = computed(() => [
-    { name: '开始新会话', value: 'new' },
-    { name: '查看会话记录', value: 'history' },
-    {
-      name: assistantView.value.favorited ? '取消收藏' : '收藏助手',
-      value: 'favorite',
-    },
-  ]);
+  const actionItems = computed(() =>
+    publicMode.value
+      ? [{ name: '清空本地会话', value: 'new' }]
+      : [
+          { name: '开始新会话', value: 'new' },
+          { name: '查看会话记录', value: 'history' },
+          {
+            name: assistantView.value.favorited ? '取消收藏' : '收藏助手',
+            value: 'favorite',
+          },
+        ],
+  );
 
   /**
    * 加载助手详情及指定历史会话。
@@ -454,8 +463,13 @@
    * @param {Object} options 页面参数
    */
   async function initializePage(options) {
+    shareCode.value = options.shareCode || '';
     assistantId.value = options.assistantId || '';
     conversationId.value = options.conversationId || '';
+    if (publicMode.value) {
+      await initializePublicShare();
+      return;
+    }
     if (!assistantId.value) {
       uni.showToast({ title: '缺少助手编号', icon: 'none' });
       goBack();
@@ -483,6 +497,40 @@
   }
 
   /**
+   * 初始化免登录分享会话，不读取登录用户的收藏与服务端会话。
+   */
+  async function initializePublicShare() {
+    loading.value = true;
+    try {
+      const detail = await getPublicAssistantShare(shareCode.value);
+      assistantId.value = detail.assistantId || '';
+      assistantView.value = {
+        assistant: {
+          assistantId: detail.assistantId,
+          assistantName: detail.assistantName,
+          showCitations: detail.showCitations,
+        },
+        baseNames: detail.baseNames || [],
+        tools: [],
+        ownerName: detail.ownerName,
+        expireTime: detail.expireTime,
+      };
+      restorePublicMessages();
+      scrollBottom();
+    } catch (error) {
+      nexoraSentry.captureError(error);
+      uni.showModal({
+        title: '分享链接不可用',
+        content: '链接可能已过期、被停用，或该助手已无法访问。',
+        showCancel: false,
+        success: goBack,
+      });
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
    * 返回上一页面。
    */
   function goBack() {
@@ -491,7 +539,7 @@
       uni.navigateBack();
       return;
     }
-    uni.reLaunch({ url: '/pages/home/index' });
+    uni.reLaunch({ url: publicMode.value ? '/pages/login/login' : '/pages/home/index' });
   }
 
   /**
@@ -501,6 +549,10 @@
     const text = question.value.trim();
     if (!text || sending.value) return;
 
+    const history = messages.value.slice(-12).map((entry) => ({
+      role: entry.role,
+      content: entry.content,
+    }));
     const userEntry = { role: 'user', content: text };
     messages.value.push(userEntry);
     question.value = '';
@@ -508,26 +560,65 @@
     scrollBottom();
 
     try {
-      const result = await chatWithAssistant(assistantId.value, {
-        conversationId: conversationId.value || null,
-        question: text,
-      });
-      conversationId.value = result.conversationId;
+      const result = publicMode.value
+        ? await chatWithPublicAssistant(shareCode.value, {
+            question: text,
+            history,
+          })
+        : await chatWithAssistant(assistantId.value, {
+            conversationId: conversationId.value || null,
+            question: text,
+          });
+      if (!publicMode.value) {
+        conversationId.value = result.conversationId;
+      }
       messages.value.push({
         role: 'assistant',
         content: result.content,
         citationsJson: JSON.stringify(result.citations || []),
         toolCallsJson: JSON.stringify(result.toolCalls || []),
       });
+      persistPublicMessages();
     } catch (error) {
       messages.value = messages.value.filter((item) => item !== userEntry);
       question.value = text;
+      persistPublicMessages();
       nexoraSentry.captureError(error);
       uni.showToast({ title: '发送失败，请稍后重试', icon: 'none' });
     } finally {
       sending.value = false;
       scrollBottom();
     }
+  }
+
+  /**
+   * 返回当前分享链接的本地缓存键。
+   *
+   * @returns {string} 缓存键
+   */
+  function publicCacheKey() {
+    return `nexora:assistant-share:${shareCode.value}`;
+  }
+
+  /**
+   * 恢复当前浏览器或移动端容器中的公开会话。
+   */
+  function restorePublicMessages() {
+    try {
+      const cached = uni.getStorageSync(publicCacheKey());
+      const parsed = typeof cached === 'string' ? JSON.parse(cached || '[]') : cached;
+      messages.value = Array.isArray(parsed) ? parsed.slice(-40) : [];
+    } catch (error) {
+      messages.value = [];
+    }
+  }
+
+  /**
+   * 将公开问答保存到本地，服务端不建立匿名用户会话。
+   */
+  function persistPublicMessages() {
+    if (!publicMode.value) return;
+    uni.setStorageSync(publicCacheKey(), JSON.stringify(messages.value.slice(-40)));
   }
 
   /**
@@ -1010,6 +1101,9 @@
       conversationId.value = '';
       messages.value = [];
       question.value = '';
+      if (publicMode.value) {
+        uni.removeStorageSync(publicCacheKey());
+      }
       return;
     }
     if (action === 'history') {

@@ -63,9 +63,10 @@
             <span v-else class="knowledge-muted">已收藏</span>
           </template>
         </a-table-column>
-        <a-table-column title="操作" :width="245" fixed="right">
+        <a-table-column title="操作" :width="320" fixed="right">
           <template #default="{ record }">
             <a-button type="link" :disabled="!record.assistant.enabledFlag" @click="openChat(record)">问答</a-button>
+            <a-button v-if="record.owned" type="link" @click="openShareRecords(record)">分享记录</a-button>
             <a-button v-if="record.owned" type="link" @click="togglePublish(record)">
               {{ record.assistant.publishedFlag ? '下架' : '上架' }}
             </a-button>
@@ -290,6 +291,14 @@
         </a-space>
       </template>
     </a-drawer>
+
+    <AssistantShareManager
+      v-if="shareAssistant"
+      v-model:open="shareOpen"
+      :assistant-id="shareAssistant.assistant.assistantId"
+      :assistant-name="shareAssistant.assistant.assistantName"
+      initial-tab="records"
+    />
   </div>
 </template>
 
@@ -309,6 +318,7 @@
   import { knowledgeApi as api } from '/@/api/business/knowledge/knowledge-api';
   import { mcpToolApi } from '/@/api/business/open-api/mcp-tool-api';
   import { nexoraSentry } from '/@/lib/nexora-sentry';
+  import AssistantShareManager from './components/assistant-share-manager.vue';
   import MarkdownContent from './components/markdown-content.vue';
   import './knowledge.less';
 
@@ -330,6 +340,8 @@
   const messageArea = ref(null);
   const confirmingRequestId = ref('');
   const initialized = ref(false);
+  const shareOpen = ref(false);
+  const shareAssistant = ref(null);
   const form = reactive(defaultForm());
 
   const toolOptions = computed(() =>
@@ -446,6 +458,12 @@
     await api.deleteAssistant(row.assistant.assistantId);
     message.success('助手已删除');
     await load();
+  }
+
+  /** 助手管理页只提供记录入口，创建分享统一放在助手商店。 */
+  function openShareRecords(row) {
+    shareAssistant.value = row;
+    shareOpen.value = true;
   }
 
   /** 进入助手工作台并加载当前用户的历史会话。 */

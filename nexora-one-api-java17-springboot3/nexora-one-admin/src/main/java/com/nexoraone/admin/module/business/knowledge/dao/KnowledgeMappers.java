@@ -19,6 +19,8 @@ public final class KnowledgeMappers {
     @Mapper public interface AssistantDao extends BaseMapper<KnowledgeAssistant> {}
     /** 智能助手收藏映射器。 */
     @Mapper public interface AssistantFavoriteDao extends BaseMapper<KnowledgeAssistantFavorite> {}
+    /** 智能助手免登录分享记录映射器。 */
+    @Mapper public interface AssistantShareDao extends BaseMapper<KnowledgeAssistantShare> {}
     /** 助手关联映射器。 */
     @Mapper public interface AssistantBaseDao extends BaseMapper<KnowledgeAssistantBase> {}
     /** 会话映射器。 */

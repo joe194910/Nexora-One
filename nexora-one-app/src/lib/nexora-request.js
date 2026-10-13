@@ -23,6 +23,14 @@ function getUserToken() {
 }
 
 /**
+ * 仅在本地存在登录令牌时附加鉴权头，兼容免登录分享接口。
+ */
+function buildAuthorizationHeader() {
+  const token = getUserToken();
+  return token ? { Authorization: 'Bearer ' + token } : {};
+}
+
+/**
  * 处理返回的消息
  */
 function handleResponse(response, resolve, reject) {
@@ -66,9 +74,7 @@ export const request = function (url, method, data) {
       url: baseUrl + url, //拼接请求路径
       data: data,
       method: method,
-      header: {
-        'Authorization':'Bearer ' + getUserToken(),
-      },
+      header: buildAuthorizationHeader(),
       success: (response) => {
         handleResponse(response, resolve, reject);
       },
@@ -109,9 +115,7 @@ export const uploadRequest = function (filePath, folder) {
     uni.uploadFile({
       url: baseUrl + '/support/file/upload',
       filePath,
-      header: {
-        'Authorization':'Bearer ' +  getUserToken(),
-      },
+      header: buildAuthorizationHeader(),
       name: 'file',
       formData: {
         folder,

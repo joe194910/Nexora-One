@@ -1,8 +1,11 @@
 package com.nexoraone.admin.module.business.knowledge.domain;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Data;
+
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /** 用户知识库的输入表单；身份信息一律从登录态取得。 */
@@ -59,5 +62,31 @@ public final class KnowledgeForms {
         private Long conversationId;
         /** 用户问题。 */
         @NotBlank @Size(max = 4000) private String question;
+    }
+
+    /** 从智能助手商店创建免登录分享链接。 */
+    @Data public static class AssistantShareCreate {
+        /** 分享链接失效时间。 */
+        @NotNull @Future private LocalDateTime expireTime;
+        /** 当前管理端访问源，例如 https://example.com。 */
+        @NotBlank @Size(max = 500) private String accessOrigin;
+    }
+
+    /** 免登录分享页面发起的助手问答。 */
+    @Data public static class PublicChat {
+        /** 当前用户问题。 */
+        @NotBlank @Size(max = 4000) private String question;
+        /** 浏览器本地保存的最近对话上下文。 */
+        @Size(max = 12) private List<@Valid PublicMessage> history;
+    }
+
+    /** 公开问答携带的单条本地会话消息。 */
+    @Data public static class PublicMessage {
+        /** 消息角色，只允许用户或助手。 */
+        @NotBlank
+        @Pattern(regexp = "user|assistant", message = "消息角色仅支持 user 或 assistant")
+        private String role;
+        /** 消息正文。 */
+        @NotBlank @Size(max = 8000) private String content;
     }
 }

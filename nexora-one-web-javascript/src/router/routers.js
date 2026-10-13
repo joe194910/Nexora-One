@@ -15,8 +15,14 @@ import NoPrivilege from '/@/views/system/40X/403.vue';
 
 export const routerArray = [
     ...loginRouters,
-     ...homeRouters, 
-    ...helpDocRouters, 
+    ...homeRouters,
+    ...helpDocRouters,
+    {
+      path: '/share/assistant/:code',
+      name: 'assistant-share-public',
+      component: () => import('/@/views/business/knowledge/assistant-share.vue'),
+      meta: { publicPage: true, title: '智能助手分享' },
+    },
     { path: '/:pathMatch(.*)*', name: '404', component: NotFound },
     { path: '/403', name: '403', component: NoPrivilege }
 ];

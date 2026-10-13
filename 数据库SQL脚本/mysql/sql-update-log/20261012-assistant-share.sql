@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS `nexora_one_kb_assistant_share` (
+  `share_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '分享记录主键',
+  `assistant_id` BIGINT NOT NULL COMMENT '智能助手主键',
+  `share_code` VARCHAR(64) NOT NULL COMMENT '公开分享编码',
+  `share_url` VARCHAR(500) NOT NULL COMMENT '完整分享链接',
+  `sharer_id` BIGINT NOT NULL COMMENT '分享人主键',
+  `sharer_name` VARCHAR(100) NOT NULL COMMENT '分享人名称快照',
+  `share_source` VARCHAR(32) NOT NULL DEFAULT 'STORE' COMMENT '分享来源',
+  `expire_time` DATETIME NOT NULL COMMENT '失效时间',
+  `enabled_flag` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+  `disable_reason` VARCHAR(64) DEFAULT NULL COMMENT '停用原因编码',
+  `disabled_time` DATETIME DEFAULT NULL COMMENT '停用时间',
+  `access_count` BIGINT NOT NULL DEFAULT 0 COMMENT '成功访问次数',
+  `last_access_time` DATETIME DEFAULT NULL COMMENT '最近访问时间',
+  `create_time` DATETIME NOT NULL COMMENT '创建时间',
+  `update_time` DATETIME NOT NULL COMMENT '更新时间',
+  PRIMARY KEY (`share_id`),
+  UNIQUE KEY `uk_kb_assistant_share_code` (`share_code`),
+  KEY `idx_kb_assistant_share_assistant` (`assistant_id`),
+  KEY `idx_kb_assistant_share_sharer` (`sharer_id`),
+  KEY `idx_kb_assistant_share_enabled_expire` (`enabled_flag`, `expire_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='智能助手免登录分享记录';

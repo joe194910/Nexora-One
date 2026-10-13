@@ -3,15 +3,18 @@ package com.nexoraone.admin.module.business.knowledge.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.nexoraone.admin.module.business.knowledge.domain.*;
 import com.nexoraone.admin.module.business.knowledge.service.*;
+import com.nexoraone.base.common.annoation.NoNeedLogin;
 import com.nexoraone.base.common.domain.ResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -23,6 +26,7 @@ public class KnowledgeController {
     @Resource private KnowledgeDocumentService documents;
     @Resource private KnowledgeCatalogService catalog;
     @Resource private KnowledgeChatService chat;
+    @Resource private KnowledgeAssistantShareService assistantShares;
 
     /** 获取启用的解析方案及对话模型供用户选择。 */
     @GetMapping("/options") @Operation(summary = "用户可选配置")
@@ -150,6 +154,32 @@ public class KnowledgeController {
         return ResponseDTO.ok();
     }
 
+    /** 从智能助手商店创建指定有效期的免登录分享链接。 */
+    @PostMapping("/assistant-store/{id}/shares")
+    @Operation(summary = "创建智能助手分享")
+    public ResponseDTO<Map<String, Object>> createAssistantShare(
+            @PathVariable Long id,
+            @RequestBody @Valid KnowledgeForms.AssistantShareCreate form) {
+        return ResponseDTO.ok(assistantShares.create(id, form));
+    }
+
+    /** 查询当前用户有权查看和停用的助手分享记录。 */
+    @GetMapping("/assistant-store/{id}/shares")
+    @Operation(summary = "查询智能助手分享记录")
+    public ResponseDTO<List<Map<String, Object>>> assistantShareRecords(@PathVariable Long id) {
+        return ResponseDTO.ok(assistantShares.records(id));
+    }
+
+    /** 分享人或助手创建者主动停用单条分享链接。 */
+    @PostMapping("/assistant-store/{id}/shares/{shareId}/disable")
+    @Operation(summary = "停用智能助手分享")
+    public ResponseDTO<String> disableAssistantShare(
+            @PathVariable Long id,
+            @PathVariable Long shareId) {
+        assistantShares.disable(id, shareId);
+        return ResponseDTO.ok();
+    }
+
     /** 查询我的助手及其多知识库关联。 */
     @GetMapping("/assistants") @Operation(summary = "我的智能助手")
     @SaCheckPermission("knowledge:assistant:query")
@@ -226,5 +256,50 @@ public class KnowledgeController {
     public ResponseDTO<String> deleteConversation(@PathVariable Long id, @PathVariable Long conversationId) {
         chat.deleteConversation(id, conversationId);
         return ResponseDTO.ok();
+    }
+
+    /** 免登录读取有效分享对应的助手信息。 */
+    @NoNeedLogin
+    @GetMapping("/public/assistant-shares/{code}")
+    @Operation(summary = "公开智能助手分享详情")
+    public ResponseDTO<Map<String, Object>> publicAssistantShare(@PathVariable String code) {
+        return ResponseDTO.ok(assistantShares.publicDetail(code));
+    }
+
+    /** 免登录执行分享助手问答，匿名链路不会调用 MCP 或业务操作工具。 */
+    @NoNeedLogin
+    @PostMapping("/public/assistant-shares/{code}/chat")
+    @Operation(summary = "公开智能助手分享问答")
+    public ResponseDTO<Map<String, Object>> publicAssistantShareChat(
+            @PathVariable String code,
+            HttpServletRequest request,
+            @RequestBody @Valid KnowledgeForms.PublicChat form) {
+        return ResponseDTO.ok(assistantShares.publicChat(code, form, clientIp(request)));
+    }
+
+    /** 根据浏览器设备类型跳转到 PC 管理端或移动端公开问答页面。 */
+    @NoNeedLogin
+    @GetMapping("/public/assistant-shares/{code}/open")
+    @Operation(summary = "打开智能助手分享页面")
+    public ResponseEntity<Void> openAssistantShare(
+            @PathVariable String code,
+            HttpServletRequest request) {
+        String userAgent = Objects.toString(request.getHeader(HttpHeaders.USER_AGENT), "");
+        boolean mobile = userAgent.matches("(?i).*(Android|iPhone|iPad|Mobile|HarmonyOS).*");
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create(assistantShares.publicPageUrl(code, mobile)))
+                .build();
+    }
+
+    /** 从反向代理请求头中取得真实客户端 IP，供公开问答限流使用。 */
+    private String clientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Real-IP");
+        if (ip == null || ip.isBlank()) {
+            String forwardedFor = request.getHeader("X-Forwarded-For");
+            if (forwardedFor != null && !forwardedFor.isBlank()) {
+                ip = forwardedFor.split(",", 2)[0].trim();
+            }
+        }
+        return ip == null || ip.isBlank() ? request.getRemoteAddr() : ip;
     }
 }

@@ -21,6 +21,9 @@ import java.util.*;
 /** 面向用户的多知识库 RAG 对话，支持本人助手和已上架公共助手。 */
 @Service
 public class KnowledgeChatService {
+    /** 公开问答允许携带的历史正文总字符数，避免浏览器伪造超大模型上下文。 */
+    private static final int PUBLIC_HISTORY_MAX_CHARS = 24_000;
+
     @Resource private KnowledgeCatalogService catalog;
     @Resource private KnowledgeDocumentService documents;
     @Resource private KnowledgeVectorSearch vectors;
@@ -98,6 +101,61 @@ public class KnowledgeChatService {
         result.put("conversationId", saved.getConversationId());
         result.put("citations", Boolean.TRUE.equals(assistant.getShowCitations()) ? hits : List.of());
         result.put("toolCalls", toolCalls);
+        return result;
+    }
+
+    /**
+     * 执行免登录分享问答，只使用知识检索和对话模型，不加载或执行任何业务工具。
+     *
+     * @param assistant 已通过分享服务校验的助手
+     * @param allowedBases 已通过分享服务校验的启用知识库
+     * @param form 当前问题和浏览器本地会话历史
+     * @return 模型回答及可展示引用
+     */
+    public Map<String, Object> publicChat(
+            KnowledgeAssistant assistant,
+            List<KnowledgeBase> allowedBases,
+            KnowledgeForms.PublicChat form) {
+        LinkedHashMap<Long, KnowledgeDocument> allowed = new LinkedHashMap<>();
+        for (KnowledgeBase base : allowedBases) {
+            for (Long documentId : catalog.documentIds(base.getBaseId())) {
+                KnowledgeDocument document = documents.accessible(documentId, base.getOwnerId());
+                documents.refresh(document);
+                if ("READY".equals(document.getStatus())) {
+                    allowed.put(documentId, document);
+                }
+            }
+        }
+        List<Map<String, Object>> hits = allowed.isEmpty() ? List.of()
+                : vectors.search(allowed.values(), form.getQuestion(), assistant.getTopK(),
+                        assistant.getScoreThreshold().doubleValue());
+        JSONArray history = new JSONArray();
+        if (form.getHistory() != null) {
+            int historyChars = form.getHistory().stream()
+                    .map(KnowledgeForms.PublicMessage::getContent)
+                    .filter(Objects::nonNull)
+                    .mapToInt(String::length)
+                    .sum();
+            if (historyChars > PUBLIC_HISTORY_MAX_CHARS) {
+                throw new IllegalArgumentException("会话上下文过长，请清空历史后重试");
+            }
+            form.getHistory().forEach(message -> history.add(JSONUtil.createObj()
+                    .set("role", message.getRole())
+                    .set("content", message.getContent())));
+        }
+        Map<String, Object> response = runtime.assistantChat(
+                assistant.getModelId(),
+                history,
+                systemPrompt(assistant.getSystemPrompt(), hits),
+                form.getQuestion(),
+                assistant.getAssistantId());
+        String answer = Objects.toString(response.get("content"), "");
+        if (StrUtil.isBlank(answer)) {
+            throw new IllegalStateException("对话模型没有返回回答");
+        }
+        Map<String, Object> result = new LinkedHashMap<>(response);
+        result.put("citations", Boolean.TRUE.equals(assistant.getShowCitations()) ? hits : List.of());
+        result.put("toolCalls", List.of());
         return result;
     }
 
